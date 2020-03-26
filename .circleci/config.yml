@@ -2,11 +2,9 @@ version: 2.1
 
 jobs:
   build-and-test:
-    docker:
-      - image: cimg/base:2020.01
+    machine: true
     steps:
       - checkout
-      - setup_remote_docker
       - run: make deps build check
 
 workflows:
