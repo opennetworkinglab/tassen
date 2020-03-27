@@ -69,7 +69,7 @@ For example:
 the test case implementations (e.g., `helper.py` provides a P4Info helper with
 methods convenient to construct P4Runtime table entries)
 
-### Mapping to Target-specific BNG-UP implementations
+### Mapping to Target-specific BNG-UP Implementations
 
 The directory `mapping` is currently empty. The goal is to provide here a
 reference implementation of the runtime mapping logic to translate P4Runtime
