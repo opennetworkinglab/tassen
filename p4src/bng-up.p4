@@ -22,6 +22,9 @@ typedef bit<9>  port_t;
 typedef bit<48> mac_addr_t;
 typedef bit<12> vid_t;
 
+typedef bit<3> fwd_type_t;
+typedef bit<32> next_id_t;
+
 const port_t CPU_PORT = 255;
 
 const vid_t DEFAULT_VID = 0;
@@ -39,6 +42,9 @@ const bit<8> PROTO_UDP = 17;
 const bit<8> PROTO_ICMPV6 = 58;
 
 const bit<16> PPPOE_PROTO_IP4 = 0x21;
+
+const fwd_type_t FWD_UNKNOWN = 0;
+const fwd_type_t FWD_IPV4_UNICAST = 1;
 
 action nop() {
     NoAction();
@@ -138,17 +144,17 @@ struct local_metadata_t {
     bit<16>      ip_eth_type;
     vid_t        vlan_vid;
     bit<3>       vlan_pcp;
-    bit<1>       vlan_cfi;
+    bit<1>       vlan_dei;
     bool         push_double_vlan;
     vid_t        inner_vlan_vid;
     bit<3>       inner_vlan_pcp;
-    bit<1>       inner_vlan_cfi;
+    bit<1>       inner_vlan_dei;
     bool         skip_forwarding;
     bool         skip_next;
-    // fwd_type_t   fwd_type;
-    // next_id_t    next_id;
+    fwd_type_t   fwd_type;
+    next_id_t    next_id;
     bool         is_multicast;
-    bool         is_controller_packet_out;
+    bool         is_cpu_out;
     bit<8>       ip_proto;
     bit<16>      l4_sport;
     bit<16>      l4_dport;
@@ -203,6 +209,9 @@ parser ParserImpl (
     state parse_vlan {
         packet.extract(hdr.vlan);
         local_meta.bng.s_tag = hdr.vlan.vid;
+        local_meta.vlan_vid  = hdr.vlan.vid;
+        local_meta.vlan_pcp  = hdr.vlan.pcp;
+        local_meta.vlan_dei  = hdr.vlan.dei;
         transition select(packet.lookahead<ethertype_t>()) {
             ETHERTYPE_VLAN: parse_inner_vlan;
             default: parse_eth_type;
@@ -211,7 +220,10 @@ parser ParserImpl (
 
     state parse_inner_vlan {
         packet.extract(hdr.inner_vlan);
-        local_meta.bng.c_tag = hdr.inner_vlan.vid;
+        local_meta.bng.c_tag       = hdr.inner_vlan.vid;
+        local_meta.inner_vlan_vid  = hdr.inner_vlan.vid;
+        local_meta.inner_vlan_pcp  = hdr.inner_vlan.pcp;
+        local_meta.inner_vlan_dei  = hdr.inner_vlan.dei;
         transition parse_eth_type;
     }
 
@@ -272,8 +284,74 @@ control IngreePipeImpl(
     inout local_metadata_t local_meta,
     inout standard_metadata_t std_meta) {
 
+    // PORT FILTERING
+    action deny() {
+        mark_to_drop(std_meta);
+    }
+
+    action permit() {
+    }
+
+    // action permit_with_internal_vlan(vlan_vid_t vlan_vid) {
+    //     local_meta.vlan_vid = vlan_vid;
+    //     permit();
+    // }
+    
+    // Decides whether a packet can be admitted in the pipeline.
+    table port_vlan {
+        key = {
+            std_meta.ingress_port : exact @name("ig_port");
+            hdr.vlan.isValid()    : exact @name("has_vlan");
+            hdr.vlan.vid          : ternary @name("s_tag");
+            hdr.inner_vlan.vid    : ternary @name("c_tag");
+        }
+        actions = {
+            deny();
+            permit();
+            // permit_with_internal_vlan();
+        }
+        const default_action = deny();
+        @name("port_vlan_counter")
+        counters = direct_counter(CounterType.packets_and_bytes);
+        size = 8192;
+    }
+
+    action set_fwd_type(fwd_type_t fwd_type) {
+        local_meta.fwd_type = fwd_type;
+    }
+
+    table fwd_classifier {
+        // TODO: if we do only routing, maybe we don't need all these keys.
+        key = {
+            std_meta.ingress_port : exact @name("ig_port");
+            hdr.ethernet.dst_addr : ternary @name("eth_dst");
+            hdr.eth_type.value    : ternary @name("ethertype");
+            // local_meta.ip_eth_type: exact @name("ip_eth_type") ;
+        }
+        actions = {
+            set_fwd_type;
+        }
+        const default_action = set_fwd_type(FWD_UNKNOWN);
+        @name("fwd_classifier_counter")
+        counters = direct_counter(CounterType.packets_and_bytes);
+        size = 1024;
+    }
+
     apply {
-        nop();
+        if (hdr.cpu_out.isValid()) {
+            std_meta.egress_spec = hdr.cpu_out.egress_port;
+            hdr.cpu_out.setInvalid();
+            local_meta.is_cpu_out = true;
+            exit;
+        }
+
+        port_vlan.apply();
+        fwd_classifier.apply();
+
+        if (local_meta.fwd_type == FWD_UNKNOWN) {
+            mark_to_drop(std_meta);
+        }
+
     }
 }
 
