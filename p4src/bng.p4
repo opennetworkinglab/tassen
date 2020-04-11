@@ -85,7 +85,7 @@ header eth_type_t {
 }
 
 header vlan_t {
-    bit<16> pid;
+    bit<16> tpid;
     bit<3>  pcp;
     bit<1>  dei;
     bit<12> vid;
@@ -96,7 +96,7 @@ header pppoe_t {
     bit<4>  type;
     bit<8>  code;
     bit<16> sess_id;
-    bit<16> length;
+    bit<16> len;
     bit<16> proto;
 }
 
@@ -451,7 +451,7 @@ control IngressDownstream(
 
     table vids {
         key = {
-            lmeta.line_id: exact @name("ipv4_dst");
+            lmeta.line_id: exact @name("line_id");
         }
         actions = {
             set_vids;
@@ -477,11 +477,42 @@ control IngressDownstream(
         const default_action = miss;
     }
 
-    action route_v4(port_t port, bit<48> dmac) {
+    @hidden
+    action encap(bit<16> pppoe_proto) {
+        // Outer VLAN (s_tag)
+        hdr.vlan.setValid();
+        hdr.vlan.tpid = ETHERTYPE_VLAN;
+        hdr.vlan.pcp  = 3w0;
+        hdr.vlan.dei  = 1w0;
+        hdr.vlan.vid  = lmeta.s_tag;
+        // Inner VLAN (c_tag)
+        hdr.vlan2.setValid();
+        hdr.vlan2.tpid = ETHERTYPE_VLAN;
+        hdr.vlan2.pcp  = 3w0;
+        hdr.vlan2.dei  = 1w0;
+        hdr.vlan2.vid  = lmeta.c_tag;
+        // PPPoE
+        hdr.eth_type.value = ETHERTYPE_PPPOES;
+        hdr.pppoe.setValid();
+        hdr.pppoe.ver     = 4w1;
+        hdr.pppoe.type    = 4w1;
+        hdr.pppoe.code    = 8w0; // session stage
+        hdr.pppoe.sess_id = lmeta.pppoe_sess_id;
+        hdr.pppoe.len     = hdr.ipv4.len + 16w2;
+        hdr.pppoe.proto   = pppoe_proto;
+    }
+
+    @hidden
+    action route(port_t port, bit<48> dmac) {
         smeta.egress_spec  = port;
         hdr.ethernet.src_addr = lmeta.my_mac;
         hdr.ethernet.dst_addr = dmac;
         routed.count(lmeta.line_id);
+    }
+
+    action route_v4(port_t port, bit<48> dmac) {
+        encap(PPPOE_PROTO_IP4);
+        route(port, dmac);
     }
 
     table routes_v4 {
