@@ -1,5 +1,7 @@
 # Tassen
 
+[![CircleCI](https://circleci.com/gh/opennetworkinglab/tassen.svg?style=svg&circle-token=1192ef25b712aaf3f6e5e54fb65b3aad27ad1f57)](https://app.circleci.com/pipelines/github/opennetworkinglab/tassen)
+
 This project aims at defining a BNG Control and User Plane Separation (CUPS) API
 based on P4Runtime, gNMI, and OpenConfig.
 
@@ -67,7 +69,7 @@ For example:
 the test case implementations (e.g., `helper.py` provides a P4Info helper with
 methods convenient to construct P4Runtime table entries)
 
-### Mapping to Target-specific BNG-UP implementations
+### Mapping to Target-specific BNG-UP Implementations
 
 The directory `mapping` is currently empty. The goal is to provide here a
 reference implementation of the runtime mapping logic to translate P4Runtime
