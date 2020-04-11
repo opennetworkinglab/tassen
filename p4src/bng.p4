@@ -17,46 +17,49 @@
 #include <core.p4>
 #include <v1model.p4>
 
-typedef bit<16> ethertype_t;
-typedef bit<9>  port_t;
-typedef bit<48> mac_addr_t;
-typedef bit<12> vid_t;
+const int MAX_LINES = 8192;
+const int MAX_ATTACH_PER_LINE = 4;
+const int MAX_UPSTREAM_ROUTES = 1024;
+// For some reason P4 constants cannot be used in annotations.
+#define MAX_ECMP_GROUP_SIZE 16
+const int MAX_PPPOE_PUNTS = 32;
+const int MAX_ACLS = 256;
 
-typedef bit<3> fwd_type_t;
-typedef bit<3> if_type_t;
-typedef bit<32> next_id_t;
-typedef bit<32> line_id_t;
+const bit<12> DEFAULT_VID = 0;
 
-const port_t CPU_PORT = 255;
+const bit<16> ETHERTYPE_QINQ   = 0x88a8;
+const bit<16> ETHERTYPE_QINQ2 = 0x9100;
+const bit<16> ETHERTYPE_VLAN   = 0x8100;
+const bit<16> ETHERTYPE_IPV4   = 0x0800;
+const bit<16> ETHERTYPE_PPPOED = 0x8863;
+const bit<16> ETHERTYPE_PPPOES = 0x8864;
 
-const vid_t DEFAULT_VID = 0;
-
-const ethertype_t ETHERTYPE_QINQ   = 0x88a8;
-const ethertype_t ETHERTYPE_QINQ_2 = 0x9100;
-const ethertype_t ETHERTYPE_VLAN   = 0x8100;
-const ethertype_t ETHERTYPE_IPV4   = 0x0800;
-const ethertype_t ETHERTYPE_PPPOED = 0x8863;
-const ethertype_t ETHERTYPE_PPPOES = 0x8864;
-
-const bit<8> PROTO_ICMP = 1;
-const bit<8> PROTO_TCP = 6;
-const bit<8> PROTO_UDP = 17;
-const bit<8> PROTO_ICMPV6 = 58;
+const bit<8> IP_PROTO_ICMP = 1;
+const bit<8> IP_PROTO_TCP = 6;
+const bit<8> IP_PROTO_UDP = 17;
+const bit<8> IP_PROTO_ICMPV6 = 58;
 
 const bit<16> PPPOE_PROTO_IP4 = 0x21;
 
-const fwd_type_t FWD_UNKNOWN = 0;
-const fwd_type_t FWD_IPV4_UNICAST = 1;
+typedef bit<9>  port_t;
+const port_t CPU_PORT = 255;
+const bit<32> CPU_CLONE_SESSION_ID = 99;
 
+typedef bit<3>  if_type_t;
 const if_type_t IF_UNKNOWN = 0;
 const if_type_t IF_CORE = 1;
 const if_type_t IF_ACCESS = 2;
 
+typedef bit<32> line_id_t;
 const line_id_t LINE_UNKNOWN = 0;
 
-action nop() {
-    NoAction();
-}
+action nop() { NoAction(); }
+
+action drop_now(inout standard_metadata_t smeta) {
+    // Exit the pipeline now and drop.
+    mark_to_drop(smeta);
+    exit;
+ }
 
 @controller_header("packet_in") header cpu_in_t {
     port_t ingress_port;
@@ -69,19 +72,19 @@ action nop() {
 }
 
 header ethernet_t {
-    mac_addr_t dst_addr;
-    mac_addr_t src_addr;
+    bit<48> dst_addr;
+    bit<48> src_addr;
 }
 
 header eth_type_t {
-    ethertype_t value;
+    bit<16> value;
 }
 
 header vlan_t {
-    ethertype_t pid;
-    bit<3>      pcp;
-    bit<1>      dei;
-    vid_t       vid;
+    bit<16> pid;
+    bit<3>  pcp;
+    bit<1>  dei;
+    bit<12> vid;
 }
 
 header pppoe_t {
@@ -94,19 +97,19 @@ header pppoe_t {
 }
 
 header ipv4_t {
-    bit<4>   ver;
-    bit<4>   ihl;
-    bit<6>   dscp;
-    bit<2>   ecn;
-    bit<16>  len;
-    bit<16>  id;
-    bit<3>   flags;
-    bit<13>  frag_offset;
-    bit<8>   ttl;
-    bit<8>   proto;
-    bit<16>  checksum;
-    bit<32>  src_addr;
-    bit<32>  dst_addr;
+    bit<4>  ver;
+    bit<4>  ihl;
+    bit<6>  dscp;
+    bit<2>  ecn;
+    bit<16> len;
+    bit<16> id;
+    bit<3>  flags;
+    bit<13> frag_offset;
+    bit<8>  ttl;
+    bit<8>  proto;
+    bit<16> checksum;
+    bit<32> src_addr;
+    bit<32> dst_addr;
 }
 
 header tcp_t {
@@ -140,15 +143,15 @@ header icmp_t {
 }
 
 struct local_metadata_t {
-    if_type_t    if_type;
-    mac_addr_t   my_mac;
-    bit<8>       ip_proto;
-    bit<16>      l4_sport;
-    bit<16>      l4_dport;
-    line_id_t    line_id;
-    vid_t        s_tag;
-    vid_t        c_tag;
-    bit<16>      pppoe_sess_id;
+    if_type_t  if_type;
+    bit<48>    my_mac;
+    bit<8>     ip_proto;
+    bit<16>    l4_sport;
+    bit<16>    l4_dport;
+    line_id_t  line_id;
+    bit<12>    s_tag;
+    bit<12>    c_tag;
+    bit<16>    pppoe_sess_id;
 }
 
 struct parsed_headers_t {
@@ -185,9 +188,9 @@ parser ParserImpl (
 
     state parse_ethernet {
         packet.extract(hdr.ethernet);
-        transition select(packet.lookahead<ethertype_t>()) {
+        transition select(packet.lookahead<bit<16>>()) {
             ETHERTYPE_QINQ: parse_vlan;
-            ETHERTYPE_QINQ_2: parse_vlan;
+            ETHERTYPE_QINQ2: parse_vlan;
             ETHERTYPE_VLAN: parse_vlan;
             default: parse_eth_type;
         }
@@ -196,7 +199,7 @@ parser ParserImpl (
     state parse_vlan {
         packet.extract(hdr.vlan);
         lmeta.s_tag = hdr.vlan.vid;
-        transition select(packet.lookahead<ethertype_t>()) {
+        transition select(packet.lookahead<bit<16>>()) {
             ETHERTYPE_VLAN: parse_vlan2;
             default: parse_eth_type;
         }
@@ -230,9 +233,9 @@ parser ParserImpl (
         packet.extract(hdr.ipv4);
         lmeta.ip_proto = hdr.ipv4.proto;
         transition select(hdr.ipv4.proto) {
-            PROTO_TCP: parse_tcp;
-            PROTO_UDP: parse_udp;
-            PROTO_ICMP: parse_icmp;
+            IP_PROTO_TCP: parse_tcp;
+            IP_PROTO_UDP: parse_udp;
+            IP_PROTO_ICMP: parse_icmp;
             default: accept;
         }
     }
@@ -259,29 +262,48 @@ parser ParserImpl (
     }
 }
 
+control TtlCheck(
+    inout parsed_headers_t hdr,
+    inout local_metadata_t lmeta,
+    inout standard_metadata_t smeta) {
+
+    counter(MAX_LINES, CounterType.packets_and_bytes) expired;
+
+    apply {
+        if (hdr.ipv4.isValid()) {
+            if (hdr.ipv4.ttl > 1) {
+                hdr.ipv4.ttl = hdr.ipv4.ttl - 1;
+            } else {
+                expired.count(lmeta.line_id);
+                drop_now(smeta);
+            }
+        }
+    }
+}
+
 control IngressUpstream(
     inout parsed_headers_t hdr,
     inout local_metadata_t lmeta,
     inout standard_metadata_t smeta) {
     
-    counter(8192, CounterType.packets_and_bytes) all;
-    counter(8192, CounterType.packets_and_bytes) punted;
-    counter(8192, CounterType.packets_and_bytes) spoofed;
-    counter(8192, CounterType.packets_and_bytes) terminated;
-
+    counter(MAX_LINES, CounterType.packets_and_bytes) all;
+    counter(MAX_LINES, CounterType.packets_and_bytes) punted;
+    counter(MAX_LINES, CounterType.packets_and_bytes) spoofed;
+    counter(MAX_LINES, CounterType.packets_and_bytes) routed;
+    
     action set_line(bit<32> line_id) {
         lmeta.line_id = line_id;
     }
 
     table lines {
         key = {
-            lmeta.s_tag: exact @name("s_tag") ;
             lmeta.c_tag: exact @name("c_tag") ;
+            lmeta.s_tag: exact @name("s_tag") ;
         }
         actions = {
             set_line;
         }
-        size = 8192;
+        size = MAX_LINES;
         const default_action = set_line(LINE_UNKNOWN);
     }
 
@@ -300,89 +322,88 @@ control IngressUpstream(
             punt;
             @defaultonly nop;
         }
-        size = 16;
+        size = MAX_PPPOE_PUNTS;
         const default_action = nop;
     }
 
-    @hidden
-    action accept(ethertype_t eth_type) {
-        // Decap.
-        hdr.eth_type.value = eth_type;
-        hdr.vlan.setInvalid();
-        hdr.vlan2.setInvalid();
-        hdr.pppoe.setInvalid();
-        terminated.count(lmeta.line_id);
-    }
-
-    action accept_v4() { 
-        accept(ETHERTYPE_IPV4);
-    }
-
     action reject() {
-        mark_to_drop(smeta);
         spoofed.count(lmeta.line_id);
-        exit;
+        drop_now(smeta);
     }
 
-    // Prevents antispoofing.
-    table attachements_v4 {
+    table attachments_v4 {
         key = {
-            lmeta.line_id     : exact @name("line_id");
-            hdr.ethernet.src_addr : exact @name("ipv4_src");
+            lmeta.line_id         : exact @name("line_id");
+            hdr.ethernet.src_addr : exact @name("eth_src");
             hdr.ipv4.src_addr     : exact @name("ipv4_src");
             hdr.pppoe.sess_id     : ternary @name("pppoe_sess_id");
         }
         actions = {
-            accept_v4;
+            nop;
             @defaultonly reject;
         }
-        size = 4 * 8192;
+        size = MAX_ATTACH_PER_LINE * MAX_LINES;
         const default_action = reject;
     }
 
-    action routes_v4(port_t port, mac_addr_t dmac) {
+    @hidden
+    action decap(bit<16> eth_type) {
+        hdr.eth_type.value = eth_type;
+        hdr.vlan.setInvalid();
+        hdr.vlan2.setInvalid();
+        hdr.pppoe.setInvalid();
+    }
+
+    @hidden
+    action route(port_t port, bit<48> dmac) {
         smeta.egress_spec = port;
         hdr.ethernet.src_addr = lmeta.my_mac;
         hdr.ethernet.dst_addr = dmac;
-        hdr.ipv4.ttl = hdr.ipv4.ttl - 1;
+        routed.count(lmeta.line_id);
     }
 
-    table routing_v4 {
+    action route_v4(port_t port, bit<48> dmac) {
+        decap(ETHERTYPE_IPV4);
+        route(port, dmac);
+    }
+
+    table routes_v4 {
         key = {
-            hdr.ipv4.dst_addr   : lpm @name("ipv4_dst");
-            hdr.ipv4.dst_addr   : selector;
-            hdr.ipv4.src_addr   : selector;
-            lmeta.ip_proto : selector;
-            lmeta.l4_sport : selector;
-            lmeta.l4_dport : selector;
+            hdr.ipv4.dst_addr : lpm @name("ipv4_dst");
+            hdr.ipv4.dst_addr : selector;
+            hdr.ipv4.src_addr : selector;
+            lmeta.ip_proto    : selector;
+            lmeta.l4_sport    : selector;
+            lmeta.l4_dport    : selector;
         }
         actions = {
-            routes_v4;
+            route_v4;
             @defaultonly nop;
         }
         default_action = nop();
-        @name("ecmp")
-        @max_group_size(16)
+        @name("ecmp_up")
+        @max_group_size(MAX_ECMP_GROUP_SIZE)
         implementation = action_selector(HashAlgorithm.crc16, 32w1024, 32w16);
-        size = 1024;
+        size = MAX_UPSTREAM_ROUTES;
     }
 
-    apply {
-        all.count(lmeta.line_id);
+    TtlCheck() ttl;
 
-        pppoe_punts.apply();
-        
+    apply { 
         lines.apply();
-
+        all.count(lmeta.line_id);
+        pppoe_punts.apply();
         if (lmeta.line_id == LINE_UNKNOWN) {
-            mark_to_drop(smeta);
-            exit;
+            drop_now(smeta);
         }
-
+        // Line is known and pkt was not punted.
+        // Verify attachment info, if valid (not spoofed), decap and route.
+        // If no route then no-op, we might punt or do something else in ACL.
         if (hdr.ipv4.isValid()) {
-            attachements_v4.apply();
-            routing_v4.apply();
+            attachments_v4.apply();
+            routes_v4.apply();
         }
+        ttl.apply(hdr, lmeta, smeta);
     }
 }
 
@@ -391,13 +412,15 @@ control IngressDownstream(
     inout local_metadata_t lmeta,
     inout standard_metadata_t smeta) {
     
-    counter(8192, CounterType.packets_and_bytes) rx;
-    counter(8192, CounterType.packets_and_bytes) rx_error;
-    
-    bool err = false;
+    counter(MAX_LINES, CounterType.packets_and_bytes) dropped;
+    counter(MAX_LINES, CounterType.packets_and_bytes) routed;
 
+    // In downstream, we expect all tables to be matched.
+    // Any table miss will cause the packet to be dropped
+    // immediately.
     action miss() {
-        err = true;
+        dropped.count(lmeta.line_id);
+        drop_now(smeta);
     }
 
     action set_line(bit<32> line_id) {
@@ -412,11 +435,11 @@ control IngressDownstream(
             set_line;
             @defaultonly miss;
         }
-        size = 8192;
+        size = MAX_LINES;
         const default_action = miss;
     }
 
-    action set_vids(vid_t c_tag, vid_t s_tag) {
+    action set_vids(bit<12> c_tag, bit<12> s_tag) {
         lmeta.c_tag = c_tag;
         lmeta.s_tag = s_tag;
     }
@@ -429,11 +452,11 @@ control IngressDownstream(
             set_vids;
             @defaultonly miss;
         }
-        size = 8192;
+        size = MAX_LINES;
         const default_action = miss;
     }
 
-    action set_pppoe_session(bit<16> pppoe_sess_id) {
+    action set_pppoe_sess(bit<16> pppoe_sess_id) {
         lmeta.pppoe_sess_id = pppoe_sess_id;
     }
 
@@ -442,26 +465,23 @@ control IngressDownstream(
             lmeta.line_id: exact @name("line_id");
         }
         actions = {
-            set_pppoe_session;
+            set_pppoe_sess;
             @defaultonly miss;
         }
-        size = 8192;
+        size = MAX_LINES;
         const default_action = miss;
     }
 
-    @max_group_size(16)
-    action_selector(HashAlgorithm.crc16, 32w1024, 32w16) ecmp_v4;
-
-    action route_v4(port_t port, mac_addr_t dmac) {
+    action route_v4(port_t port, bit<48> dmac) {
         smeta.egress_spec  = port;
         hdr.ethernet.src_addr = lmeta.my_mac;
         hdr.ethernet.dst_addr = dmac;
-        hdr.ipv4.ttl = hdr.ipv4.ttl - 1;
+        routed.count(lmeta.line_id);
     }
 
     table routes_v4 {
         key = {
-            lmeta.line_id : lpm @name("line_id");
+            lmeta.line_id     : lpm @name("line_id");
             hdr.ipv4.dst_addr : selector;
             hdr.ipv4.src_addr : selector;
             lmeta.ip_proto    : selector;
@@ -472,26 +492,74 @@ control IngressDownstream(
             route_v4;
             @defaultonly miss;
         }
-        default_action = miss();
-        implementation = ecmp_v4;
-        size = 8192;
+        default_action = miss;
+        @name("ecmp_down")
+        @max_group_size(MAX_ECMP_GROUP_SIZE)
+        implementation = action_selector(HashAlgorithm.crc16, 32w1024, 32w16);
+        size = MAX_LINES;
     }
 
+    TtlCheck() ttl;
+
     apply {
-        rx.count(lmeta.line_id);
-
         lmeta.line_id = LINE_UNKNOWN;
-
         lines_v4.apply();
         vids.apply();
         pppoe_sessions.apply();
         routes_v4.apply();
+        ttl.apply(hdr, lmeta, smeta);
+    }
+}
 
-        if (err) {
-            rx_error.count(lmeta.line_id);
-            mark_to_drop(smeta);
-            exit;
+control Acl(
+    inout parsed_headers_t hdr,
+    inout local_metadata_t lmeta,
+    inout standard_metadata_t smeta) {
+
+    action set_port(port_t port) {
+        smeta.egress_spec = port;
+    }
+
+    action punt() {
+        set_port(CPU_PORT);
+    }
+
+    // FIXME: what's the right way of cloning in v1model?
+    // action clone_to_cpu() {
+    //     clone3(CloneType.I2E, CPU_CLONE_SESSION_ID, { smeta.ingress_port });
+    // }
+
+    action drop() {
+        mark_to_drop(smeta);
+    }
+
+    table acls {
+        key = {
+            smeta.ingress_port    : exact @name("port");
+            lmeta.if_type         : exact @name("if_type");
+            hdr.ethernet.src_addr : exact @name("eth_src");
+            hdr.ethernet.dst_addr : exact @name("eth_dst");
+            hdr.ipv4.src_addr     : exact @name("ipv4_src");
+            hdr.ipv4.dst_addr     : exact @name("ipv4_dst");
+            hdr.ipv4.proto        : exact @name("ipv4_proto");
+            lmeta.l4_sport        : exact @name("l4_sport");
+            lmeta.l4_dport        : exact @name("l4_dport");
         }
+        actions = {
+            set_port;
+            punt;
+            // clone_to_cpu;
+            drop;
+            nop;
+        }
+        const default_action = nop;
+        @name("acls")
+        counters = direct_counter(CounterType.packets_and_bytes);
+        size = MAX_ACLS;
+    }
+
+    apply {
+        acls.apply();
     }
 }
 
@@ -506,7 +574,7 @@ control IngressPipe(
 
     table if_types {
         key = {
-            smeta.ingress_port : exact @name("ig_port");
+            smeta.ingress_port : exact @name("port");
         }
         actions = {
             set_if_type();
@@ -517,24 +585,25 @@ control IngressPipe(
         size = 1024;
     }
 
-    action set_my_mac() {
+    action set_my_station() {
         lmeta.my_mac = hdr.ethernet.dst_addr;
     }
 
-    table my_macs {
+    table my_stations {
         key = {
-            smeta.ingress_port    : exact @name("ig_port");
+            smeta.ingress_port    : exact @name("port");
             hdr.ethernet.dst_addr : exact @name("eth_dst");
         }
         actions = { nop; }
         const default_action = nop;
-        @name("my_macs")
+        @name("my_stations")
         counters = direct_counter(CounterType.packets_and_bytes);
         size = 2048;
     }
 
     IngressUpstream() upstream;
     IngressDownstream() downstream;
+    Acl() acl;
 
     apply {
         // Controller packet-out.
@@ -544,19 +613,17 @@ control IngressPipe(
             exit;
         }
 
-        if(!if_types.apply().hit || !my_macs.apply().hit) {
-            mark_to_drop(smeta);
-            exit;
-        };
+        if_types.apply();
 
-        if (lmeta.if_type == IF_ACCESS) {
-            upstream.apply(hdr, lmeta, smeta);
-        } else if (lmeta.if_type == IF_CORE) {
-            downstream.apply(hdr, lmeta, smeta);
-        } else {
-            // Should never be here.
-            assert(false);
+        if (my_stations.apply().hit) {
+            if (lmeta.if_type == IF_ACCESS) {
+                upstream.apply(hdr, lmeta, smeta);
+            } else if (lmeta.if_type == IF_CORE) {
+                downstream.apply(hdr, lmeta, smeta);
+            }
         }
+
+        acl.apply(hdr, lmeta, smeta);
     }
 }
 
