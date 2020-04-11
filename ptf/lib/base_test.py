@@ -47,9 +47,8 @@ from ptf.base_tests import BaseTest
 from ptf.dataplane import match_exp_pkt
 from ptf.packet import IP
 from scapy.layers.inet6 import *
-from scapy.layers.l2 import Ether
-from scapy.pton_ntop import inet_pton, inet_ntop
-from scapy.utils6 import in6_getnsma, in6_getnsmac
+from scapy.layers.ppp import PPPoE, PPP
+from scapy.layers.l2 import Ether, Dot1Q
 
 from helper import P4InfoHelper
 
@@ -57,9 +56,11 @@ DEFAULT_PRIORITY = 10
 
 IPV6_MCAST_MAC_1 = "33:33:00:00:00:01"
 
-SWITCH1_MAC = "00:00:00:00:aa:01"
-SWITCH2_MAC = "00:00:00:00:aa:02"
-SWITCH3_MAC = "00:00:00:00:aa:03"
+IF_UNKNOWN = 0
+IF_CORE = 1
+IF_ACCESS = 2
+
+CORE_MAC = "00:00:00:00:aa:01"
 HOST1_MAC = "00:00:00:00:00:01"
 HOST2_MAC = "00:00:00:00:00:02"
 
@@ -83,6 +84,13 @@ ICMPV6_IP_PROTO = 58
 NS_ICMPV6_TYPE = 135
 NA_ICMPV6_TYPE = 136
 
+PPPOE_CODE_SESSION_STAGE = 0x00
+
+PPPOED_CODE_PADI = 0x09
+PPPOED_CODE_PADO = 0x07
+PPPOED_CODE_PADR = 0x19
+PPPOED_CODE_PADS = 0x65
+PPPOED_CODE_PADT = 0xa7
 
 def print_inline(text):
     sys.stdout.write(text)
@@ -183,24 +191,16 @@ def pkt_decrement_ttl(pkt):
     return pkt
 
 
-def genNdpNsPkt(target_ip, src_mac=HOST1_MAC, src_ip=HOST1_IPV6):
-    nsma = in6_getnsma(inet_pton(socket.AF_INET6, target_ip))
-    d = inet_ntop(socket.AF_INET6, nsma)
-    dm = in6_getnsmac(nsma)
-    p = Ether(dst=dm) / IPv6(dst=d, src=src_ip, hlim=255)
-    p /= ICMPv6ND_NS(tgt=target_ip)
-    p /= ICMPv6NDOptSrcLLAddr(lladdr=src_mac)
-    return p
+def pkt_add_pppoe(pkt, code, session_id, type=1):
+    return Ether(src=pkt[Ether].src, dst=pkt[Ether].dst) / \
+           PPPoE(version=1, type=type, code=code, sessionid=session_id) / \
+           PPP() / pkt[Ether].payload
 
 
-def genNdpNaPkt(target_ip, target_mac,
-                src_mac=SWITCH1_MAC, dst_mac=IPV6_MCAST_MAC_1,
-                src_ip=SWITCH1_IPV6, dst_ip=HOST1_IPV6):
-    p = Ether(src=src_mac, dst=dst_mac)
-    p /= IPv6(dst=dst_ip, src=src_ip, hlim=255)
-    p /= ICMPv6ND_NA(tgt=target_ip)
-    p /= ICMPv6NDOptDstLLAddr(lladdr=target_mac)
-    return p
+def pkt_add_vlan(pkt, vid=10, pcp=0, dei=0):
+    return Ether(src=pkt[Ether].src, dst=pkt[Ether].dst) / \
+           Dot1Q(prio=pcp, id=dei, vlan=vid) / \
+           pkt[Ether].payload
 
 
 class P4RuntimeErrorFormatException(Exception):

@@ -336,7 +336,7 @@ control IngressUpstream(
             lmeta.line_id         : exact @name("line_id");
             hdr.ethernet.src_addr : exact @name("eth_src");
             hdr.ipv4.src_addr     : exact @name("ipv4_src");
-            hdr.pppoe.sess_id     : ternary @name("pppoe_sess_id");
+            hdr.pppoe.sess_id     : exact @name("pppoe_sess_id");
         }
         actions = {
             nop;
@@ -381,7 +381,8 @@ control IngressUpstream(
             @defaultonly nop;
         }
         default_action = nop();
-        @name("ecmp_up")
+        // BUG: action profiles don't get a fully qualified name in P4Info.
+        @name("IngressPipe.upstream.ecmp")
         @max_group_size(MAX_ECMP_GROUP_SIZE)
         implementation = action_selector(HashAlgorithm.crc16, 32w1024, 32w16);
         size = MAX_UPSTREAM_ROUTES;
@@ -493,7 +494,7 @@ control IngressDownstream(
             @defaultonly miss;
         }
         default_action = miss;
-        @name("ecmp_down")
+        @name("IngressPipe.downstream.ecmp")
         @max_group_size(MAX_ECMP_GROUP_SIZE)
         implementation = action_selector(HashAlgorithm.crc16, 32w1024, 32w16);
         size = MAX_LINES;
@@ -535,15 +536,16 @@ control Acl(
 
     table acls {
         key = {
-            smeta.ingress_port    : exact @name("port");
-            lmeta.if_type         : exact @name("if_type");
-            hdr.ethernet.src_addr : exact @name("eth_src");
-            hdr.ethernet.dst_addr : exact @name("eth_dst");
-            hdr.ipv4.src_addr     : exact @name("ipv4_src");
-            hdr.ipv4.dst_addr     : exact @name("ipv4_dst");
-            hdr.ipv4.proto        : exact @name("ipv4_proto");
-            lmeta.l4_sport        : exact @name("l4_sport");
-            lmeta.l4_dport        : exact @name("l4_dport");
+            smeta.ingress_port    : ternary @name("port");
+            lmeta.if_type         : ternary @name("if_type");
+            hdr.ethernet.src_addr : ternary @name("eth_src");
+            hdr.ethernet.dst_addr : ternary @name("eth_dst");
+            hdr.eth_type.value    : ternary @name("eth_type");
+            hdr.ipv4.src_addr     : ternary @name("ipv4_src");
+            hdr.ipv4.dst_addr     : ternary @name("ipv4_dst");
+            hdr.ipv4.proto        : ternary @name("ipv4_proto");
+            lmeta.l4_sport        : ternary @name("l4_sport");
+            lmeta.l4_dport        : ternary @name("l4_dport");
         }
         actions = {
             set_port;
@@ -594,7 +596,10 @@ control IngressPipe(
             smeta.ingress_port    : exact @name("port");
             hdr.ethernet.dst_addr : exact @name("eth_dst");
         }
-        actions = { nop; }
+        actions = {
+            set_my_station;
+            @defaultonly nop;
+        }
         const default_action = nop;
         @name("my_stations")
         counters = direct_counter(CounterType.packets_and_bytes);
@@ -633,7 +638,12 @@ control EgressPipe(
     inout standard_metadata_t smeta) {
 
     apply {
-        nop();
+
+        if (smeta.egress_port == CPU_PORT) {
+            hdr.cpu_in.setValid();
+            hdr.cpu_in.ingress_port = smeta.ingress_port;
+            exit;
+        }
     }
 }
 
