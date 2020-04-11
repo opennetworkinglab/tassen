@@ -28,15 +28,15 @@ const int MAX_ACLS = 256;
 const bit<12> DEFAULT_VID = 0;
 
 const bit<16> ETHERTYPE_QINQ   = 0x88a8;
-const bit<16> ETHERTYPE_QINQ2 = 0x9100;
+const bit<16> ETHERTYPE_QINQ2  = 0x9100;
 const bit<16> ETHERTYPE_VLAN   = 0x8100;
 const bit<16> ETHERTYPE_IPV4   = 0x0800;
 const bit<16> ETHERTYPE_PPPOED = 0x8863;
 const bit<16> ETHERTYPE_PPPOES = 0x8864;
 
-const bit<8> IP_PROTO_ICMP = 1;
-const bit<8> IP_PROTO_TCP = 6;
-const bit<8> IP_PROTO_UDP = 17;
+const bit<8> IP_PROTO_ICMP   = 1;
+const bit<8> IP_PROTO_TCP    = 6;
+const bit<8> IP_PROTO_UDP    = 17;
 const bit<8> IP_PROTO_ICMPV6 = 58;
 
 const bit<16> PPPOE_PROTO_IP4 = 0x21;
@@ -47,26 +47,30 @@ const bit<32> CPU_CLONE_SESSION_ID = 99;
 
 typedef bit<3>  if_type_t;
 const if_type_t IF_UNKNOWN = 0;
-const if_type_t IF_CORE = 1;
-const if_type_t IF_ACCESS = 2;
+const if_type_t IF_CORE    = 1;
+const if_type_t IF_ACCESS  = 2;
 
 typedef bit<32> line_id_t;
 const line_id_t LINE_UNKNOWN = 0;
 
-action nop() { NoAction(); }
+// Global actions common to many controls.
+action nop() { /* no-op */ }
 
 action drop_now(inout standard_metadata_t smeta) {
     // Exit the pipeline now and drop.
     mark_to_drop(smeta);
     exit;
- }
+}
 
-@controller_header("packet_in") header cpu_in_t {
+// Controller packet-in/out headers.
+@controller_header("packet_in")
+header cpu_in_t {
     port_t ingress_port;
     bit<7> _pad;
 }
 
-@controller_header("packet_out") header cpu_out_t {
+@controller_header("packet_out")
+header cpu_out_t {
     port_t egress_port;
     bit<7> _pad;
 }
@@ -297,8 +301,8 @@ control IngressUpstream(
 
     table lines {
         key = {
-            lmeta.c_tag: exact @name("c_tag") ;
-            lmeta.s_tag: exact @name("s_tag") ;
+            lmeta.c_tag: exact @name("c_tag");
+            lmeta.s_tag: exact @name("s_tag");
         }
         actions = {
             set_line;
