@@ -18,7 +18,7 @@ import google.protobuf.text_format
 from p4.config.v1 import p4info_pb2
 from p4.v1 import p4runtime_pb2
 
-from convert import encode
+from convert import encode, ones
 
 
 def get_match_field_value(match_field):
@@ -149,16 +149,24 @@ class P4InfoHelper(object):
             exact.value = encode(value, bitwidth)
         elif match_type == p4info_pb2.MatchField.LPM:
             lpm = p4runtime_match.lpm
-            lpm.value = encode(value[0], bitwidth)
-            lpm.prefix_len = value[1]
+            if type(value) == list or type(value) == tuple:
+                lpm.value = encode(value[0], bitwidth)
+                lpm.prefix_len = value[1]
+            else:
+                lpm.value = encode(value, bitwidth)
+                lpm.prefix_len = bitwidth
         elif match_type == p4info_pb2.MatchField.TERNARY:
-            lpm = p4runtime_match.ternary
-            lpm.value = encode(value[0], bitwidth)
-            lpm.mask = encode(value[1], bitwidth)
+            tern = p4runtime_match.ternary
+            if type(value) == list or type(value) == tuple:
+                tern.value = encode(value[0], bitwidth)
+                tern.mask = encode(value[1], bitwidth)
+            else:
+                tern.value = encode(value, bitwidth)
+                tern.mask = ones(bitwidth)
         elif match_type == p4info_pb2.MatchField.RANGE:
-            lpm = p4runtime_match.range
-            lpm.low = encode(value[0], bitwidth)
-            lpm.high = encode(value[1], bitwidth)
+            range = p4runtime_match.range
+            range.low = encode(value[0], bitwidth)
+            range.high = encode(value[1], bitwidth)
         else:
             raise Exception("Unsupported match type with type %r" % match_type)
         return p4runtime_match

@@ -109,6 +109,10 @@ def encode(x, bitwidth):
     assert (len(encoded_bytes) == byte_len)
     return encoded_bytes
 
+def ones(bitwidth):
+    'Returns a byte string of ones for the given bitwidth'
+    byte_len = bitwidthToBytes(bitwidth)
+    return ("F" * byte_len).decode('hex')
 
 def test():
     # TODO These tests should be moved out of main eventually

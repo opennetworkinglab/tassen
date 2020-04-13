@@ -32,10 +32,20 @@ for idx in 0 1 2 3 4 5 6 7; do
         # simple_switch out to scapy sniffing.
         #
         # https://superuser.com/questions/356286/how-can-i-switch-off-ipv6-nd-ra-transmissions-in-linux
-        sysctl net.ipv6.conf.${intf0}.disable_ipv6=1
-        sysctl net.ipv6.conf.${intf1}.disable_ipv6=1
+
+        # IPv6 support is missing from recent versions of Docker for Mac. Make
+        # sure we can disable it before actually doing it.
+        if [ -f /proc/sys/net/ipv6/conf/${intf0}/disable_ipv ]; then
+          sysctl net.ipv6.conf.${intf0}.disable_ipv6=1
+        fi
+        if [ -f /proc/sys/net/ipv6/conf/${intf1}/disable_ipv ]; then
+          sysctl net.ipv6.conf.${intf1}.disable_ipv6=1
+        fi
     fi
 done
+
+rm -f p4rt_write.log
+rm -f stratum_bmv2.log
 
 # shellcheck disable=SC2086
 stratum_bmv2 \

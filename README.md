@@ -73,7 +73,7 @@ methods convenient to construct P4Runtime table entries)
 
 The directory `mapping` is currently empty. The goal is to provide here a
 reference implementation of the runtime mapping logic to translate P4Runtime
-RPCs for the logical P4 program (`bng-up.p4`) to target-specific ones, e.g., for
+RPCs for the logical P4 program (`bng.p4`) to target-specific ones, e.g., for
 Tofino, FPGA, Broadcom Q2C, etc.
 
 

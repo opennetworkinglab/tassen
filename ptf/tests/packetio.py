@@ -79,20 +79,15 @@ class PacketInTest(P4RuntimeTest):
     @autocleanup
     def testPacket(self, pkt):
 
-        # Insert clone to CPU session
-        self.insert_pre_clone_session(
-            session_id=CPU_CLONE_SESSION_ID,
-            ports=[self.cpu_port])
-
         # Insert ACL entry to match on the given eth_type and clone to CPU.
         eth_type = pkt[Ether].type
         self.insert(self.helper.build_table_entry(
-            table_name="IngressPipeImpl.punt",
+            table_name="IngressPipe.acl.acls",
             match_fields={
                 # Ternary match.
-                "hdr.ethernet.ether_type": (eth_type, 0xffff)
+                "eth_type": (eth_type, 0xffff)
             },
-            action_name="IngressPipeImpl.clone_to_cpu",
+            action_name="IngressPipe.acl.punt",
             priority=DEFAULT_PRIORITY
         ))
 
