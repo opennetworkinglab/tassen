@@ -46,21 +46,21 @@ class PacketOutTest(P4RuntimeTest):
             self.testPacket(pkt)
 
     def testPacket(self, pkt):
-        for outport in [self.port1, self.port2]:
+        for port in [self.port1, self.port2]:
             # Build PacketOut message
             packet_out_msg = self.helper.build_packet_out(
                 payload=str(pkt),
                 metadata={
-                    "egress_port": outport,
+                    "egress_port": port,
                     "_pad": 0
                 })
 
-            # Send message and expect packet on the given data plane port.
+            # Send the P4RT message and expect the packet on the given port.
             self.send_packet_out(packet_out_msg)
 
-            testutils.verify_packet(self, pkt, outport)
+            testutils.verify_packet(self, pkt, port)
 
-        # Make sure packet was forwarded only on the specified ports
+        # Make sure packet came out only on the specified ports
         testutils.verify_no_other_packets(self)
 
 
@@ -79,7 +79,7 @@ class PacketInTest(P4RuntimeTest):
     @autocleanup
     def testPacket(self, pkt):
 
-        # Insert ACL entry to match on the given eth_type and clone to CPU.
+        # Insert ACL entry to match on the given eth_type and punt to CPU.
         eth_type = pkt[Ether].type
         self.insert(self.helper.build_table_entry(
             table_name="IngressPipe.acl.acls",
@@ -91,7 +91,7 @@ class PacketInTest(P4RuntimeTest):
             priority=DEFAULT_PRIORITY
         ))
 
-        for inport in [self.port1, self.port2, self.port3]:
+        for inport in (self.port1, self.port2, self.port3):
             # Expected P4Runtime PacketIn message.
             exp_packet_in_msg = self.helper.build_packet_in(
                 payload=str(pkt),
@@ -100,7 +100,7 @@ class PacketInTest(P4RuntimeTest):
                     "_pad": 0
                 })
 
-            # Send packet to given switch ingress port and expect P4Runtime
+            # Send packet to given switch ingress port and expect P4RT
             # PacketIn message.
             testutils.send_packet(self, inport, str(pkt))
             self.verify_packet_in(exp_packet_in_msg)
