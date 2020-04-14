@@ -116,6 +116,8 @@ header ipv4_t {
     bit<32> dst_addr;
 }
 
+// TODO: Add IPv6 support
+
 header tcp_t {
     bit<16> sport;
     bit<16> dport;
@@ -150,8 +152,10 @@ struct local_metadata_t {
     if_type_t  if_type;
     bit<48>    my_mac;
     bit<8>     ip_proto;
+    // Used to normalize UDP/TCP ports.
     bit<16>    l4_sport;
     bit<16>    l4_dport;
+    // Attachment attributes.
     line_id_t  line_id;
     bit<12>    s_tag;
     bit<12>    c_tag;
@@ -303,6 +307,8 @@ control IngressUpstream(
         key = {
             lmeta.c_tag: exact @name("c_tag");
             lmeta.s_tag: exact @name("s_tag");
+            // If one needs more accounting granularirty, they could add more
+            // fields here.
         }
         actions = {
             set_line;
@@ -317,6 +323,9 @@ control IngressUpstream(
         exit;
     }
 
+    // NOTE: we expect the control plane to populate this at runtime.
+    // Should we use static entries instead? The PPPoE packets we want to punt
+    // should always be the same.
     table pppoe_punts {
         key = {
             hdr.pppoe.code  : exact @name("pppoe_code");
@@ -335,6 +344,9 @@ control IngressUpstream(
         drop_now(smeta);
     }
 
+    // Provides anti-spoofing.
+    // NOTE: consider merging this table with lines to support arbitrary
+    // aggregation of traffic into the same line.
     table attachments_v4 {
         key = {
             lmeta.line_id         : exact @name("line_id");
@@ -374,6 +386,8 @@ control IngressUpstream(
     table routes_v4 {
         key = {
             hdr.ipv4.dst_addr : lpm @name("ipv4_dst");
+            // The following header fields are used to computed the ECMP hash.
+            // They're NOT part of the match key provided by the controller.
             hdr.ipv4.dst_addr : selector;
             hdr.ipv4.src_addr : selector;
             lmeta.ip_proto    : selector;
@@ -401,9 +415,9 @@ control IngressUpstream(
         if (lmeta.line_id == LINE_UNKNOWN) {
             drop_now(smeta);
         }
-        // Line is known and pkt was not punted.
-        // Verify attachment info, if valid (not spoofed), decap and route.
-        // If no route then no-op, we might punt or do something else in ACL.
+        // Line is known and pkt was not punted. Verify attachment info, if
+        // valid (not spoofed), decap and route. If no route then no-op, we
+        // might punt or do something else in ACL.
         if (hdr.ipv4.isValid()) {
             attachments_v4.apply();
             routes_v4.apply();
@@ -609,9 +623,13 @@ control IngressPipe(
         lmeta.if_type = if_type;
     }
 
+    // In some implementations, the same port might be serving traffic from both
+    // sides (ACCESS and CORE). In that case the match key could be extended to
+    // include headers to differentiate the packet direction (e.g. MPLS labels
+    // in DT, what about Dell?)
     table if_types {
         key = {
-            smeta.ingress_port : exact @name("port");
+            smeta.ingress_port : optional @name("port");
         }
         actions = {
             set_if_type();
@@ -626,6 +644,8 @@ control IngressPipe(
         lmeta.my_mac = hdr.ethernet.dst_addr;
     }
 
+    // The BNG acts as a router, so we expect packets to have Ethernet dest
+    // address the router MAC address.
     table my_stations {
         key = {
             smeta.ingress_port    : exact @name("port");
@@ -646,7 +666,8 @@ control IngressPipe(
     Acl() acl;
 
     apply {
-        // Controller packet-out.
+        // Controller packet-out. Set the egress port according to CPU header
+        // and skip the rest of the pipeline.
         if (hdr.cpu_out.isValid()) {
             smeta.egress_spec = hdr.cpu_out.egress_port;
             hdr.cpu_out.setInvalid();
@@ -663,6 +684,11 @@ control IngressPipe(
             }
         }
 
+        // FIXME: If we want to do ACL after routing, then we need to make sure
+        //  the ACL table sees the original header fields, not those modidified
+        //  by routing or previous tables. A simple solution is to make sure all
+        //  previous tables modify only metadata, and the actual header rewrite
+        //  happen after the ACL table.
         acl.apply(hdr, lmeta, smeta);
     }
 }
