@@ -629,7 +629,7 @@ control IngressPipe(
     // in DT, what about Dell?)
     table if_types {
         key = {
-            smeta.ingress_port : optional @name("port");
+            smeta.ingress_port : exact @name("port");
         }
         actions = {
             set_if_type();
