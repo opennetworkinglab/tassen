@@ -47,3 +47,11 @@ graph: p4src/bng.p4
 
 check:
 	@cd ptf && PTF_DOCKER_IMG=$(PTF_IMG) ./run_tests $(TEST)
+
+.yapf:
+	rm -rf ./yapf
+	git clone --depth 1 https://github.com/google/yapf.git .yapf
+	rm -rf .yapf/.git
+
+prettify: .yapf
+	PYTHONPATH=${curr_dir}/.yapf python .yapf/yapf -ir -e .yapf/ ptf/mapr

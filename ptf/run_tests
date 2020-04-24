@@ -13,7 +13,10 @@ function stop() {
         echo "Stopping container ${runName}..."
         docker stop -t0 "${runName}" > /dev/null
 }
-trap stop INT
+trap stop EXIT
+
+rm -rf log
+mkdir log
 
 echo "*** Starting stratum_bmv2 in Docker (${runName})..."
 docker run --name "${runName}" -d --privileged --rm \
@@ -22,18 +25,20 @@ docker run --name "${runName}" -d --privileged --rm \
     "${PTF_DOCKER_IMG}" \
     ./lib/start_bmv2.sh > /dev/null
 
-sleep 2
+sleep 1
 
-set +e
+printf "*** Starting mapr...\n"
+docker exec -d "${runName}" ./lib/start_mapr.sh
+
+sleep 1
 
 printf "*** Starting tests...\n"
-docker exec "${runName}" ./lib/runner.py \
+docker exec "${runName}" python -u ./lib/runner.py \
     --bmv2-json /p4c-out/bmv2.json \
     --p4info /p4c-out/p4info.bin \
-    --grpc-addr localhost:28000 \
+    --grpc-addr localhost:28001 \
     --device-id 1 \
     --ptf-dir ./tests \
     --cpu-port 255 \
+    --log-file ./log/ptf.log \
     --port-map /ptf/lib/port_map.json "${@}"
-
-stop
