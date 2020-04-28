@@ -23,6 +23,7 @@ const int MAX_UPSTREAM_ROUTES = 1024;
 // For some reason P4 constants cannot be used in annotations.
 #define MAX_ECMP_GROUP_SIZE 16
 const int MAX_PPPOE_PUNTS = 32;
+const int MAX_IPOE_PUNTS = 32;
 const int MAX_ACLS = 256;
 
 const bit<12> DEFAULT_VID = 0;
@@ -289,379 +290,432 @@ control TtlCheck(
     }
 }
 
-control IngressUpstream(
-    inout parsed_headers_t hdr,
-    inout local_metadata_t lmeta,
-    inout standard_metadata_t smeta) {
-    
-    counter(MAX_LINES, CounterType.packets_and_bytes) all;
-    counter(MAX_LINES, CounterType.packets_and_bytes) punted;
-    counter(MAX_LINES, CounterType.packets_and_bytes) spoofed;
-    counter(MAX_LINES, CounterType.packets_and_bytes) routed;
-    
-    action set_line(bit<32> line_id) {
-        lmeta.line_id = line_id;
-    }
-
-    table lines {
-        key = {
-            lmeta.c_tag: exact @name("c_tag");
-            lmeta.s_tag: exact @name("s_tag");
-            // If one needs more accounting granularirty, they could add more
-            // fields here.
+    control IngressUpstream(
+        inout parsed_headers_t hdr,
+        inout local_metadata_t lmeta,
+        inout standard_metadata_t smeta) {
+        
+        counter(MAX_LINES, CounterType.packets_and_bytes) all;
+        counter(MAX_LINES, CounterType.packets_and_bytes) punted;
+        counter(MAX_LINES, CounterType.packets_and_bytes) spoofed;
+        counter(MAX_LINES, CounterType.packets_and_bytes) routed;
+        
+        action set_line(bit<32> line_id) {
+            lmeta.line_id = line_id;
         }
-        actions = {
-            set_line;
+
+        table lines {
+            key = {
+                // <craig> Is there a reason these fields were the other 
+                // way around?  it makes more sense to me to have the
+                // s_tag first.
+                lmeta.s_tag: exact @name("s_tag");
+                lmeta.c_tag: exact @name("c_tag");
+                // If one needs more accounting granularirty, they could add more
+                // fields here.
+            }
+            actions = {
+                set_line;
+            }
+            size = MAX_LINES;
+            const default_action = set_line(LINE_UNKNOWN);
         }
-        size = MAX_LINES;
-        const default_action = set_line(LINE_UNKNOWN);
-    }
 
-    action punt() {
-        smeta.egress_spec = CPU_PORT;
-        punted.count(lmeta.line_id);
-        exit;
-    }
-
-    // NOTE: we expect the control plane to populate this at runtime.
-    // Should we use static entries instead? The PPPoE packets we want to punt
-    // should always be the same.
-    table pppoe_punts {
-        key = {
-            hdr.pppoe.code  : exact @name("pppoe_code");
-            hdr.pppoe.proto : ternary @name("pppoe_proto");
+        action punt() {
+            smeta.egress_spec = CPU_PORT;
+            punted.count(lmeta.line_id);
+            exit;
         }
-        actions = {
-            punt;
-            @defaultonly nop;
+
+        // NOTE: we expect the control plane to populate this at runtime.
+        // Should we use static entries instead? The PPPoE packets we want to punt
+        // should always be the same.
+        table pppoe_punts {
+            key = {
+                hdr.pppoe.code  : exact @name("pppoe_code");
+                hdr.pppoe.proto : ternary @name("pppoe_proto");
+            }
+            actions = {
+                punt;
+                @defaultonly nop;
+            }
+            size = MAX_PPPOE_PUNTS;
+            const default_action = nop;
         }
-        size = MAX_PPPOE_PUNTS;
-        const default_action = nop;
-    }
 
-    action reject() {
-        spoofed.count(lmeta.line_id);
-        drop_now(smeta);
-    }
-
-    // Provides anti-spoofing.
-    // NOTE: consider merging this table with lines to support arbitrary
-    // aggregation of traffic into the same line.
-    table attachments_v4 {
-        key = {
-            lmeta.line_id         : exact @name("line_id");
-            hdr.ethernet.src_addr : exact @name("eth_src");
-            hdr.ipv4.src_addr     : exact @name("ipv4_src");
-            hdr.pppoe.sess_id     : exact @name("pppoe_sess_id");
+        // Populated by controller with (i.e. DHCP, ARP)
+        table ipoe_punts {
+            key = {
+                hdr.eth_type.value : exact @name("eth_type");
+                lmeta.ip_proto : exact @name("ip_proto");
+                lmeta.l4_dport : exact @name("l4_dport");
+                hdr.icmp.icmp_type : ternary @name("icmp_type");
+                hdr.icmp.icmp_code : ternary @name("icmp_code");
+            }
+            actions = {
+                punt;
+                @defaultonly nop;
+            }
+            size = MAX_IPOE_PUNTS;
+            const default_action = nop;
         }
-        actions = {
-            nop;
-            @defaultonly reject;
-        }
-        size = MAX_ATTACH_PER_LINE * MAX_LINES;
-        const default_action = reject;
-    }
 
-    @hidden
-    action decap(bit<16> eth_type) {
-        hdr.eth_type.value = eth_type;
-        hdr.vlan.setInvalid();
-        hdr.vlan2.setInvalid();
-        hdr.pppoe.setInvalid();
-    }
-
-    @hidden
-    action route(port_t port, bit<48> dmac) {
-        smeta.egress_spec = port;
-        hdr.ethernet.src_addr = lmeta.my_mac;
-        hdr.ethernet.dst_addr = dmac;
-        routed.count(lmeta.line_id);
-    }
-
-    action route_v4(port_t port, bit<48> dmac) {
-        decap(ETHERTYPE_IPV4);
-        route(port, dmac);
-    }
-
-    table routes_v4 {
-        key = {
-            hdr.ipv4.dst_addr : lpm @name("ipv4_dst");
-            // The following header fields are used to computed the ECMP hash.
-            // They're NOT part of the match key provided by the controller.
-            hdr.ipv4.dst_addr : selector;
-            hdr.ipv4.src_addr : selector;
-            lmeta.ip_proto    : selector;
-            lmeta.l4_sport    : selector;
-            lmeta.l4_dport    : selector;
-        }
-        actions = {
-            route_v4;
-            @defaultonly nop;
-        }
-        default_action = nop();
-        // BUG: action profiles don't get a fully qualified name in P4Info.
-        @name("IngressPipe.upstream.ecmp")
-        @max_group_size(MAX_ECMP_GROUP_SIZE)
-        implementation = action_selector(HashAlgorithm.crc16, 32w1024, 32w16);
-        size = MAX_UPSTREAM_ROUTES;
-    }
-
-    TtlCheck() ttl;
-
-    apply { 
-        lines.apply();
-        all.count(lmeta.line_id);
-        pppoe_punts.apply();
-        if (lmeta.line_id == LINE_UNKNOWN) {
+        action reject() {
+            spoofed.count(lmeta.line_id);
             drop_now(smeta);
         }
-        // Line is known and pkt was not punted. Verify attachment info, if
-        // valid (not spoofed), decap and route. If no route then no-op, we
-        // might punt or do something else in ACL.
-        if (hdr.ipv4.isValid()) {
-            attachments_v4.apply();
+
+        // Provides anti-spoofing.
+        // NOTE: consider merging this table with lines to support arbitrary
+        // aggregation of traffic into the same line.
+        table attachments_v4 {
+            key = {
+                lmeta.line_id         : exact @name("line_id");
+                hdr.ethernet.src_addr : exact @name("eth_src");
+                hdr.ipv4.src_addr     : exact @name("ipv4_src");
+                hdr.pppoe.sess_id     : exact @name("pppoe_sess_id");
+            }
+            actions = {
+                nop;
+                @defaultonly reject;
+            }
+            size = MAX_ATTACH_PER_LINE * MAX_LINES;
+            const default_action = reject;
+        }
+
+        @hidden
+        action decap(bit<16> eth_type) {
+            hdr.eth_type.value = eth_type;
+            hdr.vlan.setInvalid();
+            hdr.vlan2.setInvalid();
+            hdr.pppoe.setInvalid();
+        }
+
+        @hidden
+        action route(port_t port, bit<48> dmac) {
+            smeta.egress_spec = port;
+            hdr.ethernet.src_addr = lmeta.my_mac;
+            hdr.ethernet.dst_addr = dmac;
+            routed.count(lmeta.line_id);
+        }
+
+        action route_v4(port_t port, bit<48> dmac) {
+            decap(ETHERTYPE_IPV4);
+            route(port, dmac);
+        }
+
+        table routes_v4 {
+            key = {
+                hdr.ipv4.dst_addr : lpm @name("ipv4_dst");
+                // The following header fields are used to computed the ECMP hash.
+                // They're NOT part of the match key provided by the controller.
+                hdr.ipv4.dst_addr : selector;
+                hdr.ipv4.src_addr : selector;
+                lmeta.ip_proto    : selector;
+                lmeta.l4_sport    : selector;
+                lmeta.l4_dport    : selector;
+            }
+            actions = {
+                route_v4;
+                @defaultonly nop;
+            }
+            default_action = nop();
+            // BUG: action profiles don't get a fully qualified name in P4Info.
+            @name("IngressPipe.upstream.ecmp")
+            @max_group_size(MAX_ECMP_GROUP_SIZE)
+            implementation = action_selector(HashAlgorithm.crc16, 32w1024, 32w16);
+            size = MAX_UPSTREAM_ROUTES;
+        }
+
+        TtlCheck() ttl;
+
+        apply { 
+            lines.apply();
+            all.count(lmeta.line_id);
+            if (pppoe_punts.apply().miss) {
+                ipoe_punts.apply();
+            }
+            if (lmeta.line_id == LINE_UNKNOWN) {
+                drop_now(smeta);
+            }
+            // Line is known and pkt was not punted. Verify attachment info, if
+            // valid (not spoofed), decap and route. If no route then no-op, we
+            // might punt or do something else in ACL.
+            if (hdr.ipv4.isValid()) {
+                attachments_v4.apply();
+                routes_v4.apply();
+            }
+            ttl.apply(hdr, lmeta, smeta);
+        }
+    }
+
+    control IngressDownstream(
+        inout parsed_headers_t hdr,
+        inout local_metadata_t lmeta,
+        inout standard_metadata_t smeta) {
+        
+        counter(MAX_LINES, CounterType.packets_and_bytes) dropped;
+        counter(MAX_LINES, CounterType.packets_and_bytes) routed;
+
+        // In downstream, we expect all tables to be matched.
+        // Any table miss will cause the packet to be dropped
+        // immediately.
+        action miss() {
+            dropped.count(lmeta.line_id);
+            drop_now(smeta);
+        }
+
+        action set_line(bit<32> line_id) {
+            lmeta.line_id = line_id;
+        }
+
+        table lines_v4 {
+            key = {
+                hdr.ipv4.dst_addr: exact @name("ipv4_dst");
+            }
+            actions = {
+                set_line;
+                @defaultonly miss;
+            }
+            size = MAX_LINES;
+            const default_action = miss;
+        }
+
+        action set_vids(bit<12> c_tag, bit<12> s_tag) {
+            lmeta.c_tag = c_tag;
+            lmeta.s_tag = s_tag;
+        }
+
+        table vids {
+            key = {
+                lmeta.line_id: exact @name("line_id");
+            }
+            actions = {
+                set_vids;
+                @defaultonly miss;
+            }
+            size = MAX_LINES;
+            const default_action = miss;
+        }
+
+        action set_pppoe_sess(bit<16> pppoe_sess_id) {
+            lmeta.pppoe_sess_id = pppoe_sess_id;
+        }
+
+        // Note: I've changed the default to nop as we won't have an
+        // entry if it's IPoE and line id has already been checked in 
+        // line_v4 table.
+        table pppoe_sessions {
+            key = {
+                lmeta.line_id: exact @name("line_id");
+            }
+            actions = {
+                set_pppoe_sess;
+                @defaultonly nop;
+            }
+            size = MAX_LINES;
+            const default_action = nop;
+        }
+
+        @hidden
+        action encap_qinq() {
+            // Outer VLAN (s_tag)
+            hdr.vlan.setValid();
+            hdr.vlan.tpid = ETHERTYPE_VLAN;
+            hdr.vlan.pcp  = 3w0;
+            hdr.vlan.dei  = 1w0;
+            hdr.vlan.vid  = lmeta.s_tag;
+            // Inner VLAN (c_tag)
+            hdr.vlan2.setValid();
+            hdr.vlan2.tpid = ETHERTYPE_VLAN;
+            hdr.vlan2.pcp  = 3w0;
+            hdr.vlan2.dei  = 1w0;
+            hdr.vlan2.vid  = lmeta.c_tag;
+        }
+
+        @hidden
+        action encap_pppoe(bit<16> pppoe_proto) {
+            // QinQ
+            encap_qinq();
+
+            // PPPoE
+            hdr.eth_type.value = ETHERTYPE_PPPOES;
+            hdr.pppoe.setValid();
+            hdr.pppoe.ver     = 4w1;
+            hdr.pppoe.type    = 4w1;
+            hdr.pppoe.code    = 8w0; // session stage
+            hdr.pppoe.sess_id = lmeta.pppoe_sess_id;
+            hdr.pppoe.len     = hdr.ipv4.len + 16w2;
+            hdr.pppoe.proto   = pppoe_proto;
+        }
+
+        @hidden
+        action encap_ipoe_v4() {
+            // QinQ
+            encap_qinq();
+
+            // IPoE
+            hdr.eth_type.value = ETHERTYPE_IPV4;
+        }
+
+        @hidden
+        action route(port_t port, bit<48> dmac) {
+            smeta.egress_spec  = port;
+            hdr.ethernet.src_addr = lmeta.my_mac;
+            hdr.ethernet.dst_addr = dmac;
+            routed.count(lmeta.line_id);
+        }
+
+        action route_pppoe_v4(port_t port, bit<48> dmac) {
+            encap_pppoe(PPPOE_PROTO_IP4);
+            route(port, dmac);
+        }
+
+        action route_ipoe_v4(port_t port, bit<48> dmac) {
+            encap_ipoe_v4();
+            route(port, dmac);
+        }
+
+        table routes_v4 {
+            key = {
+                lmeta.line_id     : lpm @name("line_id");
+                hdr.ipv4.dst_addr : selector;
+                hdr.ipv4.src_addr : selector;
+                lmeta.ip_proto    : selector;
+                lmeta.l4_sport    : selector;
+                lmeta.l4_dport    : selector;
+            }
+            actions = {
+                route_pppoe_v4;
+                route_ipoe_v4;
+                @defaultonly miss;
+            }
+            default_action = miss;
+            @name("IngressPipe.downstream.ecmp")
+            @max_group_size(MAX_ECMP_GROUP_SIZE)
+            implementation = action_selector(HashAlgorithm.crc16, 32w1024, 32w16);
+            size = MAX_LINES;
+        }
+
+        TtlCheck() ttl;
+
+        apply {
+            lmeta.line_id = LINE_UNKNOWN;
+            lines_v4.apply();
+            vids.apply();
+            pppoe_sessions.apply();
             routes_v4.apply();
+            ttl.apply(hdr, lmeta, smeta);
         }
-        ttl.apply(hdr, lmeta, smeta);
-    }
-}
-
-control IngressDownstream(
-    inout parsed_headers_t hdr,
-    inout local_metadata_t lmeta,
-    inout standard_metadata_t smeta) {
-    
-    counter(MAX_LINES, CounterType.packets_and_bytes) dropped;
-    counter(MAX_LINES, CounterType.packets_and_bytes) routed;
-
-    // In downstream, we expect all tables to be matched.
-    // Any table miss will cause the packet to be dropped
-    // immediately.
-    action miss() {
-        dropped.count(lmeta.line_id);
-        drop_now(smeta);
     }
 
-    action set_line(bit<32> line_id) {
-        lmeta.line_id = line_id;
-    }
+    control Acl(
+        inout parsed_headers_t hdr,
+        inout local_metadata_t lmeta,
+        inout standard_metadata_t smeta) {
 
-    table lines_v4 {
-        key = {
-            hdr.ipv4.dst_addr: exact @name("ipv4_dst");
+        action set_port(port_t port) {
+            smeta.egress_spec = port;
         }
-        actions = {
-            set_line;
-            @defaultonly miss;
+
+        action punt() {
+            set_port(CPU_PORT);
         }
-        size = MAX_LINES;
-        const default_action = miss;
-    }
 
-    action set_vids(bit<12> c_tag, bit<12> s_tag) {
-        lmeta.c_tag = c_tag;
-        lmeta.s_tag = s_tag;
-    }
+        // FIXME: what's the right way of cloning in v1model?
+        // action clone_to_cpu() {
+        //     clone3(CloneType.I2E, CPU_CLONE_SESSION_ID, { smeta.ingress_port });
+        // }
 
-    table vids {
-        key = {
-            lmeta.line_id: exact @name("line_id");
+        action drop() {
+            mark_to_drop(smeta);
         }
-        actions = {
-            set_vids;
-            @defaultonly miss;
+
+        table acls {
+            key = {
+                smeta.ingress_port    : ternary @name("port");
+                lmeta.if_type         : ternary @name("if_type");
+                hdr.ethernet.src_addr : ternary @name("eth_src");
+                hdr.ethernet.dst_addr : ternary @name("eth_dst");
+                hdr.eth_type.value    : ternary @name("eth_type");
+                hdr.ipv4.src_addr     : ternary @name("ipv4_src");
+                hdr.ipv4.dst_addr     : ternary @name("ipv4_dst");
+                hdr.ipv4.proto        : ternary @name("ipv4_proto");
+                lmeta.l4_sport        : ternary @name("l4_sport");
+                lmeta.l4_dport        : ternary @name("l4_dport");
+            }
+            actions = {
+                set_port;
+                punt;
+                // clone_to_cpu;
+                drop;
+                nop;
+            }
+            const default_action = nop;
+            @name("acls")
+            counters = direct_counter(CounterType.packets_and_bytes);
+            size = MAX_ACLS;
         }
-        size = MAX_LINES;
-        const default_action = miss;
-    }
 
-    action set_pppoe_sess(bit<16> pppoe_sess_id) {
-        lmeta.pppoe_sess_id = pppoe_sess_id;
-    }
-
-    table pppoe_sessions {
-        key = {
-            lmeta.line_id: exact @name("line_id");
+        apply {
+            acls.apply();
         }
-        actions = {
-            set_pppoe_sess;
-            @defaultonly miss;
+    }
+
+    control IngressPipe(
+        inout parsed_headers_t hdr,
+        inout local_metadata_t lmeta,
+        inout standard_metadata_t smeta) {
+
+        action set_if_type(if_type_t if_type) {
+            lmeta.if_type = if_type;
         }
-        size = MAX_LINES;
-        const default_action = miss;
-    }
 
-    @hidden
-    action encap(bit<16> pppoe_proto) {
-        // Outer VLAN (s_tag)
-        hdr.vlan.setValid();
-        hdr.vlan.tpid = ETHERTYPE_VLAN;
-        hdr.vlan.pcp  = 3w0;
-        hdr.vlan.dei  = 1w0;
-        hdr.vlan.vid  = lmeta.s_tag;
-        // Inner VLAN (c_tag)
-        hdr.vlan2.setValid();
-        hdr.vlan2.tpid = ETHERTYPE_VLAN;
-        hdr.vlan2.pcp  = 3w0;
-        hdr.vlan2.dei  = 1w0;
-        hdr.vlan2.vid  = lmeta.c_tag;
-        // PPPoE
-        hdr.eth_type.value = ETHERTYPE_PPPOES;
-        hdr.pppoe.setValid();
-        hdr.pppoe.ver     = 4w1;
-        hdr.pppoe.type    = 4w1;
-        hdr.pppoe.code    = 8w0; // session stage
-        hdr.pppoe.sess_id = lmeta.pppoe_sess_id;
-        hdr.pppoe.len     = hdr.ipv4.len + 16w2;
-        hdr.pppoe.proto   = pppoe_proto;
-    }
-
-    @hidden
-    action route(port_t port, bit<48> dmac) {
-        smeta.egress_spec  = port;
-        hdr.ethernet.src_addr = lmeta.my_mac;
-        hdr.ethernet.dst_addr = dmac;
-        routed.count(lmeta.line_id);
-    }
-
-    action route_v4(port_t port, bit<48> dmac) {
-        encap(PPPOE_PROTO_IP4);
-        route(port, dmac);
-    }
-
-    table routes_v4 {
-        key = {
-            lmeta.line_id     : lpm @name("line_id");
-            hdr.ipv4.dst_addr : selector;
-            hdr.ipv4.src_addr : selector;
-            lmeta.ip_proto    : selector;
-            lmeta.l4_sport    : selector;
-            lmeta.l4_dport    : selector;
+        // In some implementations, the same port might be serving traffic from both
+        // sides (ACCESS and CORE). In that case the match key could be extended to
+        // include headers to differentiate the packet direction (e.g. MPLS labels
+        // in DT, what about Dell?)
+        // <craig>Yes definitely have a use case on the SmartNIC where both
+        // access and core traffic and possibly even multiple access s_tags
+        // can be on the same port.  Perhaps we can map Vlan, QinQ S_tag and
+        // MPLS bottom of the stack labels to a "service tag" in the parser,
+        // we can then match here?
+        table if_types {
+            key = {
+                smeta.ingress_port : exact @name("port");
+                lmeta.s_tag : exact @name("s_tag");
+            }
+            actions = {
+                set_if_type();
+            }
+            const default_action = set_if_type(IF_UNKNOWN);
+            @name("if_types")
+            counters = direct_counter(CounterType.packets_and_bytes);
+            size = 1024;
         }
-        actions = {
-            route_v4;
-            @defaultonly miss;
+
+        action set_my_station() {
+            lmeta.my_mac = hdr.ethernet.dst_addr;
         }
-        default_action = miss;
-        @name("IngressPipe.downstream.ecmp")
-        @max_group_size(MAX_ECMP_GROUP_SIZE)
-        implementation = action_selector(HashAlgorithm.crc16, 32w1024, 32w16);
-        size = MAX_LINES;
-    }
 
-    TtlCheck() ttl;
-
-    apply {
-        lmeta.line_id = LINE_UNKNOWN;
-        lines_v4.apply();
-        vids.apply();
-        pppoe_sessions.apply();
-        routes_v4.apply();
-        ttl.apply(hdr, lmeta, smeta);
-    }
-}
-
-control Acl(
-    inout parsed_headers_t hdr,
-    inout local_metadata_t lmeta,
-    inout standard_metadata_t smeta) {
-
-    action set_port(port_t port) {
-        smeta.egress_spec = port;
-    }
-
-    action punt() {
-        set_port(CPU_PORT);
-    }
-
-    // FIXME: what's the right way of cloning in v1model?
-    // action clone_to_cpu() {
-    //     clone3(CloneType.I2E, CPU_CLONE_SESSION_ID, { smeta.ingress_port });
-    // }
-
-    action drop() {
-        mark_to_drop(smeta);
-    }
-
-    table acls {
-        key = {
-            smeta.ingress_port    : ternary @name("port");
-            lmeta.if_type         : ternary @name("if_type");
-            hdr.ethernet.src_addr : ternary @name("eth_src");
-            hdr.ethernet.dst_addr : ternary @name("eth_dst");
-            hdr.eth_type.value    : ternary @name("eth_type");
-            hdr.ipv4.src_addr     : ternary @name("ipv4_src");
-            hdr.ipv4.dst_addr     : ternary @name("ipv4_dst");
-            hdr.ipv4.proto        : ternary @name("ipv4_proto");
-            lmeta.l4_sport        : ternary @name("l4_sport");
-            lmeta.l4_dport        : ternary @name("l4_dport");
+        // The BNG acts as a router, so we expect packets to have Ethernet dest
+        // address the router MAC address.
+        table my_stations {
+            key = {
+                smeta.ingress_port    : exact @name("port");
+                hdr.ethernet.dst_addr : exact @name("eth_dst");
+            }
+            actions = {
+                set_my_station;
+                @defaultonly nop;
+            }
+            const default_action = nop;
+            @name("my_stations")
+            counters = direct_counter(CounterType.packets_and_bytes);
+            size = 2048;
         }
-        actions = {
-            set_port;
-            punt;
-            // clone_to_cpu;
-            drop;
-            nop;
-        }
-        const default_action = nop;
-        @name("acls")
-        counters = direct_counter(CounterType.packets_and_bytes);
-        size = MAX_ACLS;
-    }
 
-    apply {
-        acls.apply();
-    }
-}
-
-control IngressPipe(
-    inout parsed_headers_t hdr,
-    inout local_metadata_t lmeta,
-    inout standard_metadata_t smeta) {
-
-    action set_if_type(if_type_t if_type) {
-        lmeta.if_type = if_type;
-    }
-
-    // In some implementations, the same port might be serving traffic from both
-    // sides (ACCESS and CORE). In that case the match key could be extended to
-    // include headers to differentiate the packet direction (e.g. MPLS labels
-    // in DT, what about Dell?)
-    table if_types {
-        key = {
-            smeta.ingress_port : exact @name("port");
-        }
-        actions = {
-            set_if_type();
-        }
-        const default_action = set_if_type(IF_UNKNOWN);
-        @name("if_types")
-        counters = direct_counter(CounterType.packets_and_bytes);
-        size = 1024;
-    }
-
-    action set_my_station() {
-        lmeta.my_mac = hdr.ethernet.dst_addr;
-    }
-
-    // The BNG acts as a router, so we expect packets to have Ethernet dest
-    // address the router MAC address.
-    table my_stations {
-        key = {
-            smeta.ingress_port    : exact @name("port");
-            hdr.ethernet.dst_addr : exact @name("eth_dst");
-        }
-        actions = {
-            set_my_station;
-            @defaultonly nop;
-        }
-        const default_action = nop;
-        @name("my_stations")
-        counters = direct_counter(CounterType.packets_and_bytes);
-        size = 2048;
-    }
-
-    IngressUpstream() upstream;
+        IngressUpstream() upstream;
     IngressDownstream() downstream;
     Acl() acl;
 
