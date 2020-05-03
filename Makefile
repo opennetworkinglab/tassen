@@ -1,9 +1,15 @@
 mkfile_path := $(abspath $(lastword $(MAKEFILE_LIST)))
 curr_dir := $(patsubst %/,%,$(dir $(mkfile_path)))
+curr_dir_sha := $(shell echo -n "$(curr_dir)" | shasum | cut -c1-7)
+go_build_name := go-build-${curr_dir_sha}
 
 include util/docker/Makefile.vars
 
 default: build check
+build: p4 mapr
+check: ptf
+
+.PHONY: ptf mapr
 
 _docker_pull_all:
 	docker pull ${P4RT_SH_IMG}@${P4RT_SH_SHA}
@@ -16,6 +22,7 @@ _docker_pull_all:
 	docker tag ${PTF_IMG}@${PTF_SHA} ${PTF_IMG}
 	docker pull ${GNMI_CLI_IMG}@${GNMI_CLI_SHA}
 	docker tag ${GNMI_CLI_IMG}@${GNMI_CLI_SHA} ${GNMI_CLI_IMG}
+	docker pull ${GOLANG_IMG}
 
 deps: _docker_pull_all
 
@@ -23,11 +30,15 @@ clean:
 	-rm -rf p4src/build
 	-rm -rf ptf/*.log
 	-rm -rf ptf/*.pcap
+	-rm -rf mapr/mapr
 
-build: p4src/bng.p4
-	$(info *** Building P4 program...)
+deep-clean: clean
+	-docker container rm ${go_build_name}
+
+p4: p4src/bng.p4
+	$(info *** Compiling P4 program...)
 	@mkdir -p p4src/build
-	docker run --rm -v ${curr_dir}:/workdir -w /workdir ${P4C_IMG} \
+	@docker run --rm -v ${curr_dir}:/workdir -w /workdir ${P4C_IMG} \
 		p4c-bm2-ss --arch v1model -o p4src/build/bmv2.json \
 		--p4runtime-files p4src/build/p4info.txt,p4src/build/p4info.bin \
 		--Wdisable=unsupported \
@@ -45,5 +56,15 @@ graph: p4src/bng.p4
 	done
 	@echo "*** Done! Graph files are in p4src/build/graphs"
 
-check:
+ptf:
 	@cd ptf && PTF_DOCKER_IMG=$(PTF_IMG) ./run_tests $(TEST)
+
+# Create container once, use it many times to preserve cache.
+_go_build_container:
+	@if ! docker container ls -a --format '{{.Names}}' | grep -q ${go_build_name} ; then \
+		docker create -v ${curr_dir}/mapr:/mapr -w /mapr --name ${go_build_name} ${GOLANG_IMG} go build; \
+	fi
+
+mapr: _go_build_container
+	$(info *** Building mapr...)
+	@docker start -a -i ${go_build_name}

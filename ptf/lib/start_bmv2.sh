@@ -3,6 +3,7 @@
 set -xe
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+LOGDIR=${DIR}/../log
 
 CPU_PORT=255
 GRPC_PORT=28000
@@ -44,17 +45,14 @@ for idx in 0 1 2 3 4 5 6 7; do
     fi
 done
 
-rm -f p4rt_write.log
-rm -f stratum_bmv2.log
-
 # shellcheck disable=SC2086
 stratum_bmv2 \
     --external_stratum_urls=0.0.0.0:${GRPC_PORT} \
     --persistent_config_dir=/tmp \
     --forwarding_pipeline_configs_file=/dev/null \
     --chassis_config_file="${DIR}"/chassis_config.pb.txt \
-    --write_req_log_file=p4rt_write.log \
+    --write_req_log_file=${LOGDIR}/stratum_p4rt_write.log \
     --initial_pipeline=/root/dummy.json \
     --bmv2_log_level=trace \
-    --cpu_port 255 \
-    > stratum_bmv2.log 2>&1
+    --cpu_port=${CPU_PORT} \
+    > ${LOGDIR}/stratum_bmv2.log 2>&1
