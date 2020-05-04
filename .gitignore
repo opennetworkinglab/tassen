@@ -2,3 +2,4 @@
 p4src/build
 ptf/log
 mapr/mapr
+**/*.pyc

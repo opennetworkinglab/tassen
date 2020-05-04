@@ -20,11 +20,17 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	p4rt "github.com/p4lang/p4runtime/go/p4/v1"
+	"github.com/p4lang/p4runtime/go/p4/v1"
 	"google.golang.org/grpc"
 	"io"
 	"log"
 	"net"
+)
+
+var (
+	client     v1.P4RuntimeClient
+	port       = flag.Int("port", 28001, "The server port")
+	targetAddr = flag.String("target_addr", "127.0.0.1:28000", "The target address in the format of host:port")
 )
 
 const MaxMsgLen = 255
@@ -43,7 +49,7 @@ func logMsg(dir string, msg fmt.Stringer) {
 type server struct {
 }
 
-func (p server) Capabilities(ctx context.Context, request *p4rt.CapabilitiesRequest) (*p4rt.CapabilitiesResponse, error) {
+func (p server) Capabilities(ctx context.Context, request *v1.CapabilitiesRequest) (*v1.CapabilitiesResponse, error) {
 	logMsg("<<", request)
 	response, err := client.Capabilities(ctx, request)
 	if err != nil {
@@ -53,7 +59,7 @@ func (p server) Capabilities(ctx context.Context, request *p4rt.CapabilitiesRequ
 	return response, nil
 }
 
-func (p server) Write(ctx context.Context, request *p4rt.WriteRequest) (*p4rt.WriteResponse, error) {
+func (p server) Write(ctx context.Context, request *v1.WriteRequest) (*v1.WriteResponse, error) {
 	logMsg("<<", request)
 	response, err := client.Write(ctx, request)
 	if err != nil {
@@ -63,7 +69,7 @@ func (p server) Write(ctx context.Context, request *p4rt.WriteRequest) (*p4rt.Wr
 	return response, nil
 }
 
-func (p server) Read(request *p4rt.ReadRequest, toClient p4rt.P4Runtime_ReadServer) error {
+func (p server) Read(request *v1.ReadRequest, toClient v1.P4Runtime_ReadServer) error {
 	logMsg("<<", request)
 	ctx, cancel := context.WithCancel(toClient.Context())
 	defer cancel()
@@ -86,7 +92,8 @@ func (p server) Read(request *p4rt.ReadRequest, toClient p4rt.P4Runtime_ReadServ
 	}
 }
 
-func (p server) SetForwardingPipelineConfig(ctx context.Context, request *p4rt.SetForwardingPipelineConfigRequest) (*p4rt.SetForwardingPipelineConfigResponse, error) {
+func (p server) SetForwardingPipelineConfig(ctx context.Context, request *v1.SetForwardingPipelineConfigRequest) (
+	*v1.SetForwardingPipelineConfigResponse, error) {
 	logMsg("<<", request)
 	response, err := client.SetForwardingPipelineConfig(ctx, request)
 	if err != nil {
@@ -96,7 +103,8 @@ func (p server) SetForwardingPipelineConfig(ctx context.Context, request *p4rt.S
 	return response, nil
 }
 
-func (p server) GetForwardingPipelineConfig(ctx context.Context, request *p4rt.GetForwardingPipelineConfigRequest) (*p4rt.GetForwardingPipelineConfigResponse, error) {
+func (p server) GetForwardingPipelineConfig(ctx context.Context, request *v1.GetForwardingPipelineConfigRequest) (
+	*v1.GetForwardingPipelineConfigResponse, error) {
 	logMsg("<<", request)
 	response, err := client.GetForwardingPipelineConfig(ctx, request)
 	if err != nil {
@@ -106,7 +114,7 @@ func (p server) GetForwardingPipelineConfig(ctx context.Context, request *p4rt.G
 	return response, nil
 }
 
-func (p server) StreamChannel(inStream p4rt.P4Runtime_StreamChannelServer) error {
+func (p server) StreamChannel(inStream v1.P4Runtime_StreamChannelServer) error {
 	log.Println("StreamChannel opened!")
 	defer log.Println("StreamChannel closed!")
 
@@ -126,7 +134,7 @@ func (p server) StreamChannel(inStream p4rt.P4Runtime_StreamChannelServer) error
 				waiterr <- err
 				return
 			}
-			logMsg("<<", response)
+			logMsg(">>", response)
 			if err := inStream.Send(response); err != nil {
 				waiterr <- err
 				return
@@ -159,38 +167,35 @@ func (p server) StreamChannel(inStream p4rt.P4Runtime_StreamChannelServer) error
 	}
 }
 
-var (
-	port       = flag.Int("port", 28001, "The server port")
-	targetAddr = flag.String("target_addr", "127.0.0.1:28000", "The target address in the format of host:port")
-
-	client p4rt.P4RuntimeClient
-)
-
 func newServer() *server {
 	s := &server{}
 	return s
 }
 
-func main() {
-	flag.Parse()
-
+func Start(port int, targetAddr string) {
 	// Client
-	conn, err := grpc.Dial(*targetAddr, grpc.WithInsecure())
+	conn, err := grpc.Dial(targetAddr, grpc.WithInsecure())
 	if err != nil {
 		log.Fatalf("Failed to dial target: %v", err)
 	}
 	defer func() {
 		_ = conn.Close()
 	}()
-	client = p4rt.NewP4RuntimeClient(conn)
+	client = v1.NewP4RuntimeClient(conn)
 
 	// Server
-	lis, err := net.Listen("tcp", fmt.Sprintf("localhost:%d", *port))
+	lis, err := net.Listen("tcp", fmt.Sprintf("localhost:%d", port))
 	if err != nil {
 		log.Fatalf("Failed to listen: %v", err)
 	}
 	server := grpc.NewServer()
-	p4rt.RegisterP4RuntimeServer(server, newServer())
-	log.Printf("Listening on port %d, talking to %s...\n", *port, *targetAddr)
+	v1.RegisterP4RuntimeServer(server, newServer())
+	log.Printf("Listening on port %d, talking to %s...\n", port, targetAddr)
 	_ = server.Serve(lis)
+}
+
+func main() {
+	flag.Parse()
+
+	Start(*port, *targetAddr)
 }
