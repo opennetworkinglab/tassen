@@ -1,4 +1,5 @@
 .idea
 p4src/build
-ptf/*.log
-ptf/*.pcap
+ptf/log
+mapr/mapr
+**/*.pyc
