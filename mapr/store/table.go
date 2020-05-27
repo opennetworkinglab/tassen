@@ -17,6 +17,10 @@ func (s store) PutTableEntry(entry *v1.TableEntry) {
 	s.tableEntries[tableEntryKey(entry)] = entry
 }
 
+func (s store) RemoveTableEntry(entry *v1.TableEntry) {
+	delete(s.tableEntries, tableEntryKey(entry))
+}
+
 func (s store) FilterTableEntries(f func(*v1.TableEntry) bool) []*v1.TableEntry {
 	filtered := make([]*v1.TableEntry, 0)
 	for _, value := range s.tableEntries {

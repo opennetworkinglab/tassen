@@ -181,6 +181,40 @@ func Test_store_PutTableEntry(t *testing.T) {
 	}
 }
 
+func Test_store_RemoveTableEntry(t *testing.T) {
+	type fields struct {
+		tableEntries map[string]*v1.TableEntry
+	}
+	type args struct {
+		entry *v1.TableEntry
+	}
+	tests := []struct {
+		name      string
+		fields    fields
+		args      args
+		wantCount int
+	}{
+		{"empty", fields{map[string]*v1.TableEntry{
+			// empty
+		}}, args{&mockTableEntry1}, 0},
+		{"existing key", fields{map[string]*v1.TableEntry{
+			mockTableEntryKey1: &mockTableEntry1,
+		}}, args{&sameAsMockTableEntry1}, 0},
+		{"non existing key", fields{map[string]*v1.TableEntry{
+			mockTableEntryKey1: &mockTableEntry1,
+		}}, args{&mockTableEntry2}, 1},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := store{
+				tableEntries: tt.fields.tableEntries,
+			}
+			s.RemoveTableEntry(tt.args.entry)
+			assert.Equal(t, tt.wantCount, s.TableEntryCount(), "TableEntryCount() should return expected count")
+		})
+	}
+}
+
 func Test_store_TableEntries(t *testing.T) {
 	type fields struct {
 		tableEntries map[string]*v1.TableEntry
