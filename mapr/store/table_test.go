@@ -2,7 +2,7 @@ package store
 
 import (
 	v1 "github.com/p4lang/p4runtime/go/p4/v1"
-	"reflect"
+	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
@@ -141,9 +141,8 @@ func Test_store_FilterTableEntries(t *testing.T) {
 			s := store{
 				tableEntries: tt.fields.tableEntries,
 			}
-			if got := s.FilterTableEntries(tt.args.f); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("FilterTableEntries() = %v, want %v", got, tt.want)
-			}
+			got := s.FilterTableEntries(tt.args.f)
+			assert.ElementsMatch(t, tt.want, got, "FilterTableEntries(): elements don't match the expected ones")
 		})
 	}
 }
@@ -177,9 +176,7 @@ func Test_store_PutTableEntry(t *testing.T) {
 				tableEntries: tt.fields.tableEntries,
 			}
 			s.PutTableEntry(tt.args.entry)
-			if gotCount := s.TableEntryCount(); gotCount != tt.wantCount {
-				t.Errorf("TableEntryCount() = %v, want %v", gotCount, tt.wantCount)
-			}
+			assert.Equal(t, tt.wantCount, s.TableEntryCount(), "TableEntryCount() should return expected count")
 		})
 	}
 }
@@ -216,9 +213,8 @@ func Test_store_TableEntries(t *testing.T) {
 			s := store{
 				tableEntries: tt.fields.tableEntries,
 			}
-			if got := s.TableEntries(); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("TableEntries() = %v, want %v", got, tt.want)
-			}
+			got := s.TableEntries()
+			assert.ElementsMatch(t, tt.want, got, "TableEntries(): elements don't match the expected ones")
 		})
 	}
 }
@@ -238,9 +234,7 @@ func Test_tableEntryKey(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := tableEntryKey(tt.args.k); got != tt.want {
-				t.Errorf("tableEntryKey() = %v, want %v", got, tt.want)
-			}
+			assert.Equal(t, tt.want, tableEntryKey(tt.args.k), "tableEntryKey() should return expected key")
 		})
 	}
 }
@@ -267,9 +261,7 @@ func Test_store_TableEntryCount(t *testing.T) {
 			s := store{
 				tableEntries: tt.fields.tableEntries,
 			}
-			if got := s.TableEntryCount(); got != tt.want {
-				t.Errorf("TableEntryCount() = %v, want %v", got, tt.want)
-			}
+			assert.Equal(t, tt.want, s.TableEntryCount(), "TableEntryCount() should return expected count")
 		})
 	}
 }
