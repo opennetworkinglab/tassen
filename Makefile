@@ -60,11 +60,11 @@ ptf:
 	@cd ptf && PTF_DOCKER_IMG=$(PTF_IMG) ./run_tests $(TEST)
 
 # Create container once, use it many times to preserve cache.
-_go_build_container:
+_go_build_test_container:
 	@if ! docker container ls -a --format '{{.Names}}' | grep -q ${go_build_name} ; then \
-		docker create -v ${curr_dir}/mapr:/mapr -w /mapr --name ${go_build_name} ${GOLANG_IMG} go build; \
+		docker create -v ${curr_dir}/mapr:/mapr -w /mapr --name ${go_build_name} ${GOLANG_IMG} bash -c "go build && go test ./..."; \
 	fi
 
-mapr: _go_build_container
+mapr: _go_build_test_container
 	$(info *** Building mapr...)
 	@docker start -a -i ${go_build_name}

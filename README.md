@@ -15,11 +15,21 @@ installed on your machine:
 * Docker
 * make
 
-Docker is used to run the necessary without worrying about additional
+Docker is used to run the necessary tools without worrying about additional
 dependencies. Before starting, make sure to fetch all the required Docker
 images:
 
     make deps
+
+## Quick Instructions
+
+To build everything:
+
+    make build
+
+To test everything:
+
+    make check
 
 ## Content
 
@@ -36,7 +46,11 @@ The goal of this P4 program is twofold:
 
 To build the P4 program:
 
-    make build
+    make p4
+
+To generate the P4 graphs:
+
+    make graph
 
 ### Packet-based Unit Tests
 
@@ -47,7 +61,7 @@ support to provide a P4Runtime and gNMI server interface.
 
 To run all test cases:
 
-    make check
+    make ptf
 
 `ptf/tests` contains the actual test case implementation, organized in logical
 groups, e.g., `routing.py` for all test cases pertaining the routing
@@ -55,27 +69,34 @@ functionality, `packetio.py` for control packet I/O, etc.
 
 To run all tests in a group:
 
-    make check TEST=<GROUP>
+    make ptf TEST=<GROUP>
 
 To run a specific test case:
 
-    make check TEST=<GROUP>.<TEST NAME>
+    make ptf TEST=<GROUP>.<TEST NAME>
 
 For example:
 
-    make check TEST=packetio.PacketOutTest
+    make ptf TEST=packetio.PacketOutTest
   
 `ptf/lib` contains the test runner as well as libraries useful to simplify
 the test case implementations (e.g., `helper.py` provides a P4Info helper with
-methods convenient to construct P4Runtime table entries)
+methods convenient to construct P4Runtime table entries).
 
 ### Mapping to Target-specific BNG-UP Implementations
 
-The directory `mapping` is currently empty. The goal is to provide here a
-reference implementation of the runtime mapping logic to translate P4Runtime
-RPCs for the logical P4 program (`bng.p4`) to target-specific ones, e.g., for
-Tofino, FPGA, Broadcom Q2C, etc.
+The directory `mapr` contains the reference implementation of the runtime mapping
+logic to translate P4Runtime RPCs for the logical P4 program (`bng.p4`) to 
+target-specific ones, e.g., for Tofino, FPGA, Broadcom Q2C, etc.
 
+`mapr` is written in Go.
+
+To build `mapr`:
+
+    make mapr
+
+This command will produce a binary in `mapr/mapr` that will be used as part of
+the PTF tests.
 
 [bmv2]: https://github.com/p4lang/behavioral-model
 [stratum]: https://github.com/stratum/stratum

@@ -24,11 +24,13 @@ import (
 	"google.golang.org/grpc"
 	"io"
 	"log"
+	"mapr/store"
+	"mapr/translators"
 	"net"
 )
 
 var (
-	client     v1.P4RuntimeClient
+	target     v1.P4RuntimeClient
 	port       = flag.Int("port", 28001, "The server port")
 	targetAddr = flag.String("target_addr", "127.0.0.1:28000", "The target address in the format of host:port")
 )
@@ -47,11 +49,13 @@ func logMsg(dir string, msg fmt.Stringer) {
 }
 
 type server struct {
+	translator translators.Translator
+	store      store.Store
 }
 
 func (p server) Capabilities(ctx context.Context, request *v1.CapabilitiesRequest) (*v1.CapabilitiesResponse, error) {
 	logMsg("<<", request)
-	response, err := client.Capabilities(ctx, request)
+	response, err := target.Capabilities(ctx, request)
 	if err != nil {
 		return nil, err
 	}
@@ -59,21 +63,39 @@ func (p server) Capabilities(ctx context.Context, request *v1.CapabilitiesReques
 	return response, nil
 }
 
-func (p server) Write(ctx context.Context, request *v1.WriteRequest) (*v1.WriteResponse, error) {
-	logMsg("<<", request)
-	response, err := client.Write(ctx, request)
+func (p server) Write(ctx context.Context, logicalReq *v1.WriteRequest) (*v1.WriteResponse, error) {
+	logMsg("<<", logicalReq)
+	// Translate to physical
+	physicalReq, err := p.translator.Translate(logicalReq)
 	if err != nil {
 		return nil, err
 	}
+	logMsg("@@", physicalReq)
+	var response *v1.WriteResponse = nil
+	if physicalReq != nil {
+		// Translator wants to update the target.
+		res, err := target.Write(ctx, physicalReq)
+		if err != nil {
+			return nil, err
+		}
+		response = res
+	} else {
+		// No need to update target for now.
+		// Fake successful response.
+		response = &v1.WriteResponse{}
+	}
 	logMsg(">>", response)
+	// Target updated successfully, update store with logical entities.
+	p.store.PutAll(logicalReq)
 	return response, nil
 }
 
 func (p server) Read(request *v1.ReadRequest, toClient v1.P4Runtime_ReadServer) error {
+	// TODO: read from store, not from target
 	logMsg("<<", request)
 	ctx, cancel := context.WithCancel(toClient.Context())
 	defer cancel()
-	fromTarget, err := client.Read(ctx, request)
+	fromTarget, err := target.Read(ctx, request)
 	if err != nil {
 		return err
 	}
@@ -95,7 +117,7 @@ func (p server) Read(request *v1.ReadRequest, toClient v1.P4Runtime_ReadServer) 
 func (p server) SetForwardingPipelineConfig(ctx context.Context, request *v1.SetForwardingPipelineConfigRequest) (
 	*v1.SetForwardingPipelineConfigResponse, error) {
 	logMsg("<<", request)
-	response, err := client.SetForwardingPipelineConfig(ctx, request)
+	response, err := target.SetForwardingPipelineConfig(ctx, request)
 	if err != nil {
 		return nil, err
 	}
@@ -106,7 +128,7 @@ func (p server) SetForwardingPipelineConfig(ctx context.Context, request *v1.Set
 func (p server) GetForwardingPipelineConfig(ctx context.Context, request *v1.GetForwardingPipelineConfigRequest) (
 	*v1.GetForwardingPipelineConfigResponse, error) {
 	logMsg("<<", request)
-	response, err := client.GetForwardingPipelineConfig(ctx, request)
+	response, err := target.GetForwardingPipelineConfig(ctx, request)
 	if err != nil {
 		return nil, err
 	}
@@ -120,7 +142,7 @@ func (p server) StreamChannel(inStream v1.P4Runtime_StreamChannelServer) error {
 
 	outCtx, outCancel := context.WithCancel(inStream.Context())
 	defer outCancel()
-	outStream, err := client.StreamChannel(outCtx)
+	outStream, err := target.StreamChannel(outCtx)
 	if err != nil {
 		return err
 	}
@@ -168,12 +190,16 @@ func (p server) StreamChannel(inStream v1.P4Runtime_StreamChannelServer) error {
 }
 
 func newServer() *server {
-	s := &server{}
+	s := &server{
+		// TODO: the translator instance should be a command line flag
+		translator: translators.Dummy{},
+		store:      store.NewStore(),
+	}
 	return s
 }
 
 func Start(port int, targetAddr string) {
-	// Client
+	// Client to target
 	conn, err := grpc.Dial(targetAddr, grpc.WithInsecure())
 	if err != nil {
 		log.Fatalf("Failed to dial target: %v", err)
@@ -181,7 +207,7 @@ func Start(port int, targetAddr string) {
 	defer func() {
 		_ = conn.Close()
 	}()
-	client = v1.NewP4RuntimeClient(conn)
+	target = v1.NewP4RuntimeClient(conn)
 
 	// Server
 	lis, err := net.Listen("tcp", fmt.Sprintf("localhost:%d", port))
@@ -196,6 +222,5 @@ func Start(port int, targetAddr string) {
 
 func main() {
 	flag.Parse()
-
 	Start(*port, *targetAddr)
 }
