@@ -11,6 +11,8 @@ type Store interface {
 	PutAll(request *v1.WriteRequest)
 	// Stores the given table entry.
 	PutTableEntry(*v1.TableEntry)
+	// Returns the table entry associated with the given key, or nil.
+	GetTableEntry(*string) *v1.TableEntry
 	// Removes the given table entry.
 	RemoveTableEntry(*v1.TableEntry)
 	// Returns a slice of table entries that satisfy the predicate f.
