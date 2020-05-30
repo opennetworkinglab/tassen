@@ -10,7 +10,7 @@ func tableEntryKey(k *v1.TableEntry) string {
 	// Fields that determine uniqueness are defined by the P4RT spec.
 	// We return a string as that's a comparable and can be used as a map key. Is there a more efficient way of getting
 	// a comparable key out of a protobuf TableEntry message?
-	return fmt.Sprintf("%d-%s-%d", k.Priority, k.Match, k.Priority)
+	return fmt.Sprintf("%d-%s-%d", k.TableId, k.Match, k.Priority)
 }
 
 func (s store) PutTableEntry(entry *v1.TableEntry) {

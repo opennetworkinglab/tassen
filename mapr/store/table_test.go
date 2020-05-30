@@ -85,7 +85,7 @@ var mockTableEntry2 = v1.TableEntry{
 	Priority: 1,
 }
 
-var mockTableEntryKey2 = "1-[field_id:3 exact:<value:\"\\003\" >  field_id:4 exact:<value:\"\\004\" > ]-1"
+var mockTableEntryKey2 = "2-[field_id:3 exact:<value:\"\\003\" >  field_id:4 exact:<value:\"\\004\" > ]-1"
 
 func Test_store_FilterTableEntries(t *testing.T) {
 	type fields struct {
