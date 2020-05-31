@@ -170,6 +170,7 @@ func (p server) SetForwardingPipelineConfig(ctx context.Context, request *p4v1.S
 }
 
 func (p server) GetForwardingPipelineConfig(ctx context.Context, request *p4v1.GetForwardingPipelineConfigRequest) (
+	// TODO: implement returning logical config instead of physical one
 	*p4v1.GetForwardingPipelineConfigResponse, error) {
 	logMsg("<<", request)
 	response, err := target.GetForwardingPipelineConfig(ctx, request)
