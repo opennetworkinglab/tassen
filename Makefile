@@ -7,7 +7,8 @@ include util/docker/Makefile.vars
 
 default: build check
 build: p4 mapr
-check: ptf
+check: check-self
+check-all: check-self check-dummy
 
 .PHONY: ptf mapr
 
@@ -56,8 +57,17 @@ graph: p4src/bng.p4
 	done
 	@echo "*** Done! Graph files are in p4src/build/graphs"
 
-ptf:
-	@cd ptf && PTF_DOCKER_IMG=$(PTF_IMG) ./run_tests $(TEST)
+_ptf:
+	@cd ptf && PTF_DOCKER_IMG=$(PTF_IMG) ./run_tests $(TARGET_NAME) $(TEST)
+
+check-self: TARGET_NAME := self
+check-self: _ptf
+
+check-dummy: TARGET_NAME := dummy
+check-dummy: _ptf
+
+check-fabric: TARGET_NAME := fabric
+check-fabric: _ptf
 
 # Create container once, use it many times to preserve cache.
 _go_build_test_container:
