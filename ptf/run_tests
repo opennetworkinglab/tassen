@@ -2,45 +2,63 @@
 
 set -e
 
-PTF_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-P4SRC_DIR=${PTF_DIR}/../p4src
-P4C_OUT=${P4SRC_DIR}/build
-MAPR_BIN=${PTF_DIR}/../mapr/mapr
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
+WORKDIR=${DIR}/.. # project root
 PTF_DOCKER_IMG=${PTF_DOCKER_IMG:-undefined}
 
-runName=ptf-${RANDOM}
+TARGET_NAME=${1}
+# shellcheck disable=SC2124
+PTF_ARGS=${@:2}
 
+if [ -z "${TARGET_NAME}" ]; then
+  echo "ERROR: target not specified"
+  exit 1
+fi
+
+runName=ptf-${RANDOM}
 function stop() {
-        echo "Stopping container ${runName}..."
-        docker stop -t0 "${runName}" > /dev/null
+  echo "*** Stopping container ${runName}..."
+  docker stop -t0 "${runName}" >/dev/null
 }
 trap stop EXIT
 
 rm -rf log
 mkdir log
 
+if [ "${TARGET_NAME}" = "dummy" ]; then
+  targetP4cOut="p4src/build"
+else
+  targetP4cOut="mapr/p4c-out/${TARGET_NAME}"
+fi
+
 echo "*** Starting stratum_bmv2 in Docker (${runName})..."
 docker run --name "${runName}" -d --privileged --rm \
-    -v "${PTF_DIR}":/ptf -w /ptf \
-    -v "${P4C_OUT}":/p4c-out \
-    -v "${MAPR_BIN}":/usr/local/bin/mapr \
-    "${PTF_DOCKER_IMG}" \
-    ./lib/start_bmv2.sh > /dev/null
+  -v "${WORKDIR}:/workdir" -w /workdir/ptf \
+  -e "TRANSLATOR=${TARGET_NAME}" \
+  -e "TARGET_P4C_OUT=/workdir/${targetP4cOut}" \
+  --entrypoint ./lib/start_bmv2.sh \
+  "${PTF_DOCKER_IMG}" >/dev/null
 
 sleep 1
 
-printf "*** Starting mapr...\n"
-docker exec -d "${runName}" ./lib/start_mapr.sh
+if [ "${TARGET_NAME}" != "self" ]; then
+  targetPort=28001
+  echo "*** Starting mapr for target ${TARGET_NAME}..."
+  echo "*** Using pipeline config in ${targetP4cOut}..."
+  docker exec -d "${runName}" ./lib/start_mapr.sh
+else
+  targetPort=28000
+fi
 
 sleep 1
 
-printf "*** Starting tests...\n"
+echo "*** Starting tests..."
 docker exec "${runName}" python -u ./lib/runner.py \
-    --bmv2-json /p4c-out/bmv2.json \
-    --p4info /p4c-out/p4info.bin \
-    --grpc-addr localhost:28001 \
-    --device-id 1 \
-    --ptf-dir ./tests \
-    --cpu-port 255 \
-    --log-file ./log/ptf.log \
-    --port-map /ptf/lib/port_map.json "${@}"
+  --bmv2-json ../p4src/build/bmv2.json \
+  --p4info ../p4src/build//p4info.bin \
+  --grpc-addr localhost:${targetPort} \
+  --device-id 1 \
+  --ptf-dir ./tests \
+  --cpu-port 255 \
+  --log-file ./log/ptf.log \
+  --port-map ./lib/port_map.json ${PTF_ARGS}

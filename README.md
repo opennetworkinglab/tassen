@@ -61,7 +61,7 @@ support to provide a P4Runtime and gNMI server interface.
 
 To run all test cases:
 
-    make ptf
+    make check
 
 `ptf/tests` contains the actual test case implementation, organized in logical
 groups, e.g., `routing.py` for all test cases pertaining the routing
@@ -69,15 +69,15 @@ functionality, `packetio.py` for control packet I/O, etc.
 
 To run all tests in a group:
 
-    make ptf TEST=<GROUP>
+    make check TEST=<GROUP>
 
 To run a specific test case:
 
-    make ptf TEST=<GROUP>.<TEST NAME>
+    make check TEST=<GROUP>.<TEST NAME>
 
 For example:
 
-    make ptf TEST=packetio.PacketOutTest
+    make check TEST=packetio.PacketOutTest
   
 `ptf/lib` contains the test runner as well as libraries useful to simplify
 the test case implementations (e.g., `helper.py` provides a P4Info helper with
@@ -85,7 +85,7 @@ methods convenient to construct P4Runtime table entries).
 
 ### Mapping to Target-specific BNG-UP Implementations
 
-The directory `mapr` contains the reference implementation of the runtime mapping
+The directory `mapr` contains the reference implementation of the runtime
 logic to translate P4Runtime RPCs for the logical P4 program (`bng.p4`) to 
 target-specific ones, e.g., for Tofino, FPGA, Broadcom Q2C, etc.
 
@@ -95,8 +95,23 @@ To build `mapr`:
 
     make mapr
 
-This command will produce a binary in `mapr/mapr` that will be used as part of
+This command will produce a binary in `mapr/mapr` that can be used as part of
 the PTF tests.
+
+`mapr` provides the translation logic for different targets, such as:
+
+* `dummy`: for testing purposes only, where the target device runs with
+  the same Tassen logical pipeline, i.e., P4Runtime RPCs are relayed as-is,
+  with no translation. 
+* `fabric`: for a switch running ONF's fabric.p4 (`fabric-bng` profile).
+
+To run PTF tests on a given target together with `mapr`:
+
+    make check-<target>
+
+For example, to run PTF tests on the `dummy` target:
+
+    make check-dummy
 
 [bmv2]: https://github.com/p4lang/behavioral-model
 [stratum]: https://github.com/stratum/stratum

@@ -5,7 +5,9 @@ jobs:
     machine: true
     steps:
       - checkout
-      - run: make deps build check
+      - run: make deps build
+      - run: make check-self
+      - run: make check-dummy
 
 workflows:
   main:

@@ -20,19 +20,33 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"github.com/p4lang/p4runtime/go/p4/v1"
+	"github.com/golang/protobuf/proto"
+	p4confv1 "github.com/p4lang/p4runtime/go/p4/config/v1"
+	p4v1 "github.com/p4lang/p4runtime/go/p4/v1"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"io"
+	"io/ioutil"
 	"log"
 	"mapr/store"
 	"mapr/translators"
 	"net"
+	"strings"
 )
 
 var (
-	target     v1.P4RuntimeClient
-	port       = flag.Int("port", 28001, "The server port")
-	targetAddr = flag.String("target_addr", "127.0.0.1:28000", "The target address in the format of host:port")
+	target p4v1.P4RuntimeClient
+	port   = flag.Int("port", 28001,
+		"The server port")
+	targetAddr = flag.String("target_addr", "127.0.0.1:28000",
+		"The target address in the format of host:port")
+	translatorName = flag.String("translator", "dummy",
+		"Translator to use")
+	logicalP4InfoPath = flag.String("logical_p4info", "",
+		"Path to logical P4Info file in binary format, e.g., `p4info.bin`")
+	targetP4ConfigPaths = flag.String("target_p4_config", "",
+		"Path to P4 pipeline config files to apply to target, e.g., `p4info.bin,bmv2.json`")
 )
 
 const MaxMsgLen = 255
@@ -53,7 +67,7 @@ type server struct {
 	store      store.Store
 }
 
-func (p server) Capabilities(ctx context.Context, request *v1.CapabilitiesRequest) (*v1.CapabilitiesResponse, error) {
+func (p server) Capabilities(ctx context.Context, request *p4v1.CapabilitiesRequest) (*p4v1.CapabilitiesResponse, error) {
 	logMsg("<<", request)
 	response, err := target.Capabilities(ctx, request)
 	if err != nil {
@@ -63,7 +77,7 @@ func (p server) Capabilities(ctx context.Context, request *v1.CapabilitiesReques
 	return response, nil
 }
 
-func (p server) Write(ctx context.Context, logicalReq *v1.WriteRequest) (*v1.WriteResponse, error) {
+func (p server) Write(ctx context.Context, logicalReq *p4v1.WriteRequest) (*p4v1.WriteResponse, error) {
 	logMsg("<<", logicalReq)
 	// Translate to physical
 	physicalReq, err := p.translator.Translate(logicalReq)
@@ -71,7 +85,7 @@ func (p server) Write(ctx context.Context, logicalReq *v1.WriteRequest) (*v1.Wri
 		return nil, err
 	}
 	logMsg("@@", physicalReq)
-	var response *v1.WriteResponse = nil
+	var response *p4v1.WriteResponse = nil
 	if physicalReq != nil {
 		// Translator wants to update the target.
 		res, err := target.Write(ctx, physicalReq)
@@ -82,7 +96,7 @@ func (p server) Write(ctx context.Context, logicalReq *v1.WriteRequest) (*v1.Wri
 	} else {
 		// No need to update target for now.
 		// Fake successful response.
-		response = &v1.WriteResponse{}
+		response = &p4v1.WriteResponse{}
 	}
 	logMsg(">>", response)
 	// Target updated successfully, update store with logical entities.
@@ -90,7 +104,7 @@ func (p server) Write(ctx context.Context, logicalReq *v1.WriteRequest) (*v1.Wri
 	return response, nil
 }
 
-func (p server) Read(request *v1.ReadRequest, toClient v1.P4Runtime_ReadServer) error {
+func (p server) Read(request *p4v1.ReadRequest, toClient p4v1.P4Runtime_ReadServer) error {
 	// TODO: read from store, not from target
 	logMsg("<<", request)
 	ctx, cancel := context.WithCancel(toClient.Context())
@@ -114,19 +128,50 @@ func (p server) Read(request *v1.ReadRequest, toClient v1.P4Runtime_ReadServer) 
 	}
 }
 
-func (p server) SetForwardingPipelineConfig(ctx context.Context, request *v1.SetForwardingPipelineConfigRequest) (
-	*v1.SetForwardingPipelineConfigResponse, error) {
+func (p server) SetForwardingPipelineConfig(ctx context.Context, request *p4v1.SetForwardingPipelineConfigRequest) (
+	*p4v1.SetForwardingPipelineConfigResponse, error) {
 	logMsg("<<", request)
-	response, err := target.SetForwardingPipelineConfig(ctx, request)
-	if err != nil {
+	// Compare P4Info in request with the one passed via flags. Return error if not equal.
+	if bytes, err := ioutil.ReadFile(*logicalP4InfoPath); err == nil {
+		logicalP4Info := &p4confv1.P4Info{}
+		if err := proto.Unmarshal(bytes, logicalP4Info); err != nil {
+			panic(err)
+		}
+		if !proto.Equal(request.Config.P4Info, logicalP4Info) {
+			return nil, status.Error(codes.InvalidArgument, "mapr: P4Info not supported")
+		}
+	} else {
+		panic(err)
+	}
+	// Modify request by swapping config with target one
+	pieces := strings.Split(*targetP4ConfigPaths, ",")
+	// Read and parse physical p4info.bin
+	if bytes, err := ioutil.ReadFile(pieces[0]); err == nil {
+		if err := proto.Unmarshal(bytes, request.Config.P4Info); err != nil {
+			panic(err)
+		}
+	} else {
+		panic(err)
+	}
+	// Read P4 config blob
+	if bytes, err := ioutil.ReadFile(pieces[1]); err == nil {
+		request.Config.P4DeviceConfig = bytes
+	} else {
+		panic(err)
+	}
+	// Forward modified request
+	logMsg("@@", request)
+	if response, err := target.SetForwardingPipelineConfig(ctx, request); err == nil {
+		logMsg(">>", response)
+		return response, nil
+	} else {
 		return nil, err
 	}
-	logMsg(">>", response)
-	return response, nil
 }
 
-func (p server) GetForwardingPipelineConfig(ctx context.Context, request *v1.GetForwardingPipelineConfigRequest) (
-	*v1.GetForwardingPipelineConfigResponse, error) {
+func (p server) GetForwardingPipelineConfig(ctx context.Context, request *p4v1.GetForwardingPipelineConfigRequest) (
+	// TODO: implement returning logical config instead of physical one
+	*p4v1.GetForwardingPipelineConfigResponse, error) {
 	logMsg("<<", request)
 	response, err := target.GetForwardingPipelineConfig(ctx, request)
 	if err != nil {
@@ -136,7 +181,7 @@ func (p server) GetForwardingPipelineConfig(ctx context.Context, request *v1.Get
 	return response, nil
 }
 
-func (p server) StreamChannel(inStream v1.P4Runtime_StreamChannelServer) error {
+func (p server) StreamChannel(inStream p4v1.P4Runtime_StreamChannelServer) error {
 	log.Println("StreamChannel opened!")
 	defer log.Println("StreamChannel closed!")
 
@@ -189,10 +234,21 @@ func (p server) StreamChannel(inStream v1.P4Runtime_StreamChannelServer) error {
 	}
 }
 
+func newTranslator() translators.Translator {
+	switch *translatorName {
+	case "dummy":
+		return translators.Dummy{}
+	case "fabric":
+		// FIXME: replace with fabric translator once ready
+		return translators.Dummy{}
+	default:
+		panic("Unknown translator")
+	}
+}
+
 func newServer() *server {
 	s := &server{
-		// TODO: the translator instance should be a command line flag
-		translator: translators.Dummy{},
+		translator: newTranslator(),
 		store:      store.NewStore(),
 	}
 	return s
@@ -207,7 +263,7 @@ func Start(port int, targetAddr string) {
 	defer func() {
 		_ = conn.Close()
 	}()
-	target = v1.NewP4RuntimeClient(conn)
+	target = p4v1.NewP4RuntimeClient(conn)
 
 	// Server
 	lis, err := net.Listen("tcp", fmt.Sprintf("localhost:%d", port))
@@ -215,7 +271,7 @@ func Start(port int, targetAddr string) {
 		log.Fatalf("Failed to listen: %v", err)
 	}
 	server := grpc.NewServer()
-	v1.RegisterP4RuntimeServer(server, newServer())
+	p4v1.RegisterP4RuntimeServer(server, newServer())
 	log.Printf("Listening on port %d, talking to %s...\n", port, targetAddr)
 	_ = server.Serve(lis)
 }

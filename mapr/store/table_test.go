@@ -85,7 +85,7 @@ var mockTableEntry2 = v1.TableEntry{
 	Priority: 1,
 }
 
-var mockTableEntryKey2 = "1-[field_id:3 exact:<value:\"\\003\" >  field_id:4 exact:<value:\"\\004\" > ]-1"
+var mockTableEntryKey2 = "2-[field_id:3 exact:<value:\"\\003\" >  field_id:4 exact:<value:\"\\004\" > ]-1"
 
 func Test_store_FilterTableEntries(t *testing.T) {
 	type fields struct {
@@ -181,6 +181,40 @@ func Test_store_PutTableEntry(t *testing.T) {
 	}
 }
 
+func Test_store_GetTableEntry(t *testing.T) {
+	type fields struct {
+		tableEntries map[string]*v1.TableEntry
+	}
+	type args struct {
+		key *string
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+		want   *v1.TableEntry
+	}{
+		{"empty", fields{map[string]*v1.TableEntry{
+			// empty
+		}}, args{&mockTableEntryKey1}, nil},
+		{"non existing key", fields{map[string]*v1.TableEntry{
+			mockTableEntryKey1: &mockTableEntry1,
+		}}, args{&mockTableEntryKey2}, nil},
+		{"existing key", fields{map[string]*v1.TableEntry{
+			mockTableEntryKey1: &mockTableEntry1,
+			mockTableEntryKey2: &mockTableEntry2,
+		}}, args{&mockTableEntryKey2}, &mockTableEntry2},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s := store{
+				tableEntries: tt.fields.tableEntries,
+			}
+			assert.Equal(t, tt.want, s.GetTableEntry(tt.args.key), "GetTableEntry() should return expected value")
+		})
+	}
+}
+
 func Test_store_RemoveTableEntry(t *testing.T) {
 	type fields struct {
 		tableEntries map[string]*v1.TableEntry
@@ -268,7 +302,7 @@ func Test_tableEntryKey(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.want, tableEntryKey(tt.args.k), "tableEntryKey() should return expected key")
+			assert.Equal(t, tt.want, KeyFromTableEntry(tt.args.k), "KeyFromTableEntry() should return expected key")
 		})
 	}
 }
