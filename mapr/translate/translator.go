@@ -38,10 +38,11 @@ type translator struct {
 //
 // P4 tables and other objects can be categorized based on the type of information they hold, which can be device-level,
 // or attachment-level. For updates to device-level objects, we parse them and call the corresponding method in the
-// change processor. For attachment-level updates, the state of an attachment can be derived by multiple
-// objects (mostly tables). We first evaluate a snapshot of the attachment that includes data from the store and from
-// the given update. The snapshot is passed to the change processor with an indication whether the attachment state is
-// complete (all fields are populated) or not.
+// change processor. For attachment-level updates, the state of an attachment can be derived by multiple objects (mostly
+// tables), as such, a translator might need to  "accumulate" attachment state before it can modify the physical
+// pipeline. When receiving an update for an attachment-level table, we first evaluate a snapshot of the attachment that
+// includes data from the store and from the given update. The snapshot is passed to the change processor with an
+// indication of whether the attachment state is complete (all fields are populated) or not.
 //
 // Considering an example implementation for a change processor, if an attachment is complete, the processor might
 // generate all necessary updates to insert the corresponding entries in the target to enable termination/forwarding. If
