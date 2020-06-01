@@ -23,14 +23,14 @@ import (
 	"github.com/golang/protobuf/proto"
 	p4confv1 "github.com/p4lang/p4runtime/go/p4/config/v1"
 	p4v1 "github.com/p4lang/p4runtime/go/p4/v1"
+	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"io"
 	"io/ioutil"
-	"log"
 	"mapr/store"
-	"mapr/translators"
+	"mapr/translate"
 	"net"
 	"strings"
 )
@@ -51,62 +51,107 @@ var (
 
 const MaxMsgLen = 255
 
-func logMsg(dir string, msg fmt.Stringer) {
-	msgString := msg.String()
+type MsgDirection string
+
+const (
+	FromCtrl   MsgDirection = "ctrl >>"
+	ToCtrl     MsgDirection = "ctrl <<"
+	FromTarget MsgDirection = "<< trgt"
+	ToTarget   MsgDirection = ">> trgt"
+)
+
+func logMsg(dir MsgDirection, msg proto.Message) {
+	msgString := proto.CompactTextString(msg)
 	msgLen := len(msgString)
-	truncString := ""
 	if msgLen > MaxMsgLen {
-		msgString = msgString[:MaxMsgLen]
-		truncString = fmt.Sprintf("... truncated %d bytes", msgLen-MaxMsgLen)
+		msgString = msgString[:MaxMsgLen] + fmt.Sprintf("... truncated %d bytes", msgLen-MaxMsgLen)
 	}
-	log.Printf("%s %T { %s%s }\n", dir, msg, msgString, truncString)
+	log.WithField("proto", msgString).Debugf("%s %T", dir, msg)
 }
 
 type server struct {
-	translator translators.Translator
-	store      store.Store
+	translator  translate.Translator
+	serverStore store.P4RtStore
+	targetStore store.P4RtStore
+	tassenStore store.TassenStore
 }
 
-func (p server) Capabilities(ctx context.Context, request *p4v1.CapabilitiesRequest) (*p4v1.CapabilitiesResponse, error) {
-	logMsg("<<", request)
+func newServer() *server {
+	serverStore := store.NewP4RtStore()
+	targetStore := store.NewP4RtStore()
+	tassenStore := store.NewTassenStore()
+	var translator translate.Translator
+	switch *translatorName {
+	case "dummy":
+		translator = translate.NewDummyTranslator()
+	case "fabric":
+		translator = translate.NewFabricTranslator(serverStore, targetStore, tassenStore)
+	default:
+		panic("Unknown translator")
+	}
+	return &server{
+		translator:  translator,
+		serverStore: serverStore,
+		targetStore: targetStore,
+		tassenStore: tassenStore,
+	}
+}
+
+func (s server) Capabilities(ctx context.Context, request *p4v1.CapabilitiesRequest) (*p4v1.CapabilitiesResponse, error) {
+	logMsg(FromCtrl, request)
 	response, err := target.Capabilities(ctx, request)
 	if err != nil {
 		return nil, err
 	}
-	logMsg(">>", response)
+	logMsg(ToCtrl, response)
 	return response, nil
 }
 
-func (p server) Write(ctx context.Context, logicalReq *p4v1.WriteRequest) (*p4v1.WriteResponse, error) {
-	logMsg("<<", logicalReq)
-	// Translate to physical
-	physicalReq, err := p.translator.Translate(logicalReq)
+func (s server) Write(ctx context.Context, logicalReq *p4v1.WriteRequest) (*p4v1.WriteResponse, error) {
+	logMsg(FromCtrl, logicalReq)
+	// Validate logical request by executing an update dry run in the stores.
+	if err := s.serverStore.Update(logicalReq, true); err != nil {
+		return nil, err
+	}
+	if err := s.tassenStore.Update(logicalReq, true); err != nil {
+		return nil, err
+	}
+	// Translate request to one that can be applied to the physical pipeline on the target.
+	physicalReq, err := s.translator.Translate(logicalReq)
 	if err != nil {
 		return nil, err
 	}
-	logMsg("@@", physicalReq)
 	var response *p4v1.WriteResponse = nil
 	if physicalReq != nil {
+		logMsg(ToTarget, physicalReq)
 		// Translator wants to update the target.
+		// Validate request.
+		if err := s.targetStore.Update(physicalReq, true); err != nil {
+			return nil, err
+		}
+		// Apply on target.
 		res, err := target.Write(ctx, physicalReq)
 		if err != nil {
 			return nil, err
 		}
 		response = res
+		// Store.
+		_ = s.targetStore.Update(physicalReq, false)
 	} else {
-		// No need to update target for now.
+		// No need to update the target.
 		// Fake successful response.
 		response = &p4v1.WriteResponse{}
 	}
-	logMsg(">>", response)
+	logMsg(ToCtrl, response)
 	// Target updated successfully, update store with logical entities.
-	p.store.PutAll(logicalReq)
+	_ = s.serverStore.Update(logicalReq, false)
+	_ = s.tassenStore.Update(logicalReq, false)
 	return response, nil
 }
 
-func (p server) Read(request *p4v1.ReadRequest, toClient p4v1.P4Runtime_ReadServer) error {
+func (s server) Read(request *p4v1.ReadRequest, toClient p4v1.P4Runtime_ReadServer) error {
 	// TODO: read from store, not from target
-	logMsg("<<", request)
+	logMsg(FromCtrl, request)
 	ctx, cancel := context.WithCancel(toClient.Context())
 	defer cancel()
 	fromTarget, err := target.Read(ctx, request)
@@ -121,16 +166,16 @@ func (p server) Read(request *p4v1.ReadRequest, toClient p4v1.P4Runtime_ReadServ
 		if err != nil {
 			return err
 		}
-		logMsg(">>", response)
+		logMsg(ToCtrl, response)
 		if err := toClient.Send(response); err != nil {
 			return err
 		}
 	}
 }
 
-func (p server) SetForwardingPipelineConfig(ctx context.Context, request *p4v1.SetForwardingPipelineConfigRequest) (
+func (s server) SetForwardingPipelineConfig(ctx context.Context, request *p4v1.SetForwardingPipelineConfigRequest) (
 	*p4v1.SetForwardingPipelineConfigResponse, error) {
-	logMsg("<<", request)
+	logMsg(FromCtrl, request)
 	// Compare P4Info in request with the one passed via flags. Return error if not equal.
 	if bytes, err := ioutil.ReadFile(*logicalP4InfoPath); err == nil {
 		logicalP4Info := &p4confv1.P4Info{}
@@ -160,28 +205,28 @@ func (p server) SetForwardingPipelineConfig(ctx context.Context, request *p4v1.S
 		panic(err)
 	}
 	// Forward modified request
-	logMsg("@@", request)
+	logMsg(ToTarget, request)
 	if response, err := target.SetForwardingPipelineConfig(ctx, request); err == nil {
-		logMsg(">>", response)
+		logMsg(ToCtrl, response)
 		return response, nil
 	} else {
 		return nil, err
 	}
 }
 
-func (p server) GetForwardingPipelineConfig(ctx context.Context, request *p4v1.GetForwardingPipelineConfigRequest) (
+func (s server) GetForwardingPipelineConfig(ctx context.Context, request *p4v1.GetForwardingPipelineConfigRequest) (
 	// TODO: implement returning logical config instead of physical one
 	*p4v1.GetForwardingPipelineConfigResponse, error) {
-	logMsg("<<", request)
+	logMsg(FromCtrl, request)
 	response, err := target.GetForwardingPipelineConfig(ctx, request)
 	if err != nil {
 		return nil, err
 	}
-	logMsg(">>", response)
+	logMsg(ToCtrl, response)
 	return response, nil
 }
 
-func (p server) StreamChannel(inStream p4v1.P4Runtime_StreamChannelServer) error {
+func (s server) StreamChannel(inStream p4v1.P4Runtime_StreamChannelServer) error {
 	log.Println("StreamChannel opened!")
 	defer log.Println("StreamChannel closed!")
 
@@ -201,7 +246,7 @@ func (p server) StreamChannel(inStream p4v1.P4Runtime_StreamChannelServer) error
 				waiterr <- err
 				return
 			}
-			logMsg(">>", response)
+			logMsg(FromTarget, response)
 			if err := inStream.Send(response); err != nil {
 				waiterr <- err
 				return
@@ -219,7 +264,7 @@ func (p server) StreamChannel(inStream p4v1.P4Runtime_StreamChannelServer) error
 				waiterr <- err
 				return
 			}
-			logMsg("<<", request)
+			logMsg(FromCtrl, request)
 			if err := outStream.Send(request); err != nil {
 				waiterr <- err
 				return
@@ -232,26 +277,6 @@ func (p server) StreamChannel(inStream p4v1.P4Runtime_StreamChannelServer) error
 	} else {
 		return err
 	}
-}
-
-func newTranslator() translators.Translator {
-	switch *translatorName {
-	case "dummy":
-		return translators.Dummy{}
-	case "fabric":
-		// FIXME: replace with fabric translator once ready
-		return translators.Dummy{}
-	default:
-		panic("Unknown translator")
-	}
-}
-
-func newServer() *server {
-	s := &server{
-		translator: newTranslator(),
-		store:      store.NewStore(),
-	}
-	return s
 }
 
 func Start(port int, targetAddr string) {
@@ -272,11 +297,16 @@ func Start(port int, targetAddr string) {
 	}
 	server := grpc.NewServer()
 	p4v1.RegisterP4RuntimeServer(server, newServer())
-	log.Printf("Listening on port %d, talking to %s...\n", port, targetAddr)
+	log.Printf("Listening for controller on port %d, talking to target on %s...\n", port, targetAddr)
 	_ = server.Serve(lis)
 }
 
 func main() {
 	flag.Parse()
+	log.SetFormatter(&log.TextFormatter{
+		ForceColors:   true,
+		FullTimestamp: true,
+		DisableQuote:  true})
+	log.SetLevel(log.TraceLevel)
 	Start(*port, *targetAddr)
 }

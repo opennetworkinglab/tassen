@@ -1,0 +1,691 @@
+pkg_info {
+  arch: "v1model"
+}
+tables {
+  preamble {
+    id: 38498675
+    name: "IngressPipe.if_types"
+    alias: "IngressPipe.if_types"
+  }
+  match_fields {
+    id: 1
+    name: "port"
+    bitwidth: 9
+    match_type: EXACT
+  }
+  action_refs {
+    id: 18538368
+  }
+  const_default_action_id: 18538368
+  direct_resource_ids: 331661032
+  size: 1024
+}
+tables {
+  preamble {
+    id: 49392761
+    name: "IngressPipe.my_stations"
+    alias: "IngressPipe.my_stations"
+  }
+  match_fields {
+    id: 1
+    name: "port"
+    bitwidth: 9
+    match_type: EXACT
+  }
+  match_fields {
+    id: 2
+    name: "eth_dst"
+    bitwidth: 48
+    match_type: EXACT
+  }
+  action_refs {
+    id: 29456969
+  }
+  action_refs {
+    id: 28485346
+    annotations: "@defaultonly"
+    scope: DEFAULT_ONLY
+  }
+  const_default_action_id: 28485346
+  direct_resource_ids: 333390111
+  size: 2048
+}
+tables {
+  preamble {
+    id: 33956689
+    name: "IngressPipe.upstream.lines"
+    alias: "lines"
+  }
+  match_fields {
+    id: 1
+    name: "c_tag"
+    bitwidth: 12
+    match_type: EXACT
+  }
+  match_fields {
+    id: 2
+    name: "s_tag"
+    bitwidth: 12
+    match_type: EXACT
+  }
+  action_refs {
+    id: 17659136
+  }
+  const_default_action_id: 17659136
+  size: 8192
+}
+tables {
+  preamble {
+    id: 39053621
+    name: "IngressPipe.upstream.pppoe_punts"
+    alias: "pppoe_punts"
+  }
+  match_fields {
+    id: 1
+    name: "pppoe_code"
+    bitwidth: 8
+    match_type: EXACT
+  }
+  match_fields {
+    id: 2
+    name: "pppoe_proto"
+    bitwidth: 16
+    match_type: TERNARY
+  }
+  action_refs {
+    id: 27908888
+  }
+  action_refs {
+    id: 28485346
+    annotations: "@defaultonly"
+    scope: DEFAULT_ONLY
+  }
+  const_default_action_id: 28485346
+  size: 32
+}
+tables {
+  preamble {
+    id: 44507663
+    name: "IngressPipe.upstream.attachments_v4"
+    alias: "attachments_v4"
+  }
+  match_fields {
+    id: 1
+    name: "line_id"
+    bitwidth: 32
+    match_type: EXACT
+  }
+  match_fields {
+    id: 2
+    name: "eth_src"
+    bitwidth: 48
+    match_type: EXACT
+  }
+  match_fields {
+    id: 3
+    name: "ipv4_src"
+    bitwidth: 32
+    match_type: EXACT
+  }
+  match_fields {
+    id: 4
+    name: "pppoe_sess_id"
+    bitwidth: 16
+    match_type: EXACT
+  }
+  action_refs {
+    id: 28485346
+  }
+  action_refs {
+    id: 18981580
+    annotations: "@defaultonly"
+    scope: DEFAULT_ONLY
+  }
+  const_default_action_id: 18981580
+  size: 32768
+}
+tables {
+  preamble {
+    id: 40314915
+    name: "IngressPipe.upstream.routes_v4"
+    alias: "upstream.routes_v4"
+  }
+  match_fields {
+    id: 1
+    name: "ipv4_dst"
+    bitwidth: 32
+    match_type: LPM
+  }
+  action_refs {
+    id: 31033793
+  }
+  action_refs {
+    id: 28485346
+    annotations: "@defaultonly"
+    scope: DEFAULT_ONLY
+  }
+  implementation_id: 286372544
+  size: 1024
+}
+tables {
+  preamble {
+    id: 44334275
+    name: "IngressPipe.downstream.lines_v4"
+    alias: "lines_v4"
+  }
+  match_fields {
+    id: 1
+    name: "ipv4_dst"
+    bitwidth: 32
+    match_type: EXACT
+  }
+  action_refs {
+    id: 17097684
+  }
+  action_refs {
+    id: 27308170
+    annotations: "@defaultonly"
+    scope: DEFAULT_ONLY
+  }
+  const_default_action_id: 27308170
+  size: 8192
+}
+tables {
+  preamble {
+    id: 34456456
+    name: "IngressPipe.downstream.vids"
+    alias: "vids"
+  }
+  match_fields {
+    id: 1
+    name: "line_id"
+    bitwidth: 32
+    match_type: EXACT
+  }
+  action_refs {
+    id: 23385620
+  }
+  action_refs {
+    id: 27308170
+    annotations: "@defaultonly"
+    scope: DEFAULT_ONLY
+  }
+  const_default_action_id: 27308170
+  size: 8192
+}
+tables {
+  preamble {
+    id: 39589935
+    name: "IngressPipe.downstream.pppoe_sessions"
+    alias: "pppoe_sessions"
+  }
+  match_fields {
+    id: 1
+    name: "line_id"
+    bitwidth: 32
+    match_type: EXACT
+  }
+  action_refs {
+    id: 27412451
+  }
+  action_refs {
+    id: 27308170
+    annotations: "@defaultonly"
+    scope: DEFAULT_ONLY
+  }
+  const_default_action_id: 27308170
+  size: 8192
+}
+tables {
+  preamble {
+    id: 44140312
+    name: "IngressPipe.downstream.routes_v4"
+    alias: "downstream.routes_v4"
+  }
+  match_fields {
+    id: 1
+    name: "line_id"
+    bitwidth: 32
+    match_type: LPM
+  }
+  action_refs {
+    id: 23530511
+  }
+  action_refs {
+    id: 27308170
+    annotations: "@defaultonly"
+    scope: DEFAULT_ONLY
+  }
+  implementation_id: 287433378
+  size: 8192
+}
+tables {
+  preamble {
+    id: 43911884
+    name: "IngressPipe.acl.acls"
+    alias: "acl.acls"
+  }
+  match_fields {
+    id: 1
+    name: "port"
+    bitwidth: 9
+    match_type: TERNARY
+  }
+  match_fields {
+    id: 2
+    name: "if_type"
+    bitwidth: 3
+    match_type: TERNARY
+  }
+  match_fields {
+    id: 3
+    name: "eth_src"
+    bitwidth: 48
+    match_type: TERNARY
+  }
+  match_fields {
+    id: 4
+    name: "eth_dst"
+    bitwidth: 48
+    match_type: TERNARY
+  }
+  match_fields {
+    id: 5
+    name: "eth_type"
+    bitwidth: 16
+    match_type: TERNARY
+  }
+  match_fields {
+    id: 6
+    name: "ipv4_src"
+    bitwidth: 32
+    match_type: TERNARY
+  }
+  match_fields {
+    id: 7
+    name: "ipv4_dst"
+    bitwidth: 32
+    match_type: TERNARY
+  }
+  match_fields {
+    id: 8
+    name: "ipv4_proto"
+    bitwidth: 8
+    match_type: TERNARY
+  }
+  match_fields {
+    id: 9
+    name: "l4_sport"
+    bitwidth: 16
+    match_type: TERNARY
+  }
+  match_fields {
+    id: 10
+    name: "l4_dport"
+    bitwidth: 16
+    match_type: TERNARY
+  }
+  action_refs {
+    id: 21835758
+  }
+  action_refs {
+    id: 22515864
+  }
+  action_refs {
+    id: 29272903
+  }
+  action_refs {
+    id: 28485346
+  }
+  const_default_action_id: 28485346
+  direct_resource_ids: 325583051
+  size: 256
+}
+actions {
+  preamble {
+    id: 28485346
+    name: "nop"
+    alias: "nop"
+  }
+}
+actions {
+  preamble {
+    id: 31962786
+    name: "drop_now"
+    alias: "drop_now"
+  }
+}
+actions {
+  preamble {
+    id: 18538368
+    name: "IngressPipe.set_if_type"
+    alias: "set_if_type"
+  }
+  params {
+    id: 1
+    name: "if_type"
+    bitwidth: 3
+  }
+}
+actions {
+  preamble {
+    id: 29456969
+    name: "IngressPipe.set_my_station"
+    alias: "set_my_station"
+  }
+}
+actions {
+  preamble {
+    id: 17659136
+    name: "IngressPipe.upstream.set_line"
+    alias: "upstream.set_line"
+  }
+  params {
+    id: 1
+    name: "line_id"
+    bitwidth: 32
+  }
+}
+actions {
+  preamble {
+    id: 27908888
+    name: "IngressPipe.upstream.punt"
+    alias: "upstream.punt"
+  }
+}
+actions {
+  preamble {
+    id: 18981580
+    name: "IngressPipe.upstream.reject"
+    alias: "reject"
+  }
+}
+actions {
+  preamble {
+    id: 31033793
+    name: "IngressPipe.upstream.route_v4"
+    alias: "upstream.route_v4"
+  }
+  params {
+    id: 1
+    name: "port"
+    bitwidth: 9
+  }
+  params {
+    id: 2
+    name: "dmac"
+    bitwidth: 48
+  }
+}
+actions {
+  preamble {
+    id: 27308170
+    name: "IngressPipe.downstream.miss"
+    alias: "miss"
+  }
+}
+actions {
+  preamble {
+    id: 17097684
+    name: "IngressPipe.downstream.set_line"
+    alias: "downstream.set_line"
+  }
+  params {
+    id: 1
+    name: "line_id"
+    bitwidth: 32
+  }
+}
+actions {
+  preamble {
+    id: 23385620
+    name: "IngressPipe.downstream.set_vids"
+    alias: "set_vids"
+  }
+  params {
+    id: 1
+    name: "c_tag"
+    bitwidth: 12
+  }
+  params {
+    id: 2
+    name: "s_tag"
+    bitwidth: 12
+  }
+}
+actions {
+  preamble {
+    id: 27412451
+    name: "IngressPipe.downstream.set_pppoe_sess"
+    alias: "set_pppoe_sess"
+  }
+  params {
+    id: 1
+    name: "pppoe_sess_id"
+    bitwidth: 16
+  }
+}
+actions {
+  preamble {
+    id: 23530511
+    name: "IngressPipe.downstream.route_v4"
+    alias: "downstream.route_v4"
+  }
+  params {
+    id: 1
+    name: "port"
+    bitwidth: 9
+  }
+  params {
+    id: 2
+    name: "dmac"
+    bitwidth: 48
+  }
+}
+actions {
+  preamble {
+    id: 21835758
+    name: "IngressPipe.acl.set_port"
+    alias: "set_port"
+  }
+  params {
+    id: 1
+    name: "port"
+    bitwidth: 9
+  }
+}
+actions {
+  preamble {
+    id: 22515864
+    name: "IngressPipe.acl.punt"
+    alias: "acl.punt"
+  }
+}
+actions {
+  preamble {
+    id: 29272903
+    name: "IngressPipe.acl.drop"
+    alias: "drop"
+  }
+}
+action_profiles {
+  preamble {
+    id: 286372544
+    name: "IngressPipe.upstream.ecmp"
+    alias: "upstream.ecmp"
+  }
+  table_ids: 40314915
+  with_selector: true
+  size: 1024
+  max_group_size: 16
+}
+action_profiles {
+  preamble {
+    id: 287433378
+    name: "IngressPipe.downstream.ecmp"
+    alias: "downstream.ecmp"
+  }
+  table_ids: 44140312
+  with_selector: true
+  size: 1024
+  max_group_size: 16
+}
+counters {
+  preamble {
+    id: 304792521
+    name: "IngressPipe.upstream.all"
+    alias: "all"
+  }
+  spec {
+    unit: BOTH
+  }
+  size: 8192
+}
+counters {
+  preamble {
+    id: 310787420
+    name: "IngressPipe.upstream.punted"
+    alias: "punted"
+  }
+  spec {
+    unit: BOTH
+  }
+  size: 8192
+}
+counters {
+  preamble {
+    id: 314616893
+    name: "IngressPipe.upstream.spoofed"
+    alias: "spoofed"
+  }
+  spec {
+    unit: BOTH
+  }
+  size: 8192
+}
+counters {
+  preamble {
+    id: 310793502
+    name: "IngressPipe.upstream.routed"
+    alias: "upstream.routed"
+  }
+  spec {
+    unit: BOTH
+  }
+  size: 8192
+}
+counters {
+  preamble {
+    id: 307117173
+    name: "IngressPipe.upstream.ttl.expired"
+    alias: "upstream.ttl.expired"
+  }
+  spec {
+    unit: BOTH
+  }
+  size: 8192
+}
+counters {
+  preamble {
+    id: 315685570
+    name: "IngressPipe.downstream.dropped"
+    alias: "dropped"
+  }
+  spec {
+    unit: BOTH
+  }
+  size: 8192
+}
+counters {
+  preamble {
+    id: 315756728
+    name: "IngressPipe.downstream.routed"
+    alias: "downstream.routed"
+  }
+  spec {
+    unit: BOTH
+  }
+  size: 8192
+}
+counters {
+  preamble {
+    id: 305954198
+    name: "IngressPipe.downstream.ttl.expired"
+    alias: "downstream.ttl.expired"
+  }
+  spec {
+    unit: BOTH
+  }
+  size: 8192
+}
+direct_counters {
+  preamble {
+    id: 331661032
+    name: "if_types"
+    alias: "if_types"
+  }
+  spec {
+    unit: BOTH
+  }
+  direct_table_id: 38498675
+}
+direct_counters {
+  preamble {
+    id: 333390111
+    name: "my_stations"
+    alias: "my_stations"
+  }
+  spec {
+    unit: BOTH
+  }
+  direct_table_id: 49392761
+}
+direct_counters {
+  preamble {
+    id: 325583051
+    name: "acls"
+    alias: "acls"
+  }
+  spec {
+    unit: BOTH
+  }
+  direct_table_id: 43911884
+}
+controller_packet_metadata {
+  preamble {
+    id: 72345925
+    name: "packet_in"
+    alias: "packet_in"
+    annotations: "@controller_header(\"packet_in\")"
+  }
+  metadata {
+    id: 1
+    name: "ingress_port"
+    bitwidth: 9
+  }
+  metadata {
+    id: 2
+    name: "_pad"
+    bitwidth: 7
+  }
+}
+controller_packet_metadata {
+  preamble {
+    id: 81841164
+    name: "packet_out"
+    alias: "packet_out"
+    annotations: "@controller_header(\"packet_out\")"
+  }
+  metadata {
+    id: 1
+    name: "egress_port"
+    bitwidth: 9
+  }
+  metadata {
+    id: 2
+    name: "_pad"
+    bitwidth: 7
+  }
+}
+type_info {
+}

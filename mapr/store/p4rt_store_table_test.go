@@ -138,7 +138,7 @@ func Test_store_FilterTableEntries(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s := store{
+			s := p4RtStore{
 				tableEntries: tt.fields.tableEntries,
 			}
 			got := s.FilterTableEntries(tt.args.f)
@@ -172,7 +172,7 @@ func Test_store_PutTableEntry(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s := store{
+			s := p4RtStore{
 				tableEntries: tt.fields.tableEntries,
 			}
 			s.PutTableEntry(tt.args.entry)
@@ -207,7 +207,7 @@ func Test_store_GetTableEntry(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s := store{
+			s := p4RtStore{
 				tableEntries: tt.fields.tableEntries,
 			}
 			assert.Equal(t, tt.want, s.GetTableEntry(tt.args.key), "GetTableEntry() should return expected value")
@@ -240,7 +240,7 @@ func Test_store_RemoveTableEntry(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s := store{
+			s := p4RtStore{
 				tableEntries: tt.fields.tableEntries,
 			}
 			s.RemoveTableEntry(tt.args.entry)
@@ -278,7 +278,7 @@ func Test_store_TableEntries(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s := store{
+			s := p4RtStore{
 				tableEntries: tt.fields.tableEntries,
 			}
 			got := s.TableEntries()
@@ -326,7 +326,7 @@ func Test_store_TableEntryCount(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s := store{
+			s := p4RtStore{
 				tableEntries: tt.fields.tableEntries,
 			}
 			assert.Equal(t, tt.want, s.TableEntryCount(), "TableEntryCount() should return expected count")
