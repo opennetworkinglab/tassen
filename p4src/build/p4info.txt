@@ -58,12 +58,18 @@ tables {
   }
   match_fields {
     id: 1
+    name: "port"
+    bitwidth: 9
+    match_type: EXACT
+  }
+  match_fields {
+    id: 2
     name: "c_tag"
     bitwidth: 12
     match_type: EXACT
   }
   match_fields {
-    id: 2
+    id: 3
     name: "s_tag"
     bitwidth: 12
     match_type: EXACT

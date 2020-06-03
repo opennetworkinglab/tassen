@@ -76,7 +76,8 @@ class PppoeIp4UnicastTest(P4RuntimeTest):
             table_name='IngressPipe.upstream.lines',
             match_fields={
                 'c_tag': c_tag,
-                's_tag': s_tag
+                's_tag': s_tag,
+                'port' : self.port1,
             },
             action_name='IngressPipe.upstream.set_line',
             action_params={'line_id': line_id}
