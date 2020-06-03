@@ -4779,6 +4779,12 @@
           "key" : [
             {
               "match_type" : "exact",
+              "name" : "port",
+              "target" : ["standard_metadata", "ingress_port"],
+              "mask" : null
+            },
+            {
+              "match_type" : "exact",
               "name" : "c_tag",
               "target" : ["scalars", "userMetadata.c_tag"],
               "mask" : null
@@ -4787,12 +4793,6 @@
               "match_type" : "exact",
               "name" : "s_tag",
               "target" : ["scalars", "userMetadata.s_tag"],
-              "mask" : null
-            },
-            {
-              "match_type" : "exact",
-              "name" : "port",
-              "target" : ["standard_metadata", "ingress_port"],
               "mask" : null
             }
           ],

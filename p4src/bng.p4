@@ -305,9 +305,9 @@ control IngressUpstream(
 
     table lines {
         key = {
+            smeta.ingress_port  : exact @name("port");
             lmeta.c_tag         : exact @name("c_tag");
             lmeta.s_tag         : exact @name("s_tag");
-            smeta.ingress_port  : exact @name("port");
             // If one needs more accounting granularirty, they could add more
             // fields here.
         }
