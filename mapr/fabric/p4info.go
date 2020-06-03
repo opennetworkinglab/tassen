@@ -1,4 +1,4 @@
-package p4info
+package fabric
 
 //noinspection GoSnakeCaseUsage
 const(

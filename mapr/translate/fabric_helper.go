@@ -3,7 +3,7 @@ package translate
 import (
 	"encoding/binary"
 	v1 "github.com/p4lang/p4runtime/go/p4/v1"
-	"mapr/p4info"
+	"mapr/fabric"
 )
 
 
@@ -28,7 +28,7 @@ func getEthTypeValue(ethType uint16) []byte {
 
 func createEgressVlanPopEntry(port []byte, internalVlan uint16) v1.TableEntry {
 	matchVlanId := v1.FieldMatch{
-		FieldId: p4info.FieldMatch_EgressVlanVlanId,
+		FieldId: fabric.FieldMatch_EgressVlanVlanId,
 		FieldMatchType: &v1.FieldMatch_Exact_{
 			Exact: &v1.FieldMatch_Exact{
 				Value: getVlanIdValue(internalVlan),
@@ -36,7 +36,7 @@ func createEgressVlanPopEntry(port []byte, internalVlan uint16) v1.TableEntry {
 		},
 	}
 	matchEgressPort := v1.FieldMatch{
-		FieldId: p4info.FieldMatch_EgressVlanEgPort,
+		FieldId: fabric.FieldMatch_EgressVlanEgPort,
 		FieldMatchType: &v1.FieldMatch_Exact_{
 			Exact: &v1.FieldMatch_Exact{
 				Value: port,
@@ -45,20 +45,20 @@ func createEgressVlanPopEntry(port []byte, internalVlan uint16) v1.TableEntry {
 	}
 	actionPop := v1.TableAction{
 		Type: &v1.TableAction_Action{Action: &v1.Action{
-			ActionId: p4info.Action_EgressVlanPopVlan,
+			ActionId: fabric.Action_EgressVlanPopVlan,
 			Params:   nil,
 		}},
 	}
 	return v1.TableEntry{
-		TableId: p4info.Table_EgressVlan,
+		TableId: fabric.Table_EgressVlan,
 		Match:   []*v1.FieldMatch{&matchVlanId, &matchEgressPort},
 		Action:  &actionPop,
 	}
 }
 
-func createIngressPortVlanEntry(port []byte, internlVlan uint16, prio int32) v1.TableEntry {
+func createIngressPortVlanEntry(port []byte, internalVlan uint16, prio int32) v1.TableEntry {
 	matchIngressPort := v1.FieldMatch{
-		FieldId: p4info.FieldMatch_IngressPortVlanIgPort,
+		FieldId: fabric.FieldMatch_IngressPortVlanIgPort,
 		FieldMatchType: &v1.FieldMatch_Exact_{
 			Exact: &v1.FieldMatch_Exact{
 				Value: port,
@@ -66,7 +66,7 @@ func createIngressPortVlanEntry(port []byte, internlVlan uint16, prio int32) v1.
 		},
 	}
 	matchVlanIsValid := v1.FieldMatch{
-		FieldId: p4info.FieldMatch_IngressPortVlanVlanIsValid,
+		FieldId: fabric.FieldMatch_IngressPortVlanVlanIsValid,
 		FieldMatchType: &v1.FieldMatch_Exact_{
 			Exact: &v1.FieldMatch_Exact{
 				Value: []byte{0},
@@ -75,17 +75,17 @@ func createIngressPortVlanEntry(port []byte, internlVlan uint16, prio int32) v1.
 	}
 	actionPop := v1.TableAction{
 		Type: &v1.TableAction_Action{Action: &v1.Action{
-			ActionId: p4info.Action_IngressPortVlanPermitWithInternalVlan,
+			ActionId: fabric.Action_IngressPortVlanPermitWithInternalVlan,
 			Params: []*v1.Action_Param{
 				{
 					ParamId: 1,
-					Value:   getVlanIdValue(internlVlan),
+					Value:   getVlanIdValue(internalVlan),
 				},
 			},
 		}},
 	}
 	return v1.TableEntry{
-		TableId:  p4info.Table_IngressPortVlan,
+		TableId:  fabric.Table_IngressPortVlan,
 		Match:    []*v1.FieldMatch{&matchIngressPort, &matchVlanIsValid},
 		Action:   &actionPop,
 		Priority: prio,
@@ -94,7 +94,7 @@ func createIngressPortVlanEntry(port []byte, internlVlan uint16, prio int32) v1.
 
 func createFwdClassifierEntry(port []byte, EthDst []byte, prio int32) v1.TableEntry {
 	matchIngressPort := v1.FieldMatch{
-		FieldId: p4info.FieldMatch_FwdClassifierIgPort,
+		FieldId: fabric.FieldMatch_FwdClassifierIgPort,
 		FieldMatchType: &v1.FieldMatch_Exact_{
 			Exact: &v1.FieldMatch_Exact{
 				Value: port,
@@ -102,7 +102,7 @@ func createFwdClassifierEntry(port []byte, EthDst []byte, prio int32) v1.TableEn
 		},
 	}
 	matchEthDst := v1.FieldMatch{
-		FieldId: p4info.FieldMatch_FwdClassifierEthDst,
+		FieldId: fabric.FieldMatch_FwdClassifierEthDst,
 		FieldMatchType: &v1.FieldMatch_Ternary_{
 			Ternary: &v1.FieldMatch_Ternary{
 				Value: EthDst,
@@ -111,25 +111,25 @@ func createFwdClassifierEntry(port []byte, EthDst []byte, prio int32) v1.TableEn
 		},
 	}
 	matchIpEthType := v1.FieldMatch{
-		FieldId: p4info.FieldMatch_FwdClassifierIpEthType,
+		FieldId: fabric.FieldMatch_FwdClassifierIpEthType,
 		FieldMatchType: &v1.FieldMatch_Exact_{
 			Exact: &v1.FieldMatch_Exact{
-				Value: getEthTypeValue(p4info.EthTypeIpv4),
+				Value: getEthTypeValue(fabric.EthTypeIpv4),
 			},
 		},
 	}
 	actionPop := v1.TableAction{
 		Type: &v1.TableAction_Action{Action: &v1.Action{
-			ActionId: p4info.Action_FwdClassifierSetForwardingType,
+			ActionId: fabric.Action_FwdClassifierSetForwardingType,
 			Params: []*v1.Action_Param{
 				{
 					ParamId: 1,
-					Value:   []byte{p4info.FwdType_FwdIpv4Unicast}},
+					Value:   []byte{fabric.FwdType_FwdIpv4Unicast}},
 			},
 		}},
 	}
 	return v1.TableEntry{
-		TableId:  p4info.Table_FwdClassifier,
+		TableId:  fabric.Table_FwdClassifier,
 		Match:    []*v1.FieldMatch{&matchIngressPort, &matchEthDst, &matchIpEthType},
 		Action:   &actionPop,
 		Priority: prio,
