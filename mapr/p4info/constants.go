@@ -19,6 +19,7 @@ const (
 	Table_UpstreamLines           uint32 = 33956689
 	FieldMatch_UpstreamLines_Ctag uint32 = 1
 	FieldMatch_UpstreamLines_Stag uint32 = 2
+	FieldMatch_UpstreamLines_Port uint32 = 3
 	Action_UpstreamSetLine        uint32 = 17659136
 	Param_UpstreamSetLine_LineId  uint32 = 1
 

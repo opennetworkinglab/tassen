@@ -34,6 +34,7 @@ const (
 
 type AttachmentEntry struct {
 	Direction   Direction
+	Port        []byte
 	LineId      []byte
 	STag        []byte
 	CTag        []byte
@@ -43,8 +44,8 @@ type AttachmentEntry struct {
 }
 
 func (a AttachmentEntry) String() string {
-	return fmt.Sprintf("Dir: %s, LineId: %x, STag: %x, CTag: %x, MacAddr: %x, Ipv4Addr: %x, PppoeSessId: %x",
-		a.Direction, a.LineId, a.STag, a.CTag, a.MacAddr, a.Ipv4Addr, a.PppoeSessId)
+	return fmt.Sprintf("Dir: %s, Port: %s, LineId: %x, STag: %x, CTag: %x, MacAddr: %x, Ipv4Addr: %x, PppoeSessId: %x",
+		a.Direction, a.Port, a.LineId, a.STag, a.CTag, a.MacAddr, a.Ipv4Addr, a.PppoeSessId)
 }
 
 type PortKey [2]byte
@@ -172,6 +173,9 @@ func (s tassenStore) EvalAttachment(t *v1.TableEntry) (a AttachmentEntry, ok boo
 		return
 	}
 	// Is there a less verbose way of evaluating the attachment?
+	if a.Port == nil {
+		a.Port = storedAttach.Port
+	}
 	if a.STag == nil {
 		a.STag = storedAttach.STag
 	}
@@ -187,7 +191,7 @@ func (s tassenStore) EvalAttachment(t *v1.TableEntry) (a AttachmentEntry, ok boo
 	if a.PppoeSessId == nil {
 		a.PppoeSessId = storedAttach.PppoeSessId
 	}
-	ok = a.STag != nil && a.CTag != nil && a.MacAddr != nil && a.Ipv4Addr != nil && a.PppoeSessId != nil
+	ok = a.Port != nil && a.STag != nil && a.CTag != nil && a.MacAddr != nil && a.Ipv4Addr != nil && a.PppoeSessId != nil
 	return
 }
 
@@ -256,6 +260,8 @@ func ParseUpstreamLineEntry(t *v1.TableEntry, a *AttachmentEntry) error {
 			a.CTag = m.GetExact().Value
 		case p4info.FieldMatch_UpstreamLines_Stag:
 			a.STag = m.GetExact().Value
+		case p4info.FieldMatch_UpstreamLines_Port:
+			a.Port = m.GetExact().Value
 		default:
 			return fmt.Errorf("invalid %T ID %d", m, m.FieldId)
 		}

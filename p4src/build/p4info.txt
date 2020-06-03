@@ -68,6 +68,12 @@ tables {
     bitwidth: 12
     match_type: EXACT
   }
+  match_fields {
+    id: 3
+    name: "port"
+    bitwidth: 9
+    match_type: EXACT
+  }
   action_refs {
     id: 17659136
   }
