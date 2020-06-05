@@ -78,3 +78,7 @@ _go_build_test_container:
 mapr: _go_build_test_container
 	$(info *** Building mapr...)
 	@docker start -a -i ${go_build_name}
+
+gen-constants:
+	@cd util/go-gen-const && PTF_DOCKER_IMG=$(PTF_IMG) GOLANG_DOCKER_IMG=$(GOLANG_IMG) ./gen_const_fabric.sh
+	@cd util/go-gen-const && PTF_DOCKER_IMG=$(PTF_IMG) GOLANG_DOCKER_IMG=$(GOLANG_IMG) ./gen_const_bng.sh
