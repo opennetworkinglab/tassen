@@ -7,12 +7,12 @@ TASSEN_DIR=$(pwd)/../../
 PTF_DOCKER_IMG=${PTF_DOCKER_IMG:-undefined}
 GOLANG_DOCKER_IMG=${GOLANG_DOCKER_IMG:-undefined}
 
-P4INFO_FILE=/tassen/mapr/p4c-out/fabric/p4info.txt
-OUTPUT_FILE=/tassen/mapr/fabric/p4info.go
+P4INFO_FILE=/tassen/p4src/build/p4info.txt
+OUTPUT_FILE=/tassen/mapr/p4info/constants.go
 
 GO_PACKAGE=fabric
 
-echo "Generate Go constants for fabric.p4"
+echo "Generate Go constants for bng.p4"
 echo "P4Info: ${P4INFO_FILE}"
 
 docker run -v ${TASSEN_DIR}:/tassen -w /tassen/util/go-gen-const \
