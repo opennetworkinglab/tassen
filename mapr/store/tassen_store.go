@@ -86,7 +86,7 @@ func (s tassenStore) Update(r *v1.WriteRequest, dryRun bool) (err error) {
 		switch e := u.Entity.Entity.(type) {
 		case *v1.Entity_TableEntry:
 			switch e.TableEntry.TableId {
-			case p4info.Table_IfTypes:
+			case p4info.Table_IngressPipeIfTypes:
 				entry, err := ParseIfTypeEntry(e.TableEntry)
 				if err != nil {
 					return err
@@ -95,7 +95,7 @@ func (s tassenStore) Update(r *v1.WriteRequest, dryRun bool) (err error) {
 				if !dryRun {
 					s.ifTypes[toPortKey(entry.Port)] = &entry
 				}
-			case p4info.Table_MyStations:
+			case p4info.Table_IngressPipeMyStations:
 				entry, err := ParseMyStationEntry(e.TableEntry)
 				if err != nil {
 					return err
@@ -104,7 +104,7 @@ func (s tassenStore) Update(r *v1.WriteRequest, dryRun bool) (err error) {
 				if !dryRun {
 					s.myStations[toPortKey(entry.EthDst)] = &entry
 				}
-			case p4info.Table_UpstreamLines, p4info.Table_UpstreamAttachmentsV4: // TODO: downstream tables
+			case p4info.Table_IngressPipeUpstreamLines, p4info.Table_IngressPipeUpstreamAttachmentsV4: // TODO: downstream tables
 				attach, _, err := s.EvalAttachment(e.TableEntry)
 				if err != nil {
 					return err
@@ -148,9 +148,9 @@ func (s tassenStore) GetDownAttachment(key LineIdKey) *AttachmentEntry {
 
 func (s tassenStore) EvalAttachment(t *v1.TableEntry) (a AttachmentEntry, ok bool, err error) {
 	switch t.TableId {
-	case p4info.Table_UpstreamLines:
+	case p4info.Table_IngressPipeUpstreamLines:
 		err = ParseUpstreamLineEntry(t, &a)
-	case p4info.Table_UpstreamAttachmentsV4:
+	case p4info.Table_IngressPipeUpstreamAttachmentsV4:
 		err = ParseUpstreamAttachmentV4Entry(t, &a)
 	default:
 		log.Warnf("EvalAttachment(): table ID %d not implemented", t.TableId)
@@ -208,7 +208,7 @@ func ParseIfTypeEntry(t *v1.TableEntry) (IfTypeEntry, error) {
 	// Parse match
 	for _, m := range t.Match {
 		switch m.FieldId {
-		case p4info.FieldMatch_IfTypes_Port:
+		case p4info.Hdr_IngressPipeIfTypes_Port:
 			entry.Port = m.GetExact().Value
 		default:
 			return IfTypeEntry{}, fmt.Errorf("invalid %T ID %d", m, m.FieldId)
@@ -216,12 +216,12 @@ func ParseIfTypeEntry(t *v1.TableEntry) (IfTypeEntry, error) {
 	}
 	// Parse action
 	act := t.GetAction().GetAction()
-	if act == nil || act.ActionId != p4info.Action_SetIfType {
+	if act == nil || act.ActionId != p4info.Action_IngressPipeSetIfType {
 		return IfTypeEntry{}, fmt.Errorf("invalid Action %s", t.GetAction().String())
 	}
 	for _, p := range act.Params {
 		switch p.ParamId {
-		case p4info.Param_SetIfType_IfType:
+		case p4info.ActionParam_IngressPipeSetIfType_IfType:
 			entry.IfType = p.Value
 		default:
 			return IfTypeEntry{}, fmt.Errorf("invalid %T ID %d", p, p.ParamId)
@@ -235,9 +235,9 @@ func ParseMyStationEntry(t *v1.TableEntry) (MyStationEntry, error) {
 	// Parse match
 	for _, m := range t.Match {
 		switch m.FieldId {
-		case p4info.FieldMatch_MyStations_Port:
+		case p4info.Hdr_IngressPipeMyStations_Port:
 			entry.Port = m.GetExact().Value
-		case p4info.FieldMatch_MyStations_EthDst:
+		case p4info.Hdr_IngressPipeMyStations_EthDst:
 			entry.EthDst = m.GetExact().Value
 		default:
 			return MyStationEntry{}, fmt.Errorf("invalid %T ID %d", m, m.FieldId)
@@ -245,7 +245,7 @@ func ParseMyStationEntry(t *v1.TableEntry) (MyStationEntry, error) {
 	}
 	// Parse action
 	act := t.GetAction().GetAction()
-	if act == nil || act.ActionId != p4info.Action_MyStations_SetMyStation {
+	if act == nil || act.ActionId != p4info.Action_IngressPipeSetMyStation {
 		return MyStationEntry{}, fmt.Errorf("invalid Action %s", t.GetAction().String())
 	}
 	return entry, nil
@@ -256,11 +256,11 @@ func ParseUpstreamLineEntry(t *v1.TableEntry, a *AttachmentEntry) error {
 	a.Direction = DirectionUpstream
 	for _, m := range t.Match {
 		switch m.FieldId {
-		case p4info.FieldMatch_UpstreamLines_Ctag:
+		case p4info.Hdr_IngressPipeUpstreamLines_CTag:
 			a.CTag = m.GetExact().Value
-		case p4info.FieldMatch_UpstreamLines_Stag:
+		case p4info.Hdr_IngressPipeUpstreamLines_STag:
 			a.STag = m.GetExact().Value
-		case p4info.FieldMatch_UpstreamLines_Port:
+		case p4info.Hdr_IngressPipeUpstreamLines_Port:
 			a.Port = m.GetExact().Value
 		default:
 			return fmt.Errorf("invalid %T ID %d", m, m.FieldId)
@@ -268,12 +268,12 @@ func ParseUpstreamLineEntry(t *v1.TableEntry, a *AttachmentEntry) error {
 	}
 	// Parse action
 	act := t.GetAction().GetAction()
-	if act == nil || act.ActionId != p4info.Action_UpstreamSetLine {
+	if act == nil || act.ActionId != p4info.Action_IngressPipeUpstreamSetLine {
 		return fmt.Errorf("invalid Action %s", t.GetAction().String())
 	}
 	for _, p := range act.Params {
 		switch p.ParamId {
-		case p4info.Param_UpstreamSetLine_LineId:
+		case p4info.ActionParam_IngressPipeUpstreamSetLine_LineId:
 			a.LineId = p.Value
 		default:
 			return fmt.Errorf("invalid %T ID %d", p, p.ParamId)
@@ -287,13 +287,13 @@ func ParseUpstreamAttachmentV4Entry(t *v1.TableEntry, a *AttachmentEntry) error 
 	a.Direction = DirectionUpstream
 	for _, m := range t.Match {
 		switch m.FieldId {
-		case p4info.FieldMatch_UpstreamAttachmentsV4_LineId:
+		case p4info.Hdr_IngressPipeUpstreamAttachmentsV4_LineId:
 			a.LineId = m.GetExact().Value
-		case p4info.FieldMatch_UpstreamAttachmentsV4_EthSrc:
+		case p4info.Hdr_IngressPipeUpstreamAttachmentsV4_EthSrc:
 			a.MacAddr = m.GetExact().Value
-		case p4info.FieldMatch_UpstreamAttachmentsV4_Ipv4Src:
+		case p4info.Hdr_IngressPipeUpstreamAttachmentsV4_Ipv4Src:
 			a.Ipv4Addr = m.GetExact().Value
-		case p4info.FieldMatch_UpstreamAttachmentsV4_PppoeSessId:
+		case p4info.Hdr_IngressPipeUpstreamAttachmentsV4_PppoeSessId:
 			a.PppoeSessId = m.GetExact().Value
 		default:
 			return fmt.Errorf("invalid %T ID %d", m, m.FieldId)

@@ -24,7 +24,8 @@ copyright = '''/*
 
 PKG_FMT = 'package %s'
 
-CONST_OPEN = 'const ('
+CONST_OPEN = '''//noinspection GoSnakeCaseUsage 
+    const ('''
 CONST_CLOSE = ')'
 
 
