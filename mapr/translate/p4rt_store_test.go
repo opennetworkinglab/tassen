@@ -1,28 +1,28 @@
-package store
+package translate
 
 import (
-	v1 "github.com/p4lang/p4runtime/go/p4/v1"
+	p4v1 "github.com/p4lang/p4runtime/go/p4/v1"
 	"testing"
 )
 
-var emptyTableEntries = map[string]*v1.TableEntry{}
+var emptyTableEntries = map[string]*p4v1.TableEntry{}
 
-var mockUpdateInsertTableEntry1 = v1.Update{
-	Type:   v1.Update_INSERT,
-	Entity: &v1.Entity{Entity: &v1.Entity_TableEntry{TableEntry: &mockTableEntry1}},
+var mockUpdateInsertTableEntry1 = p4v1.Update{
+	Type:   p4v1.Update_INSERT,
+	Entity: &p4v1.Entity{Entity: &p4v1.Entity_TableEntry{TableEntry: &mockTableEntry1}},
 }
 
-var mockUpdateInsertTableEntry2 = v1.Update{
-	Type:   v1.Update_INSERT,
-	Entity: &v1.Entity{Entity: &v1.Entity_TableEntry{TableEntry: &mockTableEntry2}},
+var mockUpdateInsertTableEntry2 = p4v1.Update{
+	Type:   p4v1.Update_INSERT,
+	Entity: &p4v1.Entity{Entity: &p4v1.Entity_TableEntry{TableEntry: &mockTableEntry2}},
 }
 
 func Test_store_Update(t *testing.T) {
 	type fields struct {
-		tableEntries map[string]*v1.TableEntry
+		tableEntries map[string]*p4v1.TableEntry
 	}
 	type args struct {
-		req    *v1.WriteRequest
+		req    *p4v1.WriteRequest
 		dryRun bool
 	}
 	tests := []struct {
@@ -35,8 +35,8 @@ func Test_store_Update(t *testing.T) {
 			name:   "insert 1 table entry",
 			fields: fields{emptyTableEntries},
 			args: args{
-				req: &v1.WriteRequest{
-					Updates: []*v1.Update{
+				req: &p4v1.WriteRequest{
+					Updates: []*p4v1.Update{
 						&mockUpdateInsertTableEntry1,
 					},
 				},
@@ -48,8 +48,8 @@ func Test_store_Update(t *testing.T) {
 			name:   "insert 2 table entries",
 			fields: fields{emptyTableEntries},
 			args: args{
-				req: &v1.WriteRequest{
-					Updates: []*v1.Update{
+				req: &p4v1.WriteRequest{
+					Updates: []*p4v1.Update{
 						&mockUpdateInsertTableEntry1,
 						&mockUpdateInsertTableEntry2,
 					},

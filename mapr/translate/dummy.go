@@ -1,7 +1,7 @@
 package translate
 
 import (
-	v1 "github.com/p4lang/p4runtime/go/p4/v1"
+	p4v1 "github.com/p4lang/p4runtime/go/p4/v1"
 )
 
 // A dummy translator for testing purposes only.
@@ -13,6 +13,6 @@ func NewDummyTranslator() Translator {
 }
 
 // Returns the same input request.
-func (d dummy) Translate(request *v1.WriteRequest) (*v1.WriteRequest, error) {
+func (d dummy) Translate(request *p4v1.WriteRequest) (*p4v1.WriteRequest, error) {
 	return request, nil
 }
