@@ -1,9 +1,8 @@
-package translate
+package fabric
 
 import (
 	"encoding/binary"
 	v1 "github.com/p4lang/p4runtime/go/p4/v1"
-	"mapr/fabric"
 )
 
 func createUpdateEntry(entry *v1.TableEntry, uType v1.Update_Type) *v1.Update {
@@ -27,7 +26,7 @@ func getEthTypeValue(ethType uint16) []byte {
 
 func createEgressVlanPopEntry(port []byte, internalVlan uint16) v1.TableEntry {
 	matchVlanId := v1.FieldMatch{
-		FieldId: fabric.Hdr_FabricEgressEgressNextEgressVlan_VlanId,
+		FieldId: Hdr_FabricEgressEgressNextEgressVlan_VlanId,
 		FieldMatchType: &v1.FieldMatch_Exact_{
 			Exact: &v1.FieldMatch_Exact{
 				Value: getVlanIdValue(internalVlan),
@@ -35,7 +34,7 @@ func createEgressVlanPopEntry(port []byte, internalVlan uint16) v1.TableEntry {
 		},
 	}
 	matchEgressPort := v1.FieldMatch{
-		FieldId: fabric.Hdr_FabricEgressEgressNextEgressVlan_EgPort,
+		FieldId: Hdr_FabricEgressEgressNextEgressVlan_EgPort,
 		FieldMatchType: &v1.FieldMatch_Exact_{
 			Exact: &v1.FieldMatch_Exact{
 				Value: port,
@@ -44,12 +43,12 @@ func createEgressVlanPopEntry(port []byte, internalVlan uint16) v1.TableEntry {
 	}
 	actionPop := v1.TableAction{
 		Type: &v1.TableAction_Action{Action: &v1.Action{
-			ActionId: fabric.Action_FabricEgressEgressNextPopVlan,
+			ActionId: Action_FabricEgressEgressNextPopVlan,
 			Params:   nil,
 		}},
 	}
 	return v1.TableEntry{
-		TableId: fabric.Table_FabricEgressEgressNextEgressVlan,
+		TableId: Table_FabricEgressEgressNextEgressVlan,
 		Match:   []*v1.FieldMatch{&matchVlanId, &matchEgressPort},
 		Action:  &actionPop,
 	}
@@ -58,7 +57,7 @@ func createEgressVlanPopEntry(port []byte, internalVlan uint16) v1.TableEntry {
 func createIngressPortVlanEntryPermit(port []byte, vlanId []byte, innerVlanId []byte, internalVlan []byte, prio int32) v1.TableEntry {
 	matchFields := make([]*v1.FieldMatch, 0)
 	matchFields = append(matchFields, &v1.FieldMatch{
-		FieldId: fabric.Hdr_FabricIngressFilteringIngressPortVlan_IgPort,
+		FieldId: Hdr_FabricIngressFilteringIngressPortVlan_IgPort,
 		FieldMatchType: &v1.FieldMatch_Exact_{
 			Exact: &v1.FieldMatch_Exact{
 				Value: port,
@@ -67,7 +66,7 @@ func createIngressPortVlanEntryPermit(port []byte, vlanId []byte, innerVlanId []
 	})
 	if vlanId != nil {
 		matchFields = append(matchFields, &v1.FieldMatch{
-			FieldId: fabric.Hdr_FabricIngressFilteringIngressPortVlan_VlanIsValid,
+			FieldId: Hdr_FabricIngressFilteringIngressPortVlan_VlanIsValid,
 			FieldMatchType: &v1.FieldMatch_Exact_{
 				Exact: &v1.FieldMatch_Exact{
 					Value: []byte{1},
@@ -75,7 +74,7 @@ func createIngressPortVlanEntryPermit(port []byte, vlanId []byte, innerVlanId []
 			},
 		})
 		matchFields = append(matchFields, &v1.FieldMatch{
-			FieldId: fabric.Hdr_FabricIngressFilteringIngressPortVlan_VlanId,
+			FieldId: Hdr_FabricIngressFilteringIngressPortVlan_VlanId,
 			FieldMatchType: &v1.FieldMatch_Ternary_{
 				Ternary: &v1.FieldMatch_Ternary{
 					Value: vlanId,
@@ -85,7 +84,7 @@ func createIngressPortVlanEntryPermit(port []byte, vlanId []byte, innerVlanId []
 		})
 		if innerVlanId != nil {
 			matchFields = append(matchFields, &v1.FieldMatch{
-				FieldId: fabric.Hdr_FabricIngressFilteringIngressPortVlan_InnerVlanId,
+				FieldId: Hdr_FabricIngressFilteringIngressPortVlan_InnerVlanId,
 				FieldMatchType: &v1.FieldMatch_Ternary_{
 					Ternary: &v1.FieldMatch_Ternary{
 						Value: innerVlanId,
@@ -96,7 +95,7 @@ func createIngressPortVlanEntryPermit(port []byte, vlanId []byte, innerVlanId []
 		}
 	} else {
 		matchFields = append(matchFields, &v1.FieldMatch{
-			FieldId: fabric.Hdr_FabricIngressFilteringIngressPortVlan_VlanIsValid,
+			FieldId: Hdr_FabricIngressFilteringIngressPortVlan_VlanIsValid,
 			FieldMatchType: &v1.FieldMatch_Exact_{
 				Exact: &v1.FieldMatch_Exact{
 					Value: []byte{0},
@@ -108,10 +107,10 @@ func createIngressPortVlanEntryPermit(port []byte, vlanId []byte, innerVlanId []
 	if innerVlanId != nil {
 		actionPop = v1.TableAction{
 			Type: &v1.TableAction_Action{Action: &v1.Action{
-				ActionId: fabric.Action_FabricIngressFilteringPermitWithInternalVlan,
+				ActionId: Action_FabricIngressFilteringPermitWithInternalVlan,
 				Params: []*v1.Action_Param{
 					{
-						ParamId: fabric.ActionParam_FabricIngressFilteringPermitWithInternalVlan_VlanId,
+						ParamId: ActionParam_FabricIngressFilteringPermitWithInternalVlan_VlanId,
 						Value:   internalVlan,
 					},
 				},
@@ -120,12 +119,12 @@ func createIngressPortVlanEntryPermit(port []byte, vlanId []byte, innerVlanId []
 	} else {
 		actionPop = v1.TableAction{
 			Type: &v1.TableAction_Action{Action: &v1.Action{
-				ActionId: fabric.Action_FabricIngressFilteringPermit,
+				ActionId: Action_FabricIngressFilteringPermit,
 			}},
 		}
 	}
 	return v1.TableEntry{
-		TableId:  fabric.Table_FabricIngressFilteringIngressPortVlan,
+		TableId:  Table_FabricIngressFilteringIngressPortVlan,
 		Match:    matchFields,
 		Action:   &actionPop,
 		Priority: prio,
@@ -134,7 +133,7 @@ func createIngressPortVlanEntryPermit(port []byte, vlanId []byte, innerVlanId []
 
 func createFwdClassifierEntry(port []byte, EthDst []byte, prio int32) v1.TableEntry {
 	matchIngressPort := v1.FieldMatch{
-		FieldId: fabric.Hdr_FabricIngressFilteringFwdClassifier_IgPort,
+		FieldId: Hdr_FabricIngressFilteringFwdClassifier_IgPort,
 		FieldMatchType: &v1.FieldMatch_Exact_{
 			Exact: &v1.FieldMatch_Exact{
 				Value: port,
@@ -142,7 +141,7 @@ func createFwdClassifierEntry(port []byte, EthDst []byte, prio int32) v1.TableEn
 		},
 	}
 	matchEthDst := v1.FieldMatch{
-		FieldId: fabric.Hdr_FabricIngressFilteringFwdClassifier_EthDst,
+		FieldId: Hdr_FabricIngressFilteringFwdClassifier_EthDst,
 		FieldMatchType: &v1.FieldMatch_Ternary_{
 			Ternary: &v1.FieldMatch_Ternary{
 				Value: EthDst,
@@ -151,7 +150,7 @@ func createFwdClassifierEntry(port []byte, EthDst []byte, prio int32) v1.TableEn
 		},
 	}
 	matchIpEthType := v1.FieldMatch{
-		FieldId: fabric.Hdr_FabricIngressFilteringFwdClassifier_IpEthType,
+		FieldId: Hdr_FabricIngressFilteringFwdClassifier_IpEthType,
 		FieldMatchType: &v1.FieldMatch_Exact_{
 			Exact: &v1.FieldMatch_Exact{
 				Value: getEthTypeValue(EthTypeIpv4),
@@ -160,16 +159,16 @@ func createFwdClassifierEntry(port []byte, EthDst []byte, prio int32) v1.TableEn
 	}
 	actionPop := v1.TableAction{
 		Type: &v1.TableAction_Action{Action: &v1.Action{
-			ActionId: fabric.Action_FabricIngressFilteringSetForwardingType,
+			ActionId: Action_FabricIngressFilteringSetForwardingType,
 			Params: []*v1.Action_Param{
 				{
-					ParamId: fabric.ActionParam_FabricIngressFilteringSetForwardingType_FwdType,
+					ParamId: ActionParam_FabricIngressFilteringSetForwardingType_FwdType,
 					Value:   []byte{FwdType_FwdIpv4Unicast}},
 			},
 		}},
 	}
 	return v1.TableEntry{
-		TableId:  fabric.Table_FabricIngressFilteringFwdClassifier,
+		TableId:  Table_FabricIngressFilteringFwdClassifier,
 		Match:    []*v1.FieldMatch{&matchIngressPort, &matchEthDst, &matchIpEthType},
 		Action:   &actionPop,
 		Priority: prio,

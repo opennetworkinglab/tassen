@@ -29,6 +29,7 @@ import (
 	"google.golang.org/grpc/status"
 	"io"
 	"io/ioutil"
+	"mapr/fabric"
 	"mapr/store"
 	"mapr/translate"
 	"net"
@@ -85,7 +86,7 @@ func newServer() *server {
 	case "dummy":
 		translator = translate.NewDummyTranslator()
 	case "fabric":
-		translator = translate.NewFabricTranslator(serverStore, targetStore, tassenStore)
+		translator = fabric.NewFabricTranslator(serverStore, targetStore, tassenStore)
 	default:
 		panic("Unknown translator")
 	}

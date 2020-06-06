@@ -34,6 +34,14 @@ type translator struct {
 	processor   ChangeProcessor
 }
 
+func NewTranslator(srv store.P4RtStore, tsn store.TassenStore, prc ChangeProcessor) Translator {
+	return &translator{
+		serverStore: srv,
+		tassenStore: tsn,
+		processor:   prc,
+	}
+}
+
 // Implementation of translation logic that delegates changes to a ChangeProcessor.
 //
 // P4 tables and other objects can be categorized based on the type of information they hold, which can be device-level,
