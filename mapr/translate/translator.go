@@ -54,7 +54,7 @@ func (t *translator) Translate(r *v1.WriteRequest) (*v1.WriteRequest, error) {
 		switch e := u.Entity.Entity.(type) {
 		case *v1.Entity_TableEntry:
 			switch e.TableEntry.TableId {
-			case p4info.Table_IfTypes: // device-level
+			case p4info.Table_IngressPipeIfTypes: // device-level
 				entry, err := store.ParseIfTypeEntry(e.TableEntry)
 				if err != nil {
 					return nil, err
@@ -66,7 +66,7 @@ func (t *translator) Translate(r *v1.WriteRequest) (*v1.WriteRequest, error) {
 				if newUpdates != nil {
 					result = append(result, newUpdates...)
 				}
-			case p4info.Table_MyStations: // device-level
+			case p4info.Table_IngressPipeMyStations: // device-level
 				entry, err := store.ParseMyStationEntry(e.TableEntry)
 				if err != nil {
 					return nil, err
@@ -78,7 +78,7 @@ func (t *translator) Translate(r *v1.WriteRequest) (*v1.WriteRequest, error) {
 				if newUpdates != nil {
 					result = append(result, newUpdates...)
 				}
-			case p4info.Table_UpstreamLines, p4info.Table_UpstreamAttachmentsV4: // attachment-level for upstream
+			case p4info.Table_IngressPipeUpstreamLines, p4info.Table_IngressPipeUpstreamAttachmentsV4: // attachment-level for upstream
 				a, ok, err := t.tassenStore.EvalAttachment(e.TableEntry)
 				if err != nil {
 					return nil, err

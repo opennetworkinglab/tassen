@@ -10,7 +10,7 @@ GOLANG_DOCKER_IMG=${GOLANG_DOCKER_IMG:-undefined}
 P4INFO_FILE=/tassen/p4src/build/p4info.txt
 OUTPUT_FILE=/tassen/mapr/p4info/constants.go
 
-GO_PACKAGE=fabric
+GO_PACKAGE=p4info
 
 echo "Generate Go constants for bng.p4"
 echo "P4Info: ${P4INFO_FILE}"
