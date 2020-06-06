@@ -11,10 +11,10 @@ var mockPort1 = []byte{0x00, 0x01}
 var mockPort2 = []byte{0x00, 0x02}
 
 var mockTableEntryIfTypesPort1Core = v1.TableEntry{
-	TableId: p4info.Table_IfTypes,
+	TableId: p4info.Table_IngressPipeIfTypes,
 	Match: []*v1.FieldMatch{
 		{
-			FieldId: p4info.FieldMatch_IfTypes_Port,
+			FieldId: p4info.Hdr_IngressPipeIfTypes_Port,
 			FieldMatchType: &v1.FieldMatch_Exact_{
 				Exact: &v1.FieldMatch_Exact{
 					Value: mockPort1,
@@ -25,10 +25,10 @@ var mockTableEntryIfTypesPort1Core = v1.TableEntry{
 	Action: &v1.TableAction{
 		Type: &v1.TableAction_Action{
 			Action: &v1.Action{
-				ActionId: p4info.Action_SetIfType,
+				ActionId: p4info.Action_IngressPipeSetIfType,
 				Params: []*v1.Action_Param{
 					{
-						ParamId: p4info.Param_SetIfType_IfType,
+						ParamId: p4info.ActionParam_IngressPipeSetIfType_IfType,
 						Value:   []byte{p4info.IfTypeCore}},
 				},
 			}},
@@ -36,10 +36,10 @@ var mockTableEntryIfTypesPort1Core = v1.TableEntry{
 }
 
 var mockTableEntryIfTypesPort2Access = v1.TableEntry{
-	TableId: p4info.Table_IfTypes,
+	TableId: p4info.Table_IngressPipeIfTypes,
 	Match: []*v1.FieldMatch{
 		{
-			FieldId: p4info.FieldMatch_IfTypes_Port,
+			FieldId: p4info.Hdr_IngressPipeIfTypes_Port,
 			FieldMatchType: &v1.FieldMatch_Exact_{
 				Exact: &v1.FieldMatch_Exact{
 					Value: mockPort2,
@@ -50,10 +50,10 @@ var mockTableEntryIfTypesPort2Access = v1.TableEntry{
 	Action: &v1.TableAction{
 		Type: &v1.TableAction_Action{
 			Action: &v1.Action{
-				ActionId: p4info.Action_SetIfType,
+				ActionId: p4info.Action_IngressPipeSetIfType,
 				Params: []*v1.Action_Param{
 					{
-						ParamId: p4info.Param_SetIfType_IfType,
+						ParamId: p4info.ActionParam_IngressPipeSetIfType_IfType,
 						Value:   []byte{p4info.IfTypeAccess}},
 				},
 			}},
@@ -61,10 +61,10 @@ var mockTableEntryIfTypesPort2Access = v1.TableEntry{
 }
 
 var mockTableEntryIfTypesInvalidFieldMatch = v1.TableEntry{
-	TableId: p4info.Table_IfTypes,
+	TableId: p4info.Table_IngressPipeIfTypes,
 	Match: []*v1.FieldMatch{
 		{
-			FieldId: p4info.FieldMatch_IfTypes_Port - 1,
+			FieldId: p4info.Hdr_IngressPipeIfTypes_Port - 1,
 			FieldMatchType: &v1.FieldMatch_Exact_{
 				Exact: &v1.FieldMatch_Exact{
 					Value: mockPort2,
@@ -75,10 +75,10 @@ var mockTableEntryIfTypesInvalidFieldMatch = v1.TableEntry{
 	Action: &v1.TableAction{
 		Type: &v1.TableAction_Action{
 			Action: &v1.Action{
-				ActionId: p4info.Action_SetIfType,
+				ActionId: p4info.Action_IngressPipeSetIfType,
 				Params: []*v1.Action_Param{
 					{
-						ParamId: p4info.Param_SetIfType_IfType,
+						ParamId: p4info.ActionParam_IngressPipeSetIfType_IfType,
 						Value:   []byte{p4info.IfTypeAccess}},
 				},
 			}},
@@ -86,10 +86,10 @@ var mockTableEntryIfTypesInvalidFieldMatch = v1.TableEntry{
 }
 
 var mockTableEntryIfTypesInvalidActionId = v1.TableEntry{
-	TableId: p4info.Table_IfTypes,
+	TableId: p4info.Table_IngressPipeIfTypes,
 	Match: []*v1.FieldMatch{
 		{
-			FieldId: p4info.FieldMatch_IfTypes_Port,
+			FieldId: p4info.Hdr_IngressPipeIfTypes_Port,
 			FieldMatchType: &v1.FieldMatch_Exact_{
 				Exact: &v1.FieldMatch_Exact{
 					Value: mockPort2,
@@ -100,10 +100,10 @@ var mockTableEntryIfTypesInvalidActionId = v1.TableEntry{
 	Action: &v1.TableAction{
 		Type: &v1.TableAction_Action{
 			Action: &v1.Action{
-				ActionId: p4info.Action_SetIfType - 1,
+				ActionId: p4info.Action_IngressPipeSetIfType - 1,
 				Params: []*v1.Action_Param{
 					{
-						ParamId: p4info.Param_SetIfType_IfType,
+						ParamId: p4info.ActionParam_IngressPipeSetIfType_IfType,
 						Value:   []byte{p4info.IfTypeAccess}},
 				},
 			}},
@@ -111,10 +111,10 @@ var mockTableEntryIfTypesInvalidActionId = v1.TableEntry{
 }
 
 var mockTableEntryIfTypesInvalidActionParamId = v1.TableEntry{
-	TableId: p4info.Table_IfTypes,
+	TableId: p4info.Table_IngressPipeIfTypes,
 	Match: []*v1.FieldMatch{
 		{
-			FieldId: p4info.FieldMatch_IfTypes_Port,
+			FieldId: p4info.Hdr_IngressPipeIfTypes_Port,
 			FieldMatchType: &v1.FieldMatch_Exact_{
 				Exact: &v1.FieldMatch_Exact{
 					Value: mockPort2,
@@ -125,10 +125,10 @@ var mockTableEntryIfTypesInvalidActionParamId = v1.TableEntry{
 	Action: &v1.TableAction{
 		Type: &v1.TableAction_Action{
 			Action: &v1.Action{
-				ActionId: p4info.Action_SetIfType,
+				ActionId: p4info.Action_IngressPipeSetIfType,
 				Params: []*v1.Action_Param{
 					{
-						ParamId: p4info.Param_SetIfType_IfType - 1,
+						ParamId: p4info.ActionParam_IngressPipeSetIfType_IfType - 1,
 						Value:   []byte{p4info.IfTypeAccess}},
 				},
 			}},
