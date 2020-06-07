@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package p4info
+package translate
 
 //noinspection GoSnakeCaseUsage
 const (

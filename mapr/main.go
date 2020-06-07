@@ -29,7 +29,7 @@ import (
 	"google.golang.org/grpc/status"
 	"io"
 	"io/ioutil"
-	"mapr/store"
+	"mapr/fabric"
 	"mapr/translate"
 	"net"
 	"strings"
@@ -71,21 +71,21 @@ func logMsg(dir MsgDirection, msg proto.Message) {
 
 type server struct {
 	translator  translate.Translator
-	serverStore store.P4RtStore
-	targetStore store.P4RtStore
-	tassenStore store.TassenStore
+	serverStore translate.P4RtStore
+	targetStore translate.P4RtStore
+	tassenStore translate.TassenStore
 }
 
 func newServer() *server {
-	serverStore := store.NewP4RtStore()
-	targetStore := store.NewP4RtStore()
-	tassenStore := store.NewTassenStore()
+	serverStore := translate.NewP4RtStore()
+	targetStore := translate.NewP4RtStore()
+	tassenStore := translate.NewTassenStore()
 	var translator translate.Translator
 	switch *translatorName {
 	case "dummy":
 		translator = translate.NewDummyTranslator()
 	case "fabric":
-		translator = translate.NewFabricTranslator(serverStore, targetStore, tassenStore)
+		translator = fabric.NewFabricTranslator(serverStore, targetStore, tassenStore)
 	default:
 		panic("Unknown translator")
 	}

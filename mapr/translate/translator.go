@@ -1,10 +1,8 @@
 package translate
 
 import (
-	"github.com/p4lang/p4runtime/go/p4/v1"
+	p4v1 "github.com/p4lang/p4runtime/go/p4/v1"
 	log "github.com/sirupsen/logrus"
-	"mapr/p4info"
-	"mapr/store"
 )
 
 // A translator of P4RT write requests.
@@ -13,25 +11,33 @@ type Translator interface {
 	// produce a forwarding state that is equivalent to that of the logical pipeline after applying the given write
 	// request. The returned request might be nil, signaling that the translation was successful but that should not
 	// produce any change in the physical pipeline.
-	Translate(logical *v1.WriteRequest) (physical *v1.WriteRequest, err error)
+	Translate(logical *p4v1.WriteRequest) (physical *p4v1.WriteRequest, err error)
 }
 
 // A processor of changes in the logical pipeline state.
 type ChangeProcessor interface {
 	// Returns P4RT updates to apply changes for the given IfTypeEntry
-	HandleIfTypeEntry(e *store.IfTypeEntry, uType v1.Update_Type) ([]*v1.Update, error)
+	HandleIfTypeEntry(e *IfTypeEntry, uType p4v1.Update_Type) ([]*p4v1.Update, error)
 	// Returns P4RT updates to apply changes for the given MyStationEntry
-	HandleMyStationEntry(e *store.MyStationEntry, uType v1.Update_Type) ([]*v1.Update, error)
+	HandleMyStationEntry(e *MyStationEntry, uType p4v1.Update_Type) ([]*p4v1.Update, error)
 	// Returns P4RT updates to apply changes for the given AttachmentEntry. Since the state of an attachment is
 	// derived by multiple tables, the ok flag signals whether the state of the attachment is complete (e.g., all
 	// fields are known), or not.
-	HandleAttachmentEntry(a *store.AttachmentEntry, ok bool) ([]*v1.Update, error)
+	HandleAttachmentEntry(a *AttachmentEntry, ok bool) ([]*p4v1.Update, error)
 }
 
 type translator struct {
-	serverStore store.P4RtStore
-	tassenStore store.TassenStore
+	serverStore P4RtStore
+	tassenStore TassenStore
 	processor   ChangeProcessor
+}
+
+func NewTranslator(srv P4RtStore, tsn TassenStore, prc ChangeProcessor) Translator {
+	return &translator{
+		serverStore: srv,
+		tassenStore: tsn,
+		processor:   prc,
+	}
 }
 
 // Implementation of translation logic that delegates changes to a ChangeProcessor.
@@ -48,14 +54,14 @@ type translator struct {
 // generate all necessary updates to insert the corresponding entries in the target to enable termination/forwarding. If
 // the attachment is not complete, the processor might decide to remove all entries from the target related to that
 // attachment.
-func (t *translator) Translate(r *v1.WriteRequest) (*v1.WriteRequest, error) {
-	result := make([]*v1.Update, 0)
+func (t *translator) Translate(r *p4v1.WriteRequest) (*p4v1.WriteRequest, error) {
+	result := make([]*p4v1.Update, 0)
 	for _, u := range r.Updates {
 		switch e := u.Entity.Entity.(type) {
-		case *v1.Entity_TableEntry:
+		case *p4v1.Entity_TableEntry:
 			switch e.TableEntry.TableId {
-			case p4info.Table_IngressPipeIfTypes: // device-level
-				entry, err := store.ParseIfTypeEntry(e.TableEntry)
+			case Table_IngressPipeIfTypes: // device-level
+				entry, err := ParseIfTypeEntry(e.TableEntry)
 				if err != nil {
 					return nil, err
 				}
@@ -66,8 +72,8 @@ func (t *translator) Translate(r *v1.WriteRequest) (*v1.WriteRequest, error) {
 				if newUpdates != nil {
 					result = append(result, newUpdates...)
 				}
-			case p4info.Table_IngressPipeMyStations: // device-level
-				entry, err := store.ParseMyStationEntry(e.TableEntry)
+			case Table_IngressPipeMyStations: // device-level
+				entry, err := ParseMyStationEntry(e.TableEntry)
 				if err != nil {
 					return nil, err
 				}
@@ -78,7 +84,7 @@ func (t *translator) Translate(r *v1.WriteRequest) (*v1.WriteRequest, error) {
 				if newUpdates != nil {
 					result = append(result, newUpdates...)
 				}
-			case p4info.Table_IngressPipeUpstreamLines, p4info.Table_IngressPipeUpstreamAttachmentsV4: // attachment-level for upstream
+			case Table_IngressPipeUpstreamLines, Table_IngressPipeUpstreamAttachmentsV4: // attachment-level for upstream
 				a, ok, err := t.tassenStore.EvalAttachment(e.TableEntry)
 				if err != nil {
 					return nil, err
@@ -106,7 +112,7 @@ func (t *translator) Translate(r *v1.WriteRequest) (*v1.WriteRequest, error) {
 		return nil, nil
 	}
 	// Return original write request but with modified updates.
-	return &v1.WriteRequest{
+	return &p4v1.WriteRequest{
 		DeviceId:   r.DeviceId,
 		RoleId:     r.RoleId,
 		ElectionId: r.ElectionId,

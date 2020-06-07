@@ -170,16 +170,18 @@ class ConstantClassGenerator(object):
 def main():
     parser = argparse.ArgumentParser(prog='go-gen-p4-const',
                                      description='P4Info to Go constant generator.')
-    parser.add_argument('pkg_name', help='Go package name')
-    parser.add_argument('p4info', help='P4Info file')
-    parser.add_argument('-o', '--output', help='output path', default='-')
+    parser.add_argument('-o', '--output', help='path to output file', default='-')
+    parser.add_argument('-p', '--p4info', help='path to p4info file (text format)')
     args = parser.parse_args()
 
-    pkg_name = args.pkg_name
-    file_name = args.p4info
-    output = args.output
+    p4info_file = args.p4info
+    output_file = args.output
+
+    pieces = args.output.split('/')
+    pkg_name = pieces[-2] if len(pieces) > 1 else 'undefined'
+
     p4info = p4info_pb2.P4Info()
-    with open(file_name, 'r') as input_file:
+    with open(p4info_file, 'r') as input_file:
         s = input_file.read()
         tf.Merge(s, p4info)
 
@@ -187,11 +189,11 @@ def main():
     gen.parse(p4info)
     go_code = gen.generate_go()
 
-    if output == '-':
+    if output_file == '-':
         # std output
         print go_code
     else:
-        with open(output, 'w') as output_file:
+        with open(output_file, 'w') as output_file:
             output_file.write(go_code)
 
 
