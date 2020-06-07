@@ -12,17 +12,12 @@ var mockUpdateInsertTableEntry1 = p4v1.Update{
 	Entity: &p4v1.Entity{Entity: &p4v1.Entity_TableEntry{TableEntry: &mockTableEntry1}},
 }
 
-var mockUpdateInsertTableEntry2 = p4v1.Update{
-	Type:   p4v1.Update_INSERT,
-	Entity: &p4v1.Entity{Entity: &p4v1.Entity_TableEntry{TableEntry: &mockTableEntry2}},
-}
-
 func Test_store_Update(t *testing.T) {
 	type fields struct {
 		tableEntries map[string]*p4v1.TableEntry
 	}
 	type args struct {
-		req    *p4v1.WriteRequest
+		update *p4v1.Update
 		dryRun bool
 	}
 	tests := []struct {
@@ -35,28 +30,10 @@ func Test_store_Update(t *testing.T) {
 			name:   "insert 1 table entry",
 			fields: fields{emptyTableEntries},
 			args: args{
-				req: &p4v1.WriteRequest{
-					Updates: []*p4v1.Update{
-						&mockUpdateInsertTableEntry1,
-					},
-				},
+				update: &mockUpdateInsertTableEntry1,
 				dryRun: false,
 			},
 			wantTableEntryCount: 1,
-		},
-		{
-			name:   "insert 2 table entries",
-			fields: fields{emptyTableEntries},
-			args: args{
-				req: &p4v1.WriteRequest{
-					Updates: []*p4v1.Update{
-						&mockUpdateInsertTableEntry1,
-						&mockUpdateInsertTableEntry2,
-					},
-				},
-				dryRun: false,
-			},
-			wantTableEntryCount: 2,
 		},
 	}
 	for _, tt := range tests {
@@ -64,7 +41,7 @@ func Test_store_Update(t *testing.T) {
 			s := &p4RtStore{
 				tableEntries: tt.fields.tableEntries,
 			}
-			s.Update(tt.args.req, tt.args.dryRun)
+			s.Update(tt.args.update, tt.args.dryRun)
 			if gotTableEntryCount := s.TableEntryCount(); gotTableEntryCount != tt.wantTableEntryCount {
 				t.Errorf("TableEntryCount() = %v, want %v", gotTableEntryCount, tt.wantTableEntryCount)
 			}

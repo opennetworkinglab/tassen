@@ -8,8 +8,8 @@ import (
 
 // A store of P4Runtime entities with map semantics.
 type P4RtStore interface {
-	// Updates the store using the content of the given P4Runtime write request.
-	Update(r *p4v1.WriteRequest, dryRun bool) error
+	// Updates the store using the content of the given P4Runtime WriteRequest's Update.
+	Update(r *p4v1.Update, dryRun bool) error
 	// Stores the given table entry.
 	PutTableEntry(*p4v1.TableEntry)
 	// Returns the table entry associated with the given key, or nil.
@@ -62,33 +62,40 @@ func NewP4RtStore() *p4RtStore {
 	}
 }
 
-func (s *p4RtStore) Update(req *p4v1.WriteRequest, dryRun bool) error {
-	// TODO: implement dry run for validation
-	for _, u := range req.Updates {
-		switch x := u.Entity.Entity.(type) {
-		case *p4v1.Entity_TableEntry:
-			if u.Type == p4v1.Update_DELETE {
-				s.RemoveTableEntry(x.TableEntry)
-			} else {
-				s.PutTableEntry(x.TableEntry)
-			}
-		case *p4v1.Entity_ActionProfileGroup:
-			if u.Type == p4v1.Update_DELETE {
-				s.RemoveActProfGroup(x.ActionProfileGroup)
-			} else {
-				s.PutActProfGroup(x.ActionProfileGroup)
-			}
-		case *p4v1.Entity_ActionProfileMember:
-			if u.Type == p4v1.Update_DELETE {
-				s.RemoveActProfMember(x.ActionProfileMember)
-			} else {
-				s.PutActProfMember(x.ActionProfileMember)
-			}
-		default:
-			log.WithField("WriteRequest", req).Warnf("Storing %T not implemented, ignoring...", x)
+func (s *p4RtStore) Update(u *p4v1.Update, dryRun bool) error {
+	if dryRun {
+		// TODO: implement validation logic
+		return nil
+	}
+	defer s.logStoreSummary()
+	switch x := u.Entity.Entity.(type) {
+	case *p4v1.Entity_TableEntry:
+		if u.Type == p4v1.Update_DELETE {
+			s.RemoveTableEntry(x.TableEntry)
+		} else {
+			s.PutTableEntry(x.TableEntry)
 		}
+	case *p4v1.Entity_ActionProfileGroup:
+		if u.Type == p4v1.Update_DELETE {
+			s.RemoveActProfGroup(x.ActionProfileGroup)
+		} else {
+			s.PutActProfGroup(x.ActionProfileGroup)
+		}
+	case *p4v1.Entity_ActionProfileMember:
+		if u.Type == p4v1.Update_DELETE {
+			s.RemoveActProfMember(x.ActionProfileMember)
+		} else {
+			s.PutActProfMember(x.ActionProfileMember)
+		}
+	default:
+		log.Warnf("Storing %T not implemented, ignoring... [%v]", x, x)
 	}
 	return nil
+}
+
+func (s *p4RtStore) logStoreSummary() {
+	log.Debugf("P4RtStore summary: TableEntryCount=%d, ActProfGroupCount=%d, ActProfMemberCount=%d",
+		s.TableEntryCount(), s.ActProfGroupCount(), s.ActProfMemberCount())
 }
 
 // Returns a string that uniquely identifies a table entry.
@@ -105,6 +112,7 @@ func KeyFromTableEntry(t *p4v1.TableEntry) string {
 }
 
 func (s *p4RtStore) PutTableEntry(entry *p4v1.TableEntry) {
+	log.Debugf("PutTableEntry(): %v", entry)
 	s.tableEntries[KeyFromTableEntry(entry)] = entry
 }
 
@@ -113,6 +121,7 @@ func (s *p4RtStore) GetTableEntry(key *string) *p4v1.TableEntry {
 }
 
 func (s *p4RtStore) RemoveTableEntry(entry *p4v1.TableEntry) {
+	log.Debugf("RemoveTableEntry(): %v", entry)
 	delete(s.tableEntries, KeyFromTableEntry(entry))
 }
 
@@ -146,6 +155,7 @@ func KeyFromActProfGroup(g *p4v1.ActionProfileGroup) string {
 }
 
 func (s *p4RtStore) PutActProfGroup(g *p4v1.ActionProfileGroup) {
+	log.Debugf("PutActProfGroup(): %v", g)
 	s.actProfGroups[KeyFromActProfGroup(g)] = g
 }
 
@@ -154,6 +164,7 @@ func (s *p4RtStore) GetActProfGroup(key *string) *p4v1.ActionProfileGroup {
 }
 
 func (s *p4RtStore) RemoveActProfGroup(g *p4v1.ActionProfileGroup) {
+	log.Debugf("RemoveActProfGroup(): %v", g)
 	delete(s.actProfGroups, KeyFromActProfGroup(g))
 }
 
@@ -187,6 +198,7 @@ func KeyFromActProfMember(g *p4v1.ActionProfileMember) string {
 }
 
 func (s *p4RtStore) PutActProfMember(g *p4v1.ActionProfileMember) {
+	log.Debugf("PutActProfMember(): %v", g)
 	s.actProfMembers[KeyFromActProfMember(g)] = g
 }
 
@@ -195,6 +207,7 @@ func (s *p4RtStore) GetActProfMember(key *string) *p4v1.ActionProfileMember {
 }
 
 func (s *p4RtStore) RemoveActProfMember(g *p4v1.ActionProfileMember) {
+	log.Debugf("RemoveActProfMember(): %v", g)
 	delete(s.actProfMembers, KeyFromActProfMember(g))
 }
 

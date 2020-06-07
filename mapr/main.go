@@ -69,17 +69,17 @@ func logMsg(dir MsgDirection, msg proto.Message) {
 	log.WithField("proto", msgString).Debugf("%s %T", dir, msg)
 }
 
-type server struct {
-	translator  translate.Translator
-	serverStore translate.P4RtStore
-	targetStore translate.P4RtStore
-	tassenStore translate.TassenStore
+type Server struct {
+	Translator  translate.Translator
+	ServerStore translate.P4RtStore
+	TargetStore translate.P4RtStore
+	TassenStore translate.TassenStore
 }
 
-func newServer() *server {
+func NewServer() *Server {
 	serverStore := translate.NewP4RtStore()
 	targetStore := translate.NewP4RtStore()
-	tassenStore := translate.NewTassenStore()
+	tassenStore := translate.NewTassenStore(serverStore)
 	var translator translate.Translator
 	switch *translatorName {
 	case "dummy":
@@ -89,15 +89,15 @@ func newServer() *server {
 	default:
 		panic("Unknown translator")
 	}
-	return &server{
-		translator:  translator,
-		serverStore: serverStore,
-		targetStore: targetStore,
-		tassenStore: tassenStore,
+	return &Server{
+		Translator:  translator,
+		ServerStore: serverStore,
+		TargetStore: targetStore,
+		TassenStore: tassenStore,
 	}
 }
 
-func (s server) Capabilities(ctx context.Context, request *p4v1.CapabilitiesRequest) (*p4v1.CapabilitiesResponse, error) {
+func (s Server) Capabilities(ctx context.Context, request *p4v1.CapabilitiesRequest) (*p4v1.CapabilitiesResponse, error) {
 	logMsg(FromCtrl, request)
 	response, err := target.Capabilities(ctx, request)
 	if err != nil {
@@ -107,49 +107,107 @@ func (s server) Capabilities(ctx context.Context, request *p4v1.CapabilitiesRequ
 	return response, nil
 }
 
-func (s server) Write(ctx context.Context, logicalReq *p4v1.WriteRequest) (*p4v1.WriteResponse, error) {
+var globalWriteCount = 1
+
+func (s Server) Write(ctx context.Context, logicalReq *p4v1.WriteRequest) (*p4v1.WriteResponse, error) {
+	writeCount := globalWriteCount
+	globalWriteCount++
+	log.Debugf("@@@@@@ BEGIN WRITE REQUEST #%d @@@@@@ ", writeCount)
+	defer log.Debugf("@@@@@@ END WRITE REQUEST #%d @@@@@@", writeCount)
+
 	logMsg(FromCtrl, logicalReq)
-	// Validate logical request by executing an update dry run in the stores.
-	if err := s.serverStore.Update(logicalReq, true); err != nil {
-		return nil, err
+
+	if logicalReq.Atomicity != p4v1.WriteRequest_CONTINUE_ON_ERROR {
+		return nil, status.Errorf(codes.Unimplemented, "Atomicity should be CONTINUE_ON_ERROR")
 	}
-	if err := s.tassenStore.Update(logicalReq, true); err != nil {
-		return nil, err
+
+	// Template WriteRequest for the target.
+	// We'll emit one or none for each Update in the logical request.
+	physicalRequest := p4v1.WriteRequest{
+		DeviceId:   logicalReq.DeviceId,
+		RoleId:     logicalReq.RoleId,
+		ElectionId: logicalReq.ElectionId,
+		Updates:    nil,
+		Atomicity:  logicalReq.Atomicity,
 	}
-	// Translate request to one that can be applied to the physical pipeline on the target.
-	physicalReq, err := s.translator.Translate(logicalReq)
-	if err != nil {
-		return nil, err
-	}
-	var response *p4v1.WriteResponse = nil
-	if physicalReq != nil {
-		logMsg(ToTarget, physicalReq)
-		// Translator wants to update the target.
-		// Validate request.
-		if err := s.targetStore.Update(physicalReq, true); err != nil {
-			return nil, err
+
+	ok := true
+	for _, logicalUpdate := range logicalReq.Updates {
+		// Validate update against the stores.
+		if err := s.ServerStore.Update(logicalUpdate, true); err != nil {
+			log.Errorf("ServerStore.Update(dry_run=true): %v [%v]", err, logicalUpdate)
+			ok = false
+			continue // next update
 		}
-		// Apply on target.
-		res, err := target.Write(ctx, physicalReq)
+		if err := s.TassenStore.Update(logicalUpdate, true); err != nil {
+			log.Errorf("TassenStore.Update(dry_run=true): %v [%v]", err, logicalUpdate)
+			ok = false
+			continue // next update
+		}
+
+		// Translate update to zero or more to apply to the physical pipeline on the target.
+		physicalUpdates, err := s.Translator.Translate(logicalUpdate)
 		if err != nil {
-			return nil, err
+			log.Errorf("Translator.Translate(): %v [%v]", err, logicalUpdate)
+			ok = false
+			continue // next update
 		}
-		response = res
-		// Store.
-		_ = s.targetStore.Update(physicalReq, false)
-	} else {
-		// No need to update the target.
-		// Fake successful response.
-		response = &p4v1.WriteResponse{}
+
+		if physicalUpdates == nil || len(physicalUpdates) == 0 {
+			// No need to update the target.
+			continue
+		}
+
+		// Validate physical updates against target store before writing.
+		for _, u := range physicalUpdates {
+			// FIXME (carmelo): we should be validating the whole slice, not individual updates. This works fine only if
+			//  we assume the translator always produces valid updates.
+			if err := s.TargetStore.Update(u, true); err != nil {
+				log.Errorf("TargetStore.Update(dry_run=true): %v [%v]", err, u)
+				ok = false
+				continue // next update
+			}
+		}
+
+		// Write physical updates to target.
+		physicalRequest.Updates = physicalUpdates
+		logMsg(ToTarget, &physicalRequest)
+		_, err = target.Write(ctx, &physicalRequest)
+		if err != nil {
+			// TODO (carmelo): unpack and log P4RT error trailers from target.
+			log.Errorf("%s %v", FromTarget, err)
+			ok = false
+			continue // next update
+		}
+
+		// Write RPC was successful!
+		// Update stores with logical entities (there should be no errors since we did a dry run before)
+		if err := s.ServerStore.Update(logicalUpdate, false); err != nil {
+			panic(err)
+		}
+		if err := s.TassenStore.Update(logicalUpdate, false); err != nil {
+			panic(err)
+		}
+		for _, u := range physicalUpdates {
+			if err := s.TargetStore.Update(u, false); err != nil {
+				panic(err)
+			}
+		}
 	}
-	logMsg(ToCtrl, response)
-	// Target updated successfully, update store with logical entities.
-	_ = s.serverStore.Update(logicalReq, false)
-	_ = s.tassenStore.Update(logicalReq, false)
-	return response, nil
+
+	// Send WriteResponse or error to controller.
+	if ok {
+		response := &p4v1.WriteResponse{}
+		logMsg(ToCtrl, response)
+		return response, nil
+	} else {
+		// FIXME (carmelo): return errors compliant with P4RT spec. I.e., append trailers with details for each update
+		//  on the logical WriteRequest.
+		return nil, status.Errorf(codes.Unknown, "Check mapr.log")
+	}
 }
 
-func (s server) Read(request *p4v1.ReadRequest, toClient p4v1.P4Runtime_ReadServer) error {
+func (s Server) Read(request *p4v1.ReadRequest, toClient p4v1.P4Runtime_ReadServer) error {
 	// TODO: read from store, not from target
 	logMsg(FromCtrl, request)
 	ctx, cancel := context.WithCancel(toClient.Context())
@@ -173,7 +231,7 @@ func (s server) Read(request *p4v1.ReadRequest, toClient p4v1.P4Runtime_ReadServ
 	}
 }
 
-func (s server) SetForwardingPipelineConfig(ctx context.Context, request *p4v1.SetForwardingPipelineConfigRequest) (
+func (s Server) SetForwardingPipelineConfig(ctx context.Context, request *p4v1.SetForwardingPipelineConfigRequest) (
 	*p4v1.SetForwardingPipelineConfigResponse, error) {
 	logMsg(FromCtrl, request)
 	// Compare P4Info in request with the one passed via flags. Return error if not equal.
@@ -214,7 +272,7 @@ func (s server) SetForwardingPipelineConfig(ctx context.Context, request *p4v1.S
 	}
 }
 
-func (s server) GetForwardingPipelineConfig(ctx context.Context, request *p4v1.GetForwardingPipelineConfigRequest) (
+func (s Server) GetForwardingPipelineConfig(ctx context.Context, request *p4v1.GetForwardingPipelineConfigRequest) (
 	// TODO: implement returning logical config instead of physical one
 	*p4v1.GetForwardingPipelineConfigResponse, error) {
 	logMsg(FromCtrl, request)
@@ -226,7 +284,7 @@ func (s server) GetForwardingPipelineConfig(ctx context.Context, request *p4v1.G
 	return response, nil
 }
 
-func (s server) StreamChannel(inStream p4v1.P4Runtime_StreamChannelServer) error {
+func (s Server) StreamChannel(inStream p4v1.P4Runtime_StreamChannelServer) error {
 	log.Println("StreamChannel opened!")
 	defer log.Println("StreamChannel closed!")
 
@@ -296,7 +354,7 @@ func Start(port int, targetAddr string) {
 		log.Fatalf("Failed to listen: %v", err)
 	}
 	server := grpc.NewServer()
-	p4v1.RegisterP4RuntimeServer(server, newServer())
+	p4v1.RegisterP4RuntimeServer(server, NewServer())
 	log.Printf("Listening for controller on port %d, talking to target on %s...\n", port, targetAddr)
 	_ = server.Serve(lis)
 }

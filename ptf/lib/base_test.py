@@ -228,11 +228,13 @@ class P4RuntimeErrorIterator:
                 error.ParseFromString(meta[1])
                 break
         if error is None:
-            raise P4RuntimeErrorFormatException("No binary details field")
+            raise grpc_error
+            # raise P4RuntimeErrorFormatException("No binary details field")
 
         if len(error.details) == 0:
-            raise P4RuntimeErrorFormatException(
-                "Binary details field has empty Any details repeated field")
+            raise grpc_error
+            # raise P4RuntimeErrorFormatException(
+            #     "Binary details field has empty Any details repeated field")
         self.errors = error.details
         self.idx = 0
 
