@@ -8,7 +8,7 @@ include util/docker/Makefile.vars
 default: build check
 build: p4 mapr
 check: check-self
-check-all: check-self check-dummy
+check-all: check-self check-dummy check-fabric
 
 .PHONY: ptf mapr
 
@@ -36,7 +36,7 @@ clean:
 deep-clean: clean
 	-docker container rm ${go_build_name}
 
-p4: p4src/bng.p4
+p4:
 	$(info *** Compiling P4 program...)
 	@mkdir -p p4src/build
 	@docker run --rm -v ${curr_dir}:/workdir -w /workdir ${P4C_IMG} \
@@ -46,7 +46,7 @@ p4: p4src/bng.p4
 		p4src/bng.p4
 	@echo "*** P4 program compiled successfully! Output files are in p4src/build"
 
-graph: p4src/bng.p4
+graph:
 	$(info *** Generating P4 program graphs...)
 	@mkdir -p p4src/build/graphs
 	docker run --rm -v ${curr_dir}:/workdir -w /workdir ${P4C_IMG} \
@@ -75,10 +75,19 @@ _go_build_test_container:
 		docker create -v ${curr_dir}/mapr:/mapr -w /mapr --name ${go_build_name} ${GOLANG_IMG} bash -c "go build && go test ./..."; \
 	fi
 
-mapr: _go_build_test_container
+mapr: _go_build_test_container p4info-go
 	$(info *** Building mapr...)
 	@docker start -a -i ${go_build_name}
 
-gen-constants:
-	@cd util/go-gen-const && PTF_DOCKER_IMG=$(PTF_IMG) GOLANG_DOCKER_IMG=$(GOLANG_IMG) ./gen_const_fabric.sh
-	@cd util/go-gen-const && PTF_DOCKER_IMG=$(PTF_IMG) GOLANG_DOCKER_IMG=$(GOLANG_IMG) ./gen_const_bng.sh
+mapr/translate/p4info.go: p4src/build/p4info.txt
+mapr/fabric/p4info.go: mapr/p4c-out/fabric/p4info.txt
+
+P4INFO_GO := mapr/translate/p4info.go mapr/fabric/p4info.go
+p4info-go: $(P4INFO_GO)
+$(P4INFO_GO):
+	$(info *** Generating go constants: $< -> $@)
+	@docker run -v ${curr_dir}:/tassen -w /tassen \
+		--entrypoint ./util/go-gen-p4-const.py $(PTF_IMG) \
+		--output $@ --p4info $<
+	@docker run -v ${curr_dir}:/tassen -w /tassen \
+		${GOLANG_IMG} gofmt -w $@
