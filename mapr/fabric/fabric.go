@@ -1,6 +1,7 @@
 package fabric
 
 import (
+	"fmt"
 	v1 "github.com/p4lang/p4runtime/go/p4/v1"
 	log "github.com/sirupsen/logrus"
 	"mapr/translate"
@@ -62,18 +63,36 @@ func (p fabricProcessor) HandleAttachmentEntry(a *translate.AttachmentEntry, ok 
 
 func (p fabricProcessor) HandleRouteV4NextHopEntry(e *translate.NextHopEntry, uType v1.Update_Type) ([]*v1.Update, error) {
 	log.Tracef("NextHopEntry={ %s }", e)
-	log.Warnf("fabricProcessor.HandleRouteV4NextHopEntry(): not implemented")
-	return nil, nil
+	x := p.ctx.Logical().MyStations[translate.ToPortKey(e.Port)]
+	if x == nil {
+		return nil, fmt.Errorf("missing MyStation entry for port %x, cannot derive source MAC", e.Port)
+	}
+	m := createHashedSelectorMember(e, x.EthDst)
+	return []*v1.Update{createUpdateActProfMember(&m, uType)}, nil
 }
 
-func (p fabricProcessor) HandleRouteV4NextHopGroup(e *translate.NextHopGroup, uType v1.Update_Type) ([]*v1.Update, error) {
-	log.Tracef("NextHopGroup={ %s }", e)
-	log.Warnf("fabricProcessor.HandleRouteV4NextHopGroup(): not implemented")
-	return nil, nil
+func (p fabricProcessor) HandleRouteV4NextHopGroup(g *translate.NextHopGroup, uType v1.Update_Type) ([]*v1.Update, error) {
+	log.Tracef("NextHopGroup={ %s }", g)
+	// Generating the target group is easy if we use the same IDs for the members and group.
+	group := v1.ActionProfileGroup{
+		ActionProfileId: ActionProfile_FabricIngressNextHashedSelector,
+		GroupId:         g.GroupId,
+		Members:         g.Members,
+		MaxSize:         g.MaxSize,
+	}
+	groupUpdate := createUpdateActProfGroup(&group, uType)
+	nextEntry := createNextHashedEntry(g.GroupId)
+	nextUpdate := createUpdateEntry(&nextEntry, uType)
+	if uType == v1.Update_DELETE {
+		// Table entry must be removed before group.
+		return []*v1.Update{nextUpdate, groupUpdate}, nil
+	} else {
+		return []*v1.Update{groupUpdate, nextUpdate}, nil
+	}
 }
 
 func (p fabricProcessor) HandleRouteV4Entry(e *translate.RouteV4Entry, uType v1.Update_Type) ([]*v1.Update, error) {
 	log.Tracef("RouteV4Entry={ %s }", e)
-	log.Warnf("fabricProcessor.HandleRouteV4Entry(): not implemented")
-	return nil, nil
+	t := createRouteV4Entry(e)
+	return []*v1.Update{createUpdateEntry(&t, uType)}, nil
 }

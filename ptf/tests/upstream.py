@@ -61,12 +61,31 @@ class PppoeIp4UnicastTest(P4RuntimeTest):
             }
         ))
 
+        self.insert(self.helper.build_table_entry(
+            table_name='IngressPipe.if_types',
+            match_fields={
+                'port': self.port2
+            },
+            action_name='IngressPipe.set_if_type',
+            action_params={
+                'if_type': IF_CORE,
+            }
+        ))
+
         # Consider the given pkt's eth dst addr
         # as the bng mac.
         self.insert(self.helper.build_table_entry(
             table_name='IngressPipe.my_stations',
             match_fields={
                 'port': self.port1,
+                'eth_dst': pkt[Ether].dst,
+            },
+            action_name='IngressPipe.set_my_station'
+        ))
+        self.insert(self.helper.build_table_entry(
+            table_name='IngressPipe.my_stations',
+            match_fields={
+                'port': self.port2,
                 'eth_dst': pkt[Ether].dst,
             },
             action_name='IngressPipe.set_my_station'

@@ -153,11 +153,11 @@ func (t translator) translateOrStore(u *p4v1.Update, translate bool) ([]*p4v1.Up
 				// TODO: implement validation
 				return t.proc.HandleIfTypeEntry(&x, u.Type)
 			} else {
-				key := toPortKey(x.Port)
+				key := ToPortKey(x.Port)
 				if u.Type == p4v1.Update_DELETE {
 					delete(t.ctx.Logical().IfTypes, key)
 				} else {
-					t.ctx.Logical().IfTypes[toPortKey(x.Port)] = &x
+					t.ctx.Logical().IfTypes[ToPortKey(x.Port)] = &x
 				}
 				return nil, nil
 			}
@@ -170,11 +170,11 @@ func (t translator) translateOrStore(u *p4v1.Update, translate bool) ([]*p4v1.Up
 				// TODO: implement validation
 				return t.proc.HandleMyStationEntry(&x, u.Type)
 			} else {
-				key := toPortKey(x.Port)
+				key := ToPortKey(x.Port)
 				if u.Type == p4v1.Update_DELETE {
 					delete(t.ctx.Logical().MyStations, key)
 				} else {
-					t.ctx.Logical().MyStations[toPortKey(x.Port)] = &x
+					t.ctx.Logical().MyStations[ToPortKey(x.Port)] = &x
 				}
 				return nil, nil
 			}
@@ -187,7 +187,7 @@ func (t translator) translateOrStore(u *p4v1.Update, translate bool) ([]*p4v1.Up
 				// TODO: implement validation
 				return t.proc.HandleAttachmentEntry(&x, ok)
 			} else {
-				key := toLineIdKey(x.LineId)
+				key := ToLineIdKey(x.LineId)
 				if u.Type == p4v1.Update_DELETE {
 					if x.Direction == DirectionUpstream {
 						delete(t.ctx.Logical().UpstreamAttachments, key)
@@ -212,7 +212,7 @@ func (t translator) translateOrStore(u *p4v1.Update, translate bool) ([]*p4v1.Up
 				// TODO: implement validation
 				return t.proc.HandleRouteV4Entry(&x, u.Type)
 			} else {
-				key := toIpv4LpmKey(x.Ipv4Addr, x.PrefixLen)
+				key := ToIpv4LpmKey(x.Ipv4Addr, x.PrefixLen)
 				if u.Type == p4v1.Update_DELETE {
 					delete(t.ctx.Logical().UpstreamRoutesV4, key)
 				} else {
@@ -294,9 +294,9 @@ func (t translator) evalAttachment(e *p4v1.TableEntry) (a AttachmentEntry, ok bo
 	}
 	var stored *AttachmentEntry
 	if a.Direction == DirectionUpstream {
-		stored = t.ctx.Logical().UpstreamAttachments[toLineIdKey(a.LineId)]
+		stored = t.ctx.Logical().UpstreamAttachments[ToLineIdKey(a.LineId)]
 	} else if a.Direction == DirectionDownstream {
-		stored = t.ctx.Logical().DownstreamAttachments[toLineIdKey(a.LineId)]
+		stored = t.ctx.Logical().DownstreamAttachments[ToLineIdKey(a.LineId)]
 	} else {
 		panic("direction unknown")
 	}
