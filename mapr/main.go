@@ -153,34 +153,32 @@ func (s Server) Write(ctx context.Context, logicalReq *p4v1.WriteRequest) (*p4v1
 			continue // next update
 		}
 
-		if physicalUpdates == nil || len(physicalUpdates) == 0 {
-			// No need to update the target.
-			continue
-		}
+		if physicalUpdates != nil && len(physicalUpdates) > 0 {
+			// Validate physical updates against target store before writing.
+			for _, u := range physicalUpdates {
+				// FIXME (carmelo): we should be validating the whole slice, not individual updates. This works fine only if
+				//  we assume the translator always produces valid updates.
+				if err := s.TargetStore.Update(u, true); err != nil {
+					log.Errorf("TargetStore.Update(dry_run=true): %v [%v]", err, u)
+					ok = false
+					continue // next update
+				}
+			}
 
-		// Validate physical updates against target store before writing.
-		for _, u := range physicalUpdates {
-			// FIXME (carmelo): we should be validating the whole slice, not individual updates. This works fine only if
-			//  we assume the translator always produces valid updates.
-			if err := s.TargetStore.Update(u, true); err != nil {
-				log.Errorf("TargetStore.Update(dry_run=true): %v [%v]", err, u)
+			// Write physical updates to target.
+			physicalRequest.Updates = physicalUpdates
+			logMsg(ToTarget, &physicalRequest)
+			_, err = target.Write(ctx, &physicalRequest)
+			if err != nil {
+				// TODO (carmelo): unpack and log P4RT error trailers from target.
+				log.Errorf("%s %v", FromTarget, err)
 				ok = false
 				continue // next update
 			}
+
+			// Write RPC was successful!
 		}
 
-		// Write physical updates to target.
-		physicalRequest.Updates = physicalUpdates
-		logMsg(ToTarget, &physicalRequest)
-		_, err = target.Write(ctx, &physicalRequest)
-		if err != nil {
-			// TODO (carmelo): unpack and log P4RT error trailers from target.
-			log.Errorf("%s %v", FromTarget, err)
-			ok = false
-			continue // next update
-		}
-
-		// Write RPC was successful!
 		// Update stores with logical entities (there should be no errors since we did a dry run before)
 		if err := s.ServerStore.Update(logicalUpdate, false); err != nil {
 			panic(err)
