@@ -41,7 +41,7 @@ func Test_store_Update(t *testing.T) {
 			s := &p4RtStore{
 				tableEntries: tt.fields.tableEntries,
 			}
-			s.Update(tt.args.update, tt.args.dryRun)
+			s.ApplyUpdate(tt.args.update, tt.args.dryRun)
 			if gotTableEntryCount := s.TableEntryCount(); gotTableEntryCount != tt.wantTableEntryCount {
 				t.Errorf("TableEntryCount() = %v, want %v", gotTableEntryCount, tt.wantTableEntryCount)
 			}

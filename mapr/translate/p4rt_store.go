@@ -9,7 +9,7 @@ import (
 // A store of P4Runtime entities with map semantics.
 type P4RtStore interface {
 	// Updates the store using the content of the given P4Runtime WriteRequest's Update.
-	Update(r *p4v1.Update, dryRun bool) error
+	ApplyUpdate(r *p4v1.Update, dryRun bool) error
 	// Stores the given table entry.
 	PutTableEntry(*p4v1.TableEntry)
 	// Returns the table entry associated with the given key, or nil.
@@ -49,20 +49,22 @@ type P4RtStore interface {
 }
 
 type p4RtStore struct {
+	name           string
 	tableEntries   map[string]*p4v1.TableEntry
 	actProfGroups  map[string]*p4v1.ActionProfileGroup
 	actProfMembers map[string]*p4v1.ActionProfileMember
 }
 
-func NewP4RtStore() *p4RtStore {
+func NewP4RtStore(name string) *p4RtStore {
 	return &p4RtStore{
+		name:           name,
 		tableEntries:   make(map[string]*p4v1.TableEntry),
 		actProfGroups:  make(map[string]*p4v1.ActionProfileGroup),
 		actProfMembers: make(map[string]*p4v1.ActionProfileMember),
 	}
 }
 
-func (s *p4RtStore) Update(u *p4v1.Update, dryRun bool) error {
+func (s *p4RtStore) ApplyUpdate(u *p4v1.Update, dryRun bool) error {
 	if dryRun {
 		// TODO: implement validation logic
 		return nil
@@ -88,14 +90,14 @@ func (s *p4RtStore) Update(u *p4v1.Update, dryRun bool) error {
 			s.PutActProfMember(x.ActionProfileMember)
 		}
 	default:
-		log.Warnf("Storing %T not implemented, ignoring... [%v]", x, x)
+		log.Warnf("P4RtStore(%s): storing %T not implemented, ignoring... [%v]", s.name, x, x)
 	}
 	return nil
 }
 
 func (s *p4RtStore) logStoreSummary() {
-	log.Debugf("P4RtStore summary: TableEntryCount=%d, ActProfGroupCount=%d, ActProfMemberCount=%d",
-		s.TableEntryCount(), s.ActProfGroupCount(), s.ActProfMemberCount())
+	log.Debugf("P4RtStore(%s) summary: TableEntryCount=%d, ActProfGroupCount=%d, ActProfMemberCount=%d",
+		s.name, s.TableEntryCount(), s.ActProfGroupCount(), s.ActProfMemberCount())
 }
 
 // Returns a string that uniquely identifies a table entry.
@@ -112,7 +114,6 @@ func KeyFromTableEntry(t *p4v1.TableEntry) string {
 }
 
 func (s *p4RtStore) PutTableEntry(entry *p4v1.TableEntry) {
-	log.Debugf("PutTableEntry(): %v", entry)
 	s.tableEntries[KeyFromTableEntry(entry)] = entry
 }
 
@@ -121,7 +122,6 @@ func (s *p4RtStore) GetTableEntry(key *string) *p4v1.TableEntry {
 }
 
 func (s *p4RtStore) RemoveTableEntry(entry *p4v1.TableEntry) {
-	log.Debugf("RemoveTableEntry(): %v", entry)
 	delete(s.tableEntries, KeyFromTableEntry(entry))
 }
 
@@ -155,7 +155,6 @@ func KeyFromActProfGroup(g *p4v1.ActionProfileGroup) string {
 }
 
 func (s *p4RtStore) PutActProfGroup(g *p4v1.ActionProfileGroup) {
-	log.Debugf("PutActProfGroup(): %v", g)
 	s.actProfGroups[KeyFromActProfGroup(g)] = g
 }
 
@@ -164,7 +163,6 @@ func (s *p4RtStore) GetActProfGroup(key *string) *p4v1.ActionProfileGroup {
 }
 
 func (s *p4RtStore) RemoveActProfGroup(g *p4v1.ActionProfileGroup) {
-	log.Debugf("RemoveActProfGroup(): %v", g)
 	delete(s.actProfGroups, KeyFromActProfGroup(g))
 }
 
@@ -198,7 +196,6 @@ func KeyFromActProfMember(g *p4v1.ActionProfileMember) string {
 }
 
 func (s *p4RtStore) PutActProfMember(g *p4v1.ActionProfileMember) {
-	log.Debugf("PutActProfMember(): %v", g)
 	s.actProfMembers[KeyFromActProfMember(g)] = g
 }
 
@@ -207,7 +204,6 @@ func (s *p4RtStore) GetActProfMember(key *string) *p4v1.ActionProfileMember {
 }
 
 func (s *p4RtStore) RemoveActProfMember(g *p4v1.ActionProfileMember) {
-	log.Debugf("RemoveActProfMember(): %v", g)
 	delete(s.actProfMembers, KeyFromActProfMember(g))
 }
 

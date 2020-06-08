@@ -177,7 +177,7 @@ func Test_ParseIfTypeEntry(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := ParseIfTypeEntry(tt.args.t)
+			got, err := parseIfTypeEntry(tt.args.t)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("parseIfTypeEntry() error = %v, wantErr %v", err, tt.wantErr)
 				return
