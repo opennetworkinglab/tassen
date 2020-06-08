@@ -1,17 +1,18 @@
 package translate
 
 import (
+	"fmt"
 	p4v1 "github.com/p4lang/p4runtime/go/p4/v1"
-	log "github.com/sirupsen/logrus"
 )
 
-// A translator of P4RT write requests.
+// A translator of P4RT updates.
 type Translator interface {
-	// Given a write request for the logical pipeline, returns a write request for the physical pipeline that will
-	// produce a forwarding state that is equivalent to that of the logical pipeline after applying the given write
-	// request. The returned request might be nil, signaling that the translation was successful but that should not
-	// produce any change in the physical pipeline.
-	Translate(logical *p4v1.WriteRequest) (physical *p4v1.WriteRequest, err error)
+	// Given an update for the logical pipeline, returns zero or more updates for the physical pipeline that will
+	// produce a forwarding behavior that is equivalent to that of the logical pipeline after applying the given update.
+	// If the returned updates are zero (nil), that means the translation was successful but it doesn't require any
+	// changes to the physical pipeline (e.g., for many-to-one mapping, when we require multiple logical entries to
+	// produce a physical one).
+	Translate(logical *p4v1.Update) (physical []*p4v1.Update, err error)
 }
 
 // A processor of changes in the logical pipeline state.
@@ -54,69 +55,55 @@ func NewTranslator(srv P4RtStore, tsn TassenStore, prc ChangeProcessor) Translat
 // generate all necessary updates to insert the corresponding entries in the target to enable termination/forwarding. If
 // the attachment is not complete, the processor might decide to remove all entries from the target related to that
 // attachment.
-func (t *translator) Translate(r *p4v1.WriteRequest) (*p4v1.WriteRequest, error) {
+func (t *translator) Translate(u *p4v1.Update) ([]*p4v1.Update, error) {
 	result := make([]*p4v1.Update, 0)
-	for _, u := range r.Updates {
-		switch e := u.Entity.Entity.(type) {
-		case *p4v1.Entity_TableEntry:
-			switch e.TableEntry.TableId {
-			case Table_IngressPipeIfTypes: // device-level
-				entry, err := ParseIfTypeEntry(e.TableEntry)
-				if err != nil {
-					return nil, err
-				}
-				newUpdates, err := t.processor.HandleIfTypeEntry(&entry, u.Type)
-				if err != nil {
-					return nil, err
-				}
-				if newUpdates != nil {
-					result = append(result, newUpdates...)
-				}
-			case Table_IngressPipeMyStations: // device-level
-				entry, err := ParseMyStationEntry(e.TableEntry)
-				if err != nil {
-					return nil, err
-				}
-				newUpdates, err := t.processor.HandleMyStationEntry(&entry, u.Type)
-				if err != nil {
-					return nil, err
-				}
-				if newUpdates != nil {
-					result = append(result, newUpdates...)
-				}
-			case Table_IngressPipeUpstreamLines, Table_IngressPipeUpstreamAttachmentsV4: // attachment-level for upstream
-				a, ok, err := t.tassenStore.EvalAttachment(e.TableEntry)
-				if err != nil {
-					return nil, err
-				}
-				newUpdates, err := t.processor.HandleAttachmentEntry(&a, ok)
-				if err != nil {
-					return nil, err
-				}
-				if newUpdates != nil {
-					result = append(result, newUpdates...)
-				}
-			// TODO: case Table_UpstreamRoutesV4 // device-level
-			// TODO: case Table_UpstreamPppoePunts // device-level
-			// TODO: downstream tables
-			default:
-				log.Warnf("Table ID %v not implemented, ignoring... [%s]",
-					e.TableEntry.TableId, e.TableEntry.String())
+	switch e := u.Entity.Entity.(type) {
+	case *p4v1.Entity_TableEntry:
+		switch e.TableEntry.TableId {
+		case Table_IngressPipeIfTypes: // device-level
+			entry, err := ParseIfTypeEntry(e.TableEntry)
+			if err != nil {
+				return nil, err
 			}
+			newUpdates, err := t.processor.HandleIfTypeEntry(&entry, u.Type)
+			if err != nil {
+				return nil, err
+			}
+			if newUpdates != nil {
+				result = append(result, newUpdates...)
+			}
+		case Table_IngressPipeMyStations: // device-level
+			entry, err := ParseMyStationEntry(e.TableEntry)
+			if err != nil {
+				return nil, err
+			}
+			newUpdates, err := t.processor.HandleMyStationEntry(&entry, u.Type)
+			if err != nil {
+				return nil, err
+			}
+			if newUpdates != nil {
+				result = append(result, newUpdates...)
+			}
+		case Table_IngressPipeUpstreamLines, Table_IngressPipeUpstreamAttachmentsV4: // attachment-level for upstream
+			a, ok, err := t.tassenStore.EvalAttachment(e.TableEntry)
+			if err != nil {
+				return nil, err
+			}
+			newUpdates, err := t.processor.HandleAttachmentEntry(&a, ok)
+			if err != nil {
+				return nil, err
+			}
+			if newUpdates != nil {
+				result = append(result, newUpdates...)
+			}
+		// TODO: case Table_UpstreamRoutesV4 // device-level
+		// TODO: case Table_UpstreamPppoePunts // device-level
+		// TODO: downstream tables
 		default:
-			log.Warnf("Translating %T not implemented, ignoring... [%s]",
-				e, r.String())
+			return nil, fmt.Errorf("table ID %v not implemented", e.TableEntry.TableId)
 		}
+	default:
+		return nil, fmt.Errorf("translating %T not implemented", e)
 	}
-	if len(result) == 0 {
-		return nil, nil
-	}
-	// Return original write request but with modified updates.
-	return &p4v1.WriteRequest{
-		DeviceId:   r.DeviceId,
-		RoleId:     r.RoleId,
-		ElectionId: r.ElectionId,
-		Updates:    result,
-		Atomicity:  r.Atomicity,
-	}, nil
+	return result, nil
 }

@@ -59,8 +59,8 @@ func toLineIdKey(b []byte) LineIdKey {
 }
 
 type TassenStore interface {
-	// Updates the store using the content of the given P4Runtime write request
-	Update(r *p4v1.WriteRequest, dryRun bool) error
+	// Updates the store using the content of the given P4Runtime WriteRequests's Update
+	Update(r *p4v1.Update, dryRun bool) error
 	// Returns IfTypeEntry for the given port
 	GetIfType(PortKey) *IfTypeEntry
 	// Returns MyStationEntry for the given port
@@ -74,57 +74,58 @@ type TassenStore interface {
 }
 
 type tassenStore struct {
+	p4RtStore   P4RtStore
 	ifTypes     map[PortKey]*IfTypeEntry
 	myStations  map[PortKey]*MyStationEntry
 	upAttachs   map[LineIdKey]*AttachmentEntry
 	downAttachs map[LineIdKey]*AttachmentEntry
 }
 
-func (s tassenStore) Update(r *p4v1.WriteRequest, dryRun bool) (err error) {
-	for _, u := range r.Updates {
-		switch e := u.Entity.Entity.(type) {
-		case *p4v1.Entity_TableEntry:
-			switch e.TableEntry.TableId {
-			case Table_IngressPipeIfTypes:
-				entry, err := ParseIfTypeEntry(e.TableEntry)
-				if err != nil {
-					return err
-				}
-				// TODO: check if key exists
-				if !dryRun {
-					s.ifTypes[toPortKey(entry.Port)] = &entry
-				}
-			case Table_IngressPipeMyStations:
-				entry, err := ParseMyStationEntry(e.TableEntry)
-				if err != nil {
-					return err
-				}
-				// TODO: check if key exists
-				if !dryRun {
-					s.myStations[toPortKey(entry.EthDst)] = &entry
-				}
-			case Table_IngressPipeUpstreamLines, Table_IngressPipeUpstreamAttachmentsV4: // TODO: downstream tables
-				attach, _, err := s.EvalAttachment(e.TableEntry)
-				if err != nil {
-					return err
-				}
-				if !dryRun {
-					if attach.Direction == DirectionUpstream {
-						s.upAttachs[toLineIdKey(attach.LineId)] = &attach
-					} else {
-						s.downAttachs[toLineIdKey(attach.LineId)] = &attach
-					}
-				}
-			// TODO: case Table_UpstreamRoutesV4 // device-level
-			// TODO: case Table_UpstreamPppoePunts // device-level
-			default:
-				log.Warnf("Update(): Table ID %v not implemented, ignoring... [%s]",
-					e.TableEntry.TableId, e.TableEntry.String())
+func (s tassenStore) Update(u *p4v1.Update, dryRun bool) (err error) {
+	if dryRun {
+		// TODO: implement validation logic
+		return nil
+	}
+	switch e := u.Entity.Entity.(type) {
+	case *p4v1.Entity_TableEntry:
+		switch e.TableEntry.TableId {
+		case Table_IngressPipeIfTypes:
+			entry, err := ParseIfTypeEntry(e.TableEntry)
+			if err != nil {
+				return err
 			}
+			// TODO: check if key exists
+			if !dryRun {
+				s.ifTypes[toPortKey(entry.Port)] = &entry
+			}
+		case Table_IngressPipeMyStations:
+			entry, err := ParseMyStationEntry(e.TableEntry)
+			if err != nil {
+				return err
+			}
+			// TODO: check if key exists
+			if !dryRun {
+				s.myStations[toPortKey(entry.EthDst)] = &entry
+			}
+		case Table_IngressPipeUpstreamLines, Table_IngressPipeUpstreamAttachmentsV4: // TODO: downstream tables
+			attach, _, err := s.EvalAttachment(e.TableEntry)
+			if err != nil {
+				return err
+			}
+			if !dryRun {
+				if attach.Direction == DirectionUpstream {
+					s.upAttachs[toLineIdKey(attach.LineId)] = &attach
+				} else {
+					s.downAttachs[toLineIdKey(attach.LineId)] = &attach
+				}
+			}
+		// TODO: case Table_UpstreamRoutesV4 // device-level
+		// TODO: case Table_UpstreamPppoePunts // device-level
 		default:
-			log.Warnf("Update(): Updating %T not implemented, ignoring... [%s]",
-				e, r.String())
+			log.Warnf("Update(): Table ID %v not implemented, ignoring... [%v]", e.TableEntry.TableId, e.TableEntry)
 		}
+	default:
+		log.Warnf("Update(): Updating %T not implemented, ignoring... [%v]", e, u)
 	}
 	return nil
 }
@@ -194,8 +195,15 @@ func (s tassenStore) EvalAttachment(t *p4v1.TableEntry) (a AttachmentEntry, ok b
 	return
 }
 
-func NewTassenStore() *tassenStore {
+//func (s tassenStore) GetRouteV4Entry(key Ipv4LpmKey) *RouteV4Entry {
+//
+//}
+
+func NewTassenStore(p4RtStore P4RtStore) TassenStore {
 	return &tassenStore{
+		p4RtStore: p4RtStore,
+		// FIXME (carmelo): consider removing these entity-specific maps, as the same values could be derived re-parsing
+		//  the content of the p4rt store. If we can about performance, then we could use a cache.
 		ifTypes:    make(map[PortKey]*IfTypeEntry),
 		myStations: make(map[PortKey]*MyStationEntry),
 		upAttachs:  make(map[LineIdKey]*AttachmentEntry),

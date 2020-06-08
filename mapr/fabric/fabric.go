@@ -57,6 +57,6 @@ func (p fabricChangeProcessor) HandleMyStationEntry(e *translate.MyStationEntry,
 
 func (p fabricChangeProcessor) HandleAttachmentEntry(a *translate.AttachmentEntry, ok bool) ([]*v1.Update, error) {
 	log.Tracef("AttachmentEntry={ %s }, complete=%v", a, ok)
-	log.Warnf("fabricChangeProcessor.HandleMyStationEntry(): not implemented")
+	log.Warnf("fabricChangeProcessor.HandleAttachmentEntry(): not implemented")
 	return nil, nil
 }

@@ -13,6 +13,6 @@ func NewDummyTranslator() Translator {
 }
 
 // Returns the same input request.
-func (d dummy) Translate(request *p4v1.WriteRequest) (*p4v1.WriteRequest, error) {
-	return request, nil
+func (d dummy) Translate(u *p4v1.Update) ([]*p4v1.Update, error) {
+	return []*p4v1.Update{u}, nil
 }
