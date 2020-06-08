@@ -5,14 +5,18 @@ import (
 )
 
 // A dummy translator for testing purposes only.
-type dummy struct {
+type dummyTranslator struct {
 }
 
 func NewDummyTranslator() Translator {
-	return &dummy{}
+	return &dummyTranslator{}
 }
 
 // Returns the same input request.
-func (d dummy) Translate(u *p4v1.Update) ([]*p4v1.Update, error) {
+func (d dummyTranslator) Translate(u *p4v1.Update) ([]*p4v1.Update, error) {
 	return []*p4v1.Update{u}, nil
+}
+
+func (d dummyTranslator) ApplyUpdate(*p4v1.Update, []*p4v1.Update) error {
+	return nil
 }

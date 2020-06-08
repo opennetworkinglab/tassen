@@ -41,8 +41,8 @@ var (
 		"The server port")
 	targetAddr = flag.String("target_addr", "127.0.0.1:28000",
 		"The target address in the format of host:port")
-	translatorName = flag.String("translator", "dummy",
-		"Translator to use")
+	processorName = flag.String("proc", "dummy",
+		"Processor to use")
 	logicalP4InfoPath = flag.String("logical_p4info", "",
 		"Path to logical P4Info file in binary format, e.g., `p4info.bin`")
 	targetP4ConfigPaths = flag.String("target_p4_config", "",
@@ -70,30 +70,30 @@ func logMsg(dir MsgDirection, msg proto.Message) {
 }
 
 type Server struct {
-	Translator  translate.Translator
-	ServerStore translate.P4RtStore
-	TargetStore translate.P4RtStore
-	TassenStore translate.TassenStore
+	// Holds the logical P4RT entities.
+	P4RtStore translate.P4RtStore
+	// Handles translation of logical updates to physical ones.
+	Translator translate.Translator
 }
 
 func NewServer() *Server {
-	serverStore := translate.NewP4RtStore()
-	targetStore := translate.NewP4RtStore()
-	tassenStore := translate.NewTassenStore(serverStore)
-	var translator translate.Translator
-	switch *translatorName {
-	case "dummy":
-		translator = translate.NewDummyTranslator()
-	case "fabric":
-		translator = fabric.NewFabricTranslator(serverStore, targetStore, tassenStore)
-	default:
-		panic("Unknown translator")
+	ctx := translate.NewContext()
+	var trn translate.Translator
+	if *processorName == "dummy" {
+		trn = translate.NewDummyTranslator()
+	} else {
+		var proc translate.Processor
+		switch *processorName {
+		case "fabric":
+			proc = fabric.NewFabricProcessor(ctx)
+		default:
+			panic("Unknown processor")
+		}
+		trn = translate.NewTranslator(proc, ctx)
 	}
 	return &Server{
-		Translator:  translator,
-		ServerStore: serverStore,
-		TargetStore: targetStore,
-		TassenStore: tassenStore,
+		P4RtStore:  translate.NewP4RtStore("logical"),
+		Translator: trn,
 	}
 }
 
@@ -133,65 +133,41 @@ func (s Server) Write(ctx context.Context, logicalReq *p4v1.WriteRequest) (*p4v1
 
 	ok := true
 	for _, logicalUpdate := range logicalReq.Updates {
-		// Validate update against the stores.
-		if err := s.ServerStore.Update(logicalUpdate, true); err != nil {
-			log.Errorf("ServerStore.Update(dry_run=true): %v [%v]", err, logicalUpdate)
-			ok = false
-			continue // next update
-		}
-		if err := s.TassenStore.Update(logicalUpdate, true); err != nil {
-			log.Errorf("TassenStore.Update(dry_run=true): %v [%v]", err, logicalUpdate)
+		// Validate update against P4RT store, to catch duplicate entries, and other P4RT-level errors.
+		if err := s.P4RtStore.ApplyUpdate(logicalUpdate, true); err != nil {
+			log.Errorf("ServerStore.ApplyUpdate(dry_run=true): %v [%v]", err, logicalUpdate)
 			ok = false
 			continue // next update
 		}
 
-		// Translate update to zero or more to apply to the physical pipeline on the target.
-		physicalUpdates, err := s.Translator.Translate(logicalUpdate)
+		// Translate logical update to zero or more physical ones to write on the target.
+		targetUpdates, err := s.Translator.Translate(logicalUpdate)
 		if err != nil {
 			log.Errorf("Translator.Translate(): %v [%v]", err, logicalUpdate)
 			ok = false
 			continue // next update
 		}
 
-		if physicalUpdates == nil || len(physicalUpdates) == 0 {
-			// No need to update the target.
-			continue
-		}
-
-		// Validate physical updates against target store before writing.
-		for _, u := range physicalUpdates {
-			// FIXME (carmelo): we should be validating the whole slice, not individual updates. This works fine only if
-			//  we assume the translator always produces valid updates.
-			if err := s.TargetStore.Update(u, true); err != nil {
-				log.Errorf("TargetStore.Update(dry_run=true): %v [%v]", err, u)
+		if targetUpdates != nil && len(targetUpdates) > 0 {
+			// Write physical updates to target.
+			physicalRequest.Updates = targetUpdates
+			logMsg(ToTarget, &physicalRequest)
+			_, err = target.Write(ctx, &physicalRequest)
+			if err != nil {
+				// TODO (carmelo): unpack and log P4RT error trailers from target.
+				log.Errorf("%s %v", FromTarget, err)
 				ok = false
 				continue // next update
 			}
+			// Write RPC was successful!
 		}
 
-		// Write physical updates to target.
-		physicalRequest.Updates = physicalUpdates
-		logMsg(ToTarget, &physicalRequest)
-		_, err = target.Write(ctx, &physicalRequest)
-		if err != nil {
-			// TODO (carmelo): unpack and log P4RT error trailers from target.
-			log.Errorf("%s %v", FromTarget, err)
-			ok = false
-			continue // next update
-		}
-
-		// Write RPC was successful!
-		// Update stores with logical entities (there should be no errors since we did a dry run before)
-		if err := s.ServerStore.Update(logicalUpdate, false); err != nil {
+		// Update internal stores (there should be no errors since we did a dry run before)
+		if err := s.P4RtStore.ApplyUpdate(logicalUpdate, false); err != nil {
 			panic(err)
 		}
-		if err := s.TassenStore.Update(logicalUpdate, false); err != nil {
+		if err := s.Translator.ApplyUpdate(logicalUpdate, targetUpdates); err != nil {
 			panic(err)
-		}
-		for _, u := range physicalUpdates {
-			if err := s.TargetStore.Update(u, false); err != nil {
-				panic(err)
-			}
 		}
 	}
 

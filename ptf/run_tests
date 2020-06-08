@@ -34,7 +34,7 @@ fi
 echo "*** Starting stratum_bmv2 in Docker (${runName})..."
 docker run --name "${runName}" -d --privileged --rm \
   -v "${WORKDIR}:/workdir" -w /workdir/ptf \
-  -e "TRANSLATOR=${TARGET_NAME}" \
+  -e "PROCESSOR=${TARGET_NAME}" \
   -e "TARGET_P4C_OUT=/workdir/${targetP4cOut}" \
   --entrypoint ./lib/start_bmv2.sh \
   "${PTF_DOCKER_IMG}" >/dev/null
