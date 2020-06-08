@@ -80,18 +80,18 @@ func (r RouteV4Entry) String() string {
 
 type PortKey [2]byte
 
-func toPortKey(b []byte) PortKey {
+func ToPortKey(b []byte) PortKey {
 	return PortKey{b[0], b[1]}
 }
 
 type LineIdKey [4]byte
 
-func toLineIdKey(b []byte) LineIdKey {
+func ToLineIdKey(b []byte) LineIdKey {
 	return LineIdKey{b[0], b[1], b[2], b[3]}
 }
 
 type Ipv4LpmKey string
 
-func toIpv4LpmKey(addr []byte, prefixLen int32) Ipv4LpmKey {
+func ToIpv4LpmKey(addr []byte, prefixLen int32) Ipv4LpmKey {
 	return Ipv4LpmKey(fmt.Sprintf("%x/%d", addr, prefixLen))
 }
