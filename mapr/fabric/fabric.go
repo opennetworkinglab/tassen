@@ -80,10 +80,25 @@ func (p fabricProcessor) HandleAttachmentEntry(a *translate.AttachmentEntry, ok 
 			log.Tracef("fabricProcessor.HandleAttachmentEntry(): Downstream direction not implemented")
 		}
 	} else {
-		// Query target store to understand which entries are to be removed
-		if a.LineId != nil {
-			toBeRemovedEntries := getTargetEntriesUpstreamByLineId(p, a.LineId)
+		switch a.Direction {
+		case translate.DirectionUpstream:
+			// Query target store to understand which entries to remove
+			toBeRemovedEntries := make([]*v1.TableEntry, 0)
+			if a.LineId != nil {
+				toBeRemovedEntries = append(toBeRemovedEntries, getTargetEntriesUpstreamByLineId(p, a.LineId)...)
+			}
+			if a.STag != nil && a.CTag != nil && a.Port != nil {
+				tempRule := createIngressPortVlanEntryPermit(a.Port, a.STag, a.CTag, nil, defaultPrio)
+				key := translate.KeyFromTableEntry(&tempRule)
+				remEntry := p.ctx.Target().GetTableEntry(&key)
+				// Otherwise it will append nil
+				if remEntry != nil {
+					toBeRemovedEntries = append(toBeRemovedEntries, p.ctx.Target().GetTableEntry(&key))
+				}
+			}
 			return createUpdateEntries(toBeRemovedEntries, v1.Update_DELETE), nil
+		case translate.DirectionDownstream:
+			log.Tracef("fabricProcessor.HandleAttachmentEntry(): Downstream direction not implemented")
 		}
 	}
 	return nil, nil
