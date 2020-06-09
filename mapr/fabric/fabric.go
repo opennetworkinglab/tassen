@@ -29,23 +29,17 @@ func NewFabricProcessor(ctx translate.Context) translate.Processor {
 func (p fabricProcessor) HandleIfTypeEntry(e *translate.IfTypeEntry, uType v1.Update_Type) ([]*v1.Update, error) {
 	log.Tracef("IfTypeEntry={ %s }", e)
 	// TODO: check parameter of IfTypeEntry and return error
-	phyTableEntries := make([]v1.TableEntry, 0)
 	switch e.IfType[0] {
 	case translate.IfTypeCore:
-		phyTableEntries = append(phyTableEntries,
-			createIngressPortVlanEntryPermit(e.Port, nil, nil, getVlanIdValue(defaultInternalTag), defaultPrio))
-		phyTableEntries = append(phyTableEntries, createEgressVlanPopEntry(e.Port, defaultInternalTag))
+		ingressPortVlanEntry := createIngressPortVlanEntryPermit(e.Port, nil, nil, getVlanIdValue(defaultInternalTag), defaultPrio)
+		egressPopVlanEntry := createEgressVlanPopEntry(e.Port, defaultInternalTag)
+		return []*v1.Update{createUpdateEntry(&ingressPortVlanEntry, uType), createUpdateEntry(&egressPopVlanEntry, uType)}, nil
 	case translate.IfTypeAccess:
 		log.Warnf("fabricProcessor.HandleIfTypeEntry(): not implemented for ACCESS ports")
 	default:
 		log.Warnf("IfTypeEntry.IfType=%v not implemented", e.IfType)
 	}
-
-	phyUpdateEntry := make([]*v1.Update, 0)
-	for i := range phyTableEntries {
-		phyUpdateEntry = append(phyUpdateEntry, createUpdateEntry(&phyTableEntries[i], uType))
-	}
-	return phyUpdateEntry, nil
+	return nil, nil
 }
 
 func (p fabricProcessor) HandleMyStationEntry(e *translate.MyStationEntry, uType v1.Update_Type) ([]*v1.Update, error) {
@@ -57,7 +51,56 @@ func (p fabricProcessor) HandleMyStationEntry(e *translate.MyStationEntry, uType
 
 func (p fabricProcessor) HandleAttachmentEntry(a *translate.AttachmentEntry, ok bool) ([]*v1.Update, error) {
 	log.Tracef("AttachmentEntry={ %s }, complete=%v", a, ok)
-	log.Warnf("fabricProcessor.HandleAttachmentEntry(): not implemented")
+	if ok {
+		// The attachment is complete, generate the rules
+		switch a.Direction {
+		case translate.DirectionUpstream:
+			// Ingress Port Vlan for double tagged access port
+			ingressPortVlanEntry := createIngressPortVlanEntryPermit(a.Port, a.STag, a.CTag, nil, defaultPrio)
+			// BNG specific rules
+			// - t_line_map
+			lineMapEntry := createLineMapEntry(a.STag, a.CTag, a.LineId)
+			// - t_pppoe_term_v4
+			pppoeTermV4Entry := createPppoeTermV4(a.LineId, a.Ipv4Addr, a.PppoeSessId)
+
+			targetUpdateEntries := make([]*v1.Update, 0)
+			// Query target store to understand if insert or modify
+			for _, v := range []*v1.TableEntry{&ingressPortVlanEntry, &lineMapEntry, &pppoeTermV4Entry} {
+				key := translate.KeyFromTableEntry(v)
+				targetTableEntry := p.ctx.Target().GetTableEntry(&key)
+				updateType := v1.Update_INSERT
+				if targetTableEntry != nil {
+					// TODO: we could filter only the modified entries instead of always pushing a MODIFY to the target
+					updateType = v1.Update_MODIFY
+				}
+				targetUpdateEntries = append(targetUpdateEntries, createUpdateEntry(v, updateType))
+			}
+			return targetUpdateEntries, nil
+		case translate.DirectionDownstream:
+			log.Tracef("fabricProcessor.HandleAttachmentEntry(): Downstream direction not implemented")
+		}
+	} else {
+		switch a.Direction {
+		case translate.DirectionUpstream:
+			// Query target store to understand which entries to remove
+			toBeRemovedEntries := make([]*v1.TableEntry, 0)
+			if a.LineId != nil {
+				toBeRemovedEntries = append(toBeRemovedEntries, getTargetEntriesUpstreamByLineId(p, a.LineId)...)
+			}
+			if a.STag != nil && a.CTag != nil && a.Port != nil {
+				tempRule := createIngressPortVlanEntryPermit(a.Port, a.STag, a.CTag, nil, defaultPrio)
+				key := translate.KeyFromTableEntry(&tempRule)
+				remEntry := p.ctx.Target().GetTableEntry(&key)
+				// Otherwise it will append nil
+				if remEntry != nil {
+					toBeRemovedEntries = append(toBeRemovedEntries, p.ctx.Target().GetTableEntry(&key))
+				}
+			}
+			return createUpdateEntries(toBeRemovedEntries, v1.Update_DELETE), nil
+		case translate.DirectionDownstream:
+			log.Tracef("fabricProcessor.HandleAttachmentEntry(): Downstream direction not implemented")
+		}
+	}
 	return nil, nil
 }
 
@@ -93,6 +136,7 @@ func (p fabricProcessor) HandleRouteV4NextHopGroup(g *translate.NextHopGroup, uT
 
 func (p fabricProcessor) HandleRouteV4Entry(e *translate.RouteV4Entry, uType v1.Update_Type) ([]*v1.Update, error) {
 	log.Tracef("RouteV4Entry={ %s }", e)
-	t := createRouteV4Entry(e)
-	return []*v1.Update{createUpdateEntry(&t, uType)}, nil
+	r := createRouteV4Entry(e)
+	v := createNextVlanEntry(e, getVlanIdValue(defaultInternalTag))
+	return []*v1.Update{createUpdateEntry(&r, uType), createUpdateEntry(&v, uType)}, nil
 }

@@ -1,6 +1,7 @@
 package fabric
 
 import (
+	"bytes"
 	"encoding/binary"
 	v1 "github.com/p4lang/p4runtime/go/p4/v1"
 	"mapr/translate"
@@ -11,6 +12,14 @@ func createUpdateEntry(entry *v1.TableEntry, uType v1.Update_Type) *v1.Update {
 		Type:   uType,
 		Entity: &v1.Entity{Entity: &v1.Entity_TableEntry{TableEntry: entry}},
 	}
+}
+
+func createUpdateEntries(entries []*v1.TableEntry, uType v1.Update_Type) []*v1.Update {
+	phyUpdateEntry := make([]*v1.Update, 0)
+	for i := range entries {
+		phyUpdateEntry = append(phyUpdateEntry, createUpdateEntry(entries[i], uType))
+	}
+	return phyUpdateEntry
 }
 
 func createUpdateActProfMember(member *v1.ActionProfileMember, uType v1.Update_Type) *v1.Update {
@@ -89,7 +98,7 @@ func createIngressPortVlanEntryPermit(port []byte, vlanId []byte, innerVlanId []
 			FieldId: Hdr_FabricIngressFilteringIngressPortVlan_VlanIsValid,
 			FieldMatchType: &v1.FieldMatch_Exact_{
 				Exact: &v1.FieldMatch_Exact{
-					Value: []byte{1},
+					Value: []byte{0x01},
 				},
 			},
 		})
@@ -98,7 +107,7 @@ func createIngressPortVlanEntryPermit(port []byte, vlanId []byte, innerVlanId []
 			FieldMatchType: &v1.FieldMatch_Ternary_{
 				Ternary: &v1.FieldMatch_Ternary{
 					Value: vlanId,
-					Mask:  []byte{0xFF, 0xFF},
+					Mask:  []byte{0x0F, 0xFF},
 				},
 			},
 		})
@@ -108,7 +117,7 @@ func createIngressPortVlanEntryPermit(port []byte, vlanId []byte, innerVlanId []
 				FieldMatchType: &v1.FieldMatch_Ternary_{
 					Ternary: &v1.FieldMatch_Ternary{
 						Value: innerVlanId,
-						Mask:  []byte{0xFF, 0xFF},
+						Mask:  []byte{0x0F, 0xFF},
 					},
 				},
 			})
@@ -118,13 +127,13 @@ func createIngressPortVlanEntryPermit(port []byte, vlanId []byte, innerVlanId []
 			FieldId: Hdr_FabricIngressFilteringIngressPortVlan_VlanIsValid,
 			FieldMatchType: &v1.FieldMatch_Exact_{
 				Exact: &v1.FieldMatch_Exact{
-					Value: []byte{0},
+					Value: []byte{0x00},
 				},
 			},
 		})
 	}
 	var actionPop v1.TableAction
-	if innerVlanId != nil {
+	if internalVlan != nil {
 		actionPop = v1.TableAction{
 			Type: &v1.TableAction_Action{Action: &v1.Action{
 				ActionId: Action_FabricIngressFilteringPermitWithInternalVlan,
@@ -249,4 +258,97 @@ func createRouteV4Entry(e *translate.RouteV4Entry) v1.TableEntry {
 			}},
 		}}},
 	}
+}
+
+func createNextVlanEntry(e *translate.RouteV4Entry, outputTag []byte) v1.TableEntry {
+	return v1.TableEntry{
+		TableId: Table_FabricIngressNextNextVlan,
+		Match: []*v1.FieldMatch{{
+			FieldId: Hdr_FabricIngressForwardingRoutingV4_Ipv4Dst,
+			FieldMatchType: &v1.FieldMatch_Exact_{Exact: &v1.FieldMatch_Exact{
+				Value:     getNextIdValue(e.NextHopGroupId),
+			}}}},
+		Action: &v1.TableAction{Type: &v1.TableAction_Action{Action: &v1.Action{
+			ActionId: Action_FabricIngressNextSetVlan,
+			Params: []*v1.Action_Param{{
+				ParamId: ActionParam_FabricIngressNextSetVlan_VlanId,
+				Value:   outputTag,
+			}},
+		}}},
+	}
+}
+
+func createLineMapEntry(sTag []byte, cTag []byte, lineId []byte) v1.TableEntry {
+	matches := []*v1.FieldMatch{{
+		FieldId: Hdr_FabricIngressBngIngressTLineMap_STag,
+		FieldMatchType: &v1.FieldMatch_Exact_{
+			Exact: &v1.FieldMatch_Exact{
+				Value: sTag,
+			}}}, {
+		FieldId: Hdr_FabricIngressBngIngressTLineMap_CTag,
+		FieldMatchType: &v1.FieldMatch_Exact_{
+			Exact: &v1.FieldMatch_Exact{
+				Value: cTag,
+			}}},
+	}
+	return v1.TableEntry{
+		TableId:  Table_FabricIngressBngIngressTLineMap,
+		Match:    matches,
+		Action:   &v1.TableAction{Type: &v1.TableAction_Action{Action: &v1.Action{
+				ActionId: Action_FabricIngressBngIngressSetLine,
+				Params: []*v1.Action_Param{{
+						ParamId: ActionParam_FabricIngressBngIngressSetLine_LineId,
+						Value:   lineId,
+				}}}}},
+	}
+}
+
+func createPppoeTermV4(lineId []byte, ipv4Addr []byte, pppoeSessId []byte) v1.TableEntry {
+	matches := []*v1.FieldMatch{{
+		FieldId: Hdr_FabricIngressBngIngressUpstreamTPppoeTermV4_LineId,
+		FieldMatchType: &v1.FieldMatch_Exact_{
+			Exact: &v1.FieldMatch_Exact{
+				Value: lineId,
+			}}}, {
+		FieldId: Hdr_FabricIngressBngIngressUpstreamTPppoeTermV4_Ipv4Src,
+		FieldMatchType: &v1.FieldMatch_Exact_{
+			Exact: &v1.FieldMatch_Exact{
+				Value: ipv4Addr,
+			}}}, {
+		FieldId: Hdr_FabricIngressBngIngressUpstreamTPppoeTermV4_PppoeSessionId,
+		FieldMatchType: &v1.FieldMatch_Exact_{
+			Exact: &v1.FieldMatch_Exact{
+				Value: pppoeSessId,
+			}}},
+	}
+	return v1.TableEntry{
+		TableId:  Table_FabricIngressBngIngressUpstreamTPppoeTermV4,
+		Match:    matches,
+		Action:   &v1.TableAction{Type: &v1.TableAction_Action{Action: &v1.Action{
+			ActionId: Action_FabricIngressBngIngressUpstreamTermEnabledV4,
+			}}},
+	}
+}
+
+func getTargetEntriesUpstreamByLineId(p fabricProcessor, lineId []byte) []*v1.TableEntry {
+	return p.ctx.Target().FilterTableEntries(
+		func(entry *v1.TableEntry) bool {
+			if entry.TableId == Table_FabricIngressBngIngressTLineMap &&
+				entry.GetAction().GetAction().ActionId == Action_FabricIngressBngIngressSetLine {
+				for _, v := range entry.GetAction().GetAction().GetParams() {
+					if bytes.Equal(v.Value, lineId) {
+						return true
+					}
+				}
+			}
+			if entry.TableId == Table_FabricIngressBngIngressUpstreamTPppoeTermV4 {
+				for _, m := range entry.GetMatch() {
+					if m.FieldId == Hdr_FabricIngressBngIngressUpstreamTPppoeTermV4_LineId &&
+						bytes.Equal(m.GetExact().Value, lineId) {
+						return true
+					}
+				}
+			}
+			return false
+		})
 }
