@@ -18,12 +18,17 @@
 #include <v1model.p4>
 
 const int MAX_LINES = 8192;
+// FIXME: we agreed to get rid of line IDs in favor of attachment IDs, as such
+//  allowing multiple attachments per line is no longer meaningful and should be
+//  removed.
 const int MAX_ATTACH_PER_LINE = 4;
 const int MAX_UPSTREAM_ROUTES = 1024;
 // For some reason P4 constants cannot be used in annotations.
 #define MAX_ECMP_GROUP_SIZE 16
 const int MAX_PPPOE_PUNTS = 32;
 const int MAX_ACLS = 256;
+const int MAX_COS = 16; // Classes of Service
+const int MAX_ACCOUNTING_IDS = MAX_LINES * MAX_COS;
 
 const bit<12> DEFAULT_VID = 0;
 
@@ -50,8 +55,19 @@ const if_type_t IF_UNKNOWN = 0;
 const if_type_t IF_CORE    = 1;
 const if_type_t IF_ACCESS  = 2;
 
+typedef bit<3> direction_t;
+const direction_t DIR_UNKNOWN    = 0;
+const direction_t DIR_UPSTREAM   = 1;
+const direction_t DIR_DOWNSTREAM = 2;
+
 typedef bit<32> line_id_t;
 const line_id_t LINE_UNKNOWN = 0;
+
+typedef bit<32> cos_id_t;
+const line_id_t COS_UNKNOWN = 0;
+
+typedef bit<32> accounting_id_t;
+const line_id_t ACCOUNTING_UNKNOWN = 0;
 
 // Global actions common to many controls.
 action nop() { /* no-op */ }
@@ -149,17 +165,20 @@ header icmp_t {
 }
 
 struct local_metadata_t {
-    if_type_t  if_type;
-    bit<48>    my_mac;
-    bit<8>     ip_proto;
+    if_type_t        if_type;
+    direction_t      direction;
+    bit<48>          my_mac;
+    bit<8>           ip_proto;
     // Used to normalize UDP/TCP ports.
-    bit<16>    l4_sport;
-    bit<16>    l4_dport;
+    bit<16>          l4_sport;
+    bit<16>          l4_dport;
     // Attachment attributes.
-    line_id_t  line_id;
-    bit<12>    s_tag;
-    bit<12>    c_tag;
-    bit<16>    pppoe_sess_id;
+    line_id_t        line_id;
+    cos_id_t         cos_id;
+    accounting_id_t  accounting_id;
+    bit<12>          s_tag;
+    bit<12>          c_tag;
+    bit<16>          pppoe_sess_id;
 }
 
 struct parsed_headers_t {
@@ -289,11 +308,69 @@ control TtlCheck(
     }
 }
 
+control Accounting(
+    inout parsed_headers_t hdr,
+    inout local_metadata_t lmeta,
+    inout standard_metadata_t smeta) {
+
+    // +1 is for ACCOUNTING_UNKNOWN (0)
+    counter(MAX_ACCOUNTING_IDS+1, CounterType.packets_and_bytes) upstream;
+    counter(MAX_ACCOUNTING_IDS+1, CounterType.packets_and_bytes) downstream;
+
+    apply {
+        if (lmeta.direction == DIR_UPSTREAM) {
+            upstream.count(lmeta.accounting_id);
+        } else if (lmeta.direction == DIR_DOWNSTREAM) {
+            downstream.count(lmeta.accounting_id);
+        }
+    }
+}
+
+control CoS(
+    inout parsed_headers_t hdr,
+    inout local_metadata_t lmeta,
+    inout standard_metadata_t smeta) {
+
+    action set_cos_id(cos_id_t cos_id) {
+        lmeta.cos_id = cos_id;
+    }
+
+    table services_v4 {
+        key = {
+            hdr.ipv4.src_addr     : ternary @name("ipv4_src");
+            hdr.ipv4.dst_addr     : ternary @name("ipv4_dst");
+            hdr.ipv4.proto        : ternary @name("ipv4_proto");
+            lmeta.l4_sport        : range   @name("l4_sport");
+            lmeta.l4_dport        : range   @name("l4_dport");
+        }
+        actions = {
+            set_cos_id;
+        }
+        const default_action = set_cos_id(COS_UNKNOWN);
+        // This is fine if we assume we classify traffic in the same way for all
+        // attachments. If we expect to be supporting special classification
+        // rules only for some attachments, then size should be something
+        // different.
+        size = MAX_COS;
+    }
+
+    apply {
+        if (hdr.ipv4.isValid()) {
+            services_v4.apply();
+        } else {
+            set_cos_id(COS_UNKNOWN);
+        }
+    }
+}
+
 control IngressUpstream(
     inout parsed_headers_t hdr,
     inout local_metadata_t lmeta,
     inout standard_metadata_t smeta) {
-    
+
+    // FIXME: do we still need all these counters now that we have proper
+    //  accounting controls? Most of these counters seems useful for debugging
+    //  only, we could use preprocessor flags to enable/disable them.
     counter(MAX_LINES, CounterType.packets_and_bytes) all;
     counter(MAX_LINES, CounterType.packets_and_bytes) punted;
     counter(MAX_LINES, CounterType.packets_and_bytes) spoofed;
@@ -407,6 +484,7 @@ control IngressUpstream(
         size = MAX_UPSTREAM_ROUTES;
     }
 
+    CoS() cos;
     TtlCheck() ttl;
 
     apply { 
@@ -416,6 +494,7 @@ control IngressUpstream(
         if (lmeta.line_id == LINE_UNKNOWN) {
             drop_now(smeta);
         }
+        cos.apply(hdr, lmeta, smeta);
         // Line is known and pkt was not punted. Verify attachment info, if
         // valid (not spoofed), decap and route. If no route then no-op, we
         // might punt or do something else in ACL.
@@ -550,6 +629,7 @@ control IngressDownstream(
         size = MAX_LINES;
     }
 
+    CoS() cos;
     TtlCheck() ttl;
 
     apply {
@@ -557,6 +637,7 @@ control IngressDownstream(
         lines_v4.apply();
         vids.apply();
         pppoe_sessions.apply();
+        cos.apply(hdr, lmeta, smeta);
         routes_v4.apply();
         ttl.apply(hdr, lmeta, smeta);
     }
@@ -662,9 +743,26 @@ control IngressPipe(
         size = 2048;
     }
 
+    action set_accounting_id(accounting_id_t accounting_id) {
+        lmeta.accounting_id = accounting_id;
+    }
+
+    table accounting_ids {
+        key = {
+            lmeta.line_id : exact @name("line_id");
+            lmeta.cos_id  : exact @name("cos_id");
+        }
+        actions = {
+            set_accounting_id;
+        }
+        const default_action = set_accounting_id(ACCOUNTING_UNKNOWN);
+        size = MAX_ACCOUNTING_IDS;
+    }
+
     IngressUpstream() upstream;
     IngressDownstream() downstream;
     Acl() acl;
+    Accounting() accounting;
 
     apply {
         // Controller packet-out. Set the egress port according to CPU header
@@ -677,10 +775,14 @@ control IngressPipe(
 
         if_types.apply();
 
+        lmeta.direction = DIR_UNKNOWN;
+
         if (my_stations.apply().hit) {
             if (lmeta.if_type == IF_ACCESS) {
+                lmeta.direction = DIR_UPSTREAM;
                 upstream.apply(hdr, lmeta, smeta);
             } else if (lmeta.if_type == IF_CORE) {
+                lmeta.direction = DIR_DOWNSTREAM;
                 downstream.apply(hdr, lmeta, smeta);
             }
         }
@@ -691,21 +793,33 @@ control IngressPipe(
         //  previous tables modify only metadata, and the actual header rewrite
         //  happen after the ACL table.
         acl.apply(hdr, lmeta, smeta);
+
+        // FIXME: stop using exit statement in drop_now() action, otherwise
+        //  dropped packets will not make it until here to be counted. This is
+        //  pre-qos accounting, so we should count every packet that enters the
+        //  switch. Instead of the exit statement, we should use metadata to
+        //  signal intention to drop and skip applying tables as needed.
+
+        accounting_ids.apply();
+        accounting.apply(hdr, lmeta, smeta);
     }
 }
 
 control EgressPipe(
     inout parsed_headers_t hdr,
-    inout local_metadata_t local_meta,
+    inout local_metadata_t lmeta,
     inout standard_metadata_t smeta) {
 
-    apply {
+    Accounting() accounting;
 
+    apply {
         if (smeta.egress_port == CPU_PORT) {
             hdr.cpu_in.setValid();
             hdr.cpu_in.ingress_port = smeta.ingress_port;
             exit;
         }
+
+        accounting.apply(hdr, lmeta, smeta);
     }
 }
 
