@@ -140,7 +140,7 @@ tables {
     match_type: EXACT
   }
   action_refs {
-    id: 28485346
+    id: 23630800
   }
   action_refs {
     id: 18981580
@@ -149,29 +149,6 @@ tables {
   }
   const_default_action_id: 18981580
   size: 32768
-}
-tables {
-  preamble {
-    id: 40314915
-    name: "IngressPipe.upstream.routes_v4"
-    alias: "upstream.routes_v4"
-  }
-  match_fields {
-    id: 1
-    name: "ipv4_dst"
-    bitwidth: 32
-    match_type: LPM
-  }
-  action_refs {
-    id: 31033793
-  }
-  action_refs {
-    id: 28485346
-    annotations: "@defaultonly"
-    scope: DEFAULT_ONLY
-  }
-  implementation_id: 286372544
-  size: 1024
 }
 tables {
   preamble {
@@ -244,26 +221,26 @@ tables {
 }
 tables {
   preamble {
-    id: 44140312
-    name: "IngressPipe.downstream.routes_v4"
-    alias: "downstream.routes_v4"
+    id: 40572658
+    name: "IngressPipe.routing.routes_v4"
+    alias: "routes_v4"
   }
   match_fields {
     id: 1
-    name: "line_id"
+    name: "ipv4_dst"
     bitwidth: 32
     match_type: LPM
   }
   action_refs {
-    id: 23530511
+    id: 21408227
   }
   action_refs {
-    id: 27308170
+    id: 28485346
     annotations: "@defaultonly"
     scope: DEFAULT_ONLY
   }
-  implementation_id: 287433378
-  size: 8192
+  implementation_id: 293424976
+  size: 1024
 }
 tables {
   preamble {
@@ -408,19 +385,9 @@ actions {
 }
 actions {
   preamble {
-    id: 31033793
-    name: "IngressPipe.upstream.route_v4"
-    alias: "upstream.route_v4"
-  }
-  params {
-    id: 1
-    name: "port"
-    bitwidth: 9
-  }
-  params {
-    id: 2
-    name: "dmac"
-    bitwidth: 48
+    id: 23630800
+    name: "IngressPipe.upstream.allow"
+    alias: "allow"
   }
 }
 actions {
@@ -473,9 +440,9 @@ actions {
 }
 actions {
   preamble {
-    id: 23530511
-    name: "IngressPipe.downstream.route_v4"
-    alias: "downstream.route_v4"
+    id: 21408227
+    name: "IngressPipe.routing.route_v4"
+    alias: "route_v4"
   }
   params {
     id: 1
@@ -516,22 +483,11 @@ actions {
 }
 action_profiles {
   preamble {
-    id: 286372544
-    name: "IngressPipe.upstream.ecmp"
-    alias: "upstream.ecmp"
+    id: 293424976
+    name: "IngressPipe.routing.ecmp"
+    alias: "ecmp"
   }
-  table_ids: 40314915
-  with_selector: true
-  size: 1024
-  max_group_size: 16
-}
-action_profiles {
-  preamble {
-    id: 287433378
-    name: "IngressPipe.downstream.ecmp"
-    alias: "downstream.ecmp"
-  }
-  table_ids: 44140312
+  table_ids: 40572658
   with_selector: true
   size: 1024
   max_group_size: 16
@@ -571,28 +527,6 @@ counters {
 }
 counters {
   preamble {
-    id: 310793502
-    name: "IngressPipe.upstream.routed"
-    alias: "upstream.routed"
-  }
-  spec {
-    unit: BOTH
-  }
-  size: 8192
-}
-counters {
-  preamble {
-    id: 307117173
-    name: "IngressPipe.upstream.ttl.expired"
-    alias: "upstream.ttl.expired"
-  }
-  spec {
-    unit: BOTH
-  }
-  size: 8192
-}
-counters {
-  preamble {
     id: 315685570
     name: "IngressPipe.downstream.dropped"
     alias: "dropped"
@@ -604,9 +538,9 @@ counters {
 }
 counters {
   preamble {
-    id: 315756728
-    name: "IngressPipe.downstream.routed"
-    alias: "downstream.routed"
+    id: 307231920
+    name: "IngressPipe.routing.routed"
+    alias: "routed"
   }
   spec {
     unit: BOTH
@@ -615,9 +549,9 @@ counters {
 }
 counters {
   preamble {
-    id: 305954198
-    name: "IngressPipe.downstream.ttl.expired"
-    alias: "downstream.ttl.expired"
+    id: 314096939
+    name: "IngressPipe.routing.ttl.expired"
+    alias: "expired"
   }
   spec {
     unit: BOTH

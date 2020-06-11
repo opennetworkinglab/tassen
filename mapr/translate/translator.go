@@ -178,7 +178,8 @@ func (t translator) translateOrStore(u *p4v1.Update, translate bool) ([]*p4v1.Up
 				}
 				return nil, nil
 			}
-		case Table_IngressPipeUpstreamLines, Table_IngressPipeUpstreamAttachmentsV4:
+		case Table_IngressPipeUpstreamLines, Table_IngressPipeUpstreamAttachmentsV4, Table_IngressPipeDownstreamLinesV4,
+			Table_IngressPipeDownstreamVids, Table_IngressPipeDownstreamPppoeSessions:
 			x, ok, err := t.evalAttachment(e.TableEntry)
 			if err != nil {
 				return nil, err
@@ -203,7 +204,7 @@ func (t translator) translateOrStore(u *p4v1.Update, translate bool) ([]*p4v1.Up
 				}
 				return nil, nil
 			}
-		case Table_IngressPipeUpstreamRoutesV4:
+		case Table_IngressPipeRoutingRoutesV4:
 			x, err := parseUpstreamRouteV4Entry(e.TableEntry)
 			if err != nil {
 				return nil, err
@@ -221,14 +222,13 @@ func (t translator) translateOrStore(u *p4v1.Update, translate bool) ([]*p4v1.Up
 				return nil, nil
 			}
 		// TODO: case Table_UpstreamPppoePunts // device-level
-		// TODO: downstream tables
 		default:
 			return nil, fmt.Errorf("invalid table ID %v", e.TableEntry.TableId)
 		}
 	case *p4v1.Entity_ActionProfileGroup:
 		switch e.ActionProfileGroup.ActionProfileId {
-		case ActionProfile_IngressPipeUpstreamEcmp:
-			x, err := parseUpstreamRoutesV4ActProfGroup(e.ActionProfileGroup)
+		case ActionProfile_IngressPipeRoutingEcmp:
+			x, err := parseRoutesV4ActProfGroup(e.ActionProfileGroup)
 			if err != nil {
 				return nil, err
 			}
@@ -249,8 +249,8 @@ func (t translator) translateOrStore(u *p4v1.Update, translate bool) ([]*p4v1.Up
 		}
 	case *p4v1.Entity_ActionProfileMember:
 		switch e.ActionProfileMember.ActionProfileId {
-		case ActionProfile_IngressPipeUpstreamEcmp:
-			x, err := parseUpstreamRoutesV4ActProfMember(e.ActionProfileMember)
+		case ActionProfile_IngressPipeRoutingEcmp:
+			x, err := parseRoutesV4ActProfMember(e.ActionProfileMember)
 			if err != nil {
 				return nil, err
 			}
@@ -283,6 +283,12 @@ func (t translator) evalAttachment(e *p4v1.TableEntry) (a AttachmentEntry, ok bo
 		err = parseUpstreamLineEntry(e, &a)
 	case Table_IngressPipeUpstreamAttachmentsV4:
 		err = parseUpstreamAttachmentV4Entry(e, &a)
+	case Table_IngressPipeDownstreamLinesV4:
+		err = parseDownstreamLinesV4Entry(e, &a)
+	case Table_IngressPipeDownstreamVids:
+		err = parseDownstreamVidsEntry(e, &a)
+	case Table_IngressPipeDownstreamPppoeSessions:
+		err = parseDownstreamPppoeSessionsEntry(e, &a)
 	default:
 		err = fmt.Errorf("table ID %d is not attachment-level", e.TableId)
 	}
@@ -424,26 +430,106 @@ func parseUpstreamAttachmentV4Entry(t *p4v1.TableEntry, a *AttachmentEntry) erro
 	}
 	// Parse action
 	act := t.GetAction().GetAction()
-	if act == nil || act.ActionId != Action_Nop {
+	if act == nil || act.ActionId != Action_IngressPipeUpstreamAllow {
 		return fmt.Errorf("invalid Action %s", t.GetAction())
 	}
 	return nil
 }
 
-func parseUpstreamRoutesV4ActProfMember(m *p4v1.ActionProfileMember) (NextHopEntry, error) {
+func parseDownstreamLinesV4Entry(t *p4v1.TableEntry, a *AttachmentEntry) error {
+	a.Direction = DirectionDownstream
+	for _, m := range t.Match {
+		switch m.FieldId {
+		case Hdr_IngressPipeDownstreamLinesV4_Ipv4Dst:
+			a.Ipv4Addr = m.GetExact().Value
+		default:
+			return fmt.Errorf("invalid %T ID %d", m, m.FieldId)
+		}
+	}
+	// Parse action
+	act := t.GetAction().GetAction()
+	if act == nil || act.ActionId != Action_IngressPipeDownstreamSetLine {
+		return fmt.Errorf("invalid Action %s", t.GetAction())
+	}
+	for _, p := range act.Params {
+		switch p.ParamId {
+		case ActionParam_IngressPipeDownstreamSetLine_LineId:
+			a.LineId = p.Value
+		default:
+			return fmt.Errorf("invalid %T ID %d", p, p.ParamId)
+		}
+	}
+	return nil
+}
+
+func parseDownstreamVidsEntry(t *p4v1.TableEntry, a *AttachmentEntry) error {
+	a.Direction = DirectionDownstream
+	for _, m := range t.Match {
+		switch m.FieldId {
+		case Hdr_IngressPipeDownstreamVids_LineId:
+			a.LineId = m.GetExact().Value
+		default:
+			return fmt.Errorf("invalid %T ID %d", m, m.FieldId)
+		}
+	}
+	// Parse action
+	act := t.GetAction().GetAction()
+	if act == nil || act.ActionId != Action_IngressPipeDownstreamSetVids {
+		return fmt.Errorf("invalid Action %s", t.GetAction())
+	}
+	for _, p := range act.Params {
+		switch p.ParamId {
+		case ActionParam_IngressPipeDownstreamSetVids_CTag:
+			a.CTag = p.Value
+		case ActionParam_IngressPipeDownstreamSetVids_STag:
+			a.STag = p.Value
+		default:
+			return fmt.Errorf("invalid %T ID %d", p, p.ParamId)
+		}
+	}
+	return nil
+}
+
+func parseDownstreamPppoeSessionsEntry(t *p4v1.TableEntry, a *AttachmentEntry) error {
+	a.Direction = DirectionDownstream
+	for _, m := range t.Match {
+		switch m.FieldId {
+		case Hdr_IngressPipeDownstreamPppoeSessions_LineId:
+			a.LineId = m.GetExact().Value
+		default:
+			return fmt.Errorf("invalid %T ID %d", m, m.FieldId)
+		}
+	}
+	// Parse action
+	act := t.GetAction().GetAction()
+	if act == nil || act.ActionId != Action_IngressPipeDownstreamSetPppoeSess {
+		return fmt.Errorf("invalid Action %s", t.GetAction())
+	}
+	for _, p := range act.Params {
+		switch p.ParamId {
+		case ActionParam_IngressPipeDownstreamSetPppoeSess_PppoeSessId:
+			a.PppoeSessId = p.Value
+		default:
+			return fmt.Errorf("invalid %T ID %d", p, p.ParamId)
+		}
+	}
+	return nil
+}
+
+func parseRoutesV4ActProfMember(m *p4v1.ActionProfileMember) (NextHopEntry, error) {
 	n := NextHopEntry{
 		Id: m.MemberId,
 	}
 	// Parse action
 	act := m.Action
-	if act == nil || act.ActionId != Action_IngressPipeUpstreamRouteV4 {
+	if act == nil || act.ActionId != Action_IngressPipeRoutingRouteV4 {
 		return n, fmt.Errorf("invalid Action %s", act)
 	}
 	for _, p := range act.Params {
 		switch p.ParamId {
-		case ActionParam_IngressPipeUpstreamRouteV4_Dmac:
+		case ActionParam_IngressPipeRoutingRouteV4_Dmac:
 			n.MacAddr = p.Value
-		case ActionParam_IngressPipeUpstreamRouteV4_Port:
+		case ActionParam_IngressPipeRoutingRouteV4_Port:
 			n.Port = p.Value
 		default:
 			return n, fmt.Errorf("invalid %T ID %d", p, p.ParamId)
@@ -452,7 +538,7 @@ func parseUpstreamRoutesV4ActProfMember(m *p4v1.ActionProfileMember) (NextHopEnt
 	return n, nil
 }
 
-func parseUpstreamRoutesV4ActProfGroup(g *p4v1.ActionProfileGroup) (NextHopGroup, error) {
+func parseRoutesV4ActProfGroup(g *p4v1.ActionProfileGroup) (NextHopGroup, error) {
 	// No need to parse, simply wrap message in NextHopGroup.
 	return NextHopGroup(*g), nil
 }
@@ -463,7 +549,7 @@ func parseUpstreamRouteV4Entry(t *p4v1.TableEntry) (RouteV4Entry, error) {
 	r.Direction = DirectionUpstream
 	for _, m := range t.Match {
 		switch m.FieldId {
-		case Hdr_IngressPipeUpstreamRoutesV4_Ipv4Dst:
+		case Hdr_IngressPipeRoutingRoutesV4_Ipv4Dst:
 			r.Ipv4Addr = m.GetLpm().Value
 			r.PrefixLen = m.GetLpm().PrefixLen
 		default:

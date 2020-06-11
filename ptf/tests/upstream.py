@@ -110,21 +110,21 @@ class PppoeIp4UnicastTest(P4RuntimeTest):
                 'ipv4_src': pkt[IP].src,
                 'pppoe_sess_id': pppoe_sess_id
             },
-            action_name='nop'
+            action_name='IngressPipe.upstream.allow'
         ))
 
         self.insert(self.helper.build_act_prof_group(
-            act_prof_name="IngressPipe.upstream.ecmp",
+            act_prof_name="IngressPipe.routing.ecmp",
             group_id=line_id,
             actions=[
-                ('IngressPipe.upstream.route_v4',
+                ('IngressPipe.routing.route_v4',
                     {'dmac': next_hop_mac, 'port': self.port2}),
             ]
         ))
 
         # Insert routing entry
         self.insert(self.helper.build_table_entry(
-            table_name='IngressPipe.upstream.routes_v4',
+            table_name='IngressPipe.routing.routes_v4',
             match_fields={
                 # LPM match (value, prefix)
                 'ipv4_dst': (pkt[IP].dst, 32)

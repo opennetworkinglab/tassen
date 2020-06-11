@@ -37,43 +37,39 @@ const (
 	Hdr_IngressPipeUpstreamPppoePunts_PppoeCode      uint32 = 1
 	Hdr_IngressPipeUpstreamPppoePunts_PppoeProto     uint32 = 2
 	Hdr_IngressPipeDownstreamVids_LineId             uint32 = 1
+	Hdr_IngressPipeRoutingRoutesV4_Ipv4Dst           uint32 = 1
 	Hdr_IngressPipeMyStations_Port                   uint32 = 1
 	Hdr_IngressPipeMyStations_EthDst                 uint32 = 2
 	Hdr_IngressPipeUpstreamAttachmentsV4_EthSrc      uint32 = 2
 	Hdr_IngressPipeUpstreamAttachmentsV4_Ipv4Src     uint32 = 3
 	Hdr_IngressPipeUpstreamAttachmentsV4_LineId      uint32 = 1
 	Hdr_IngressPipeUpstreamAttachmentsV4_PppoeSessId uint32 = 4
-	Hdr_IngressPipeDownstreamRoutesV4_LineId         uint32 = 1
-	Hdr_IngressPipeUpstreamRoutesV4_Ipv4Dst          uint32 = 1
 	Hdr_IngressPipeIfTypes_Port                      uint32 = 1
 	// Table IDs
 	Table_IngressPipeMyStations              uint32 = 49392761
-	Table_IngressPipeUpstreamPppoePunts      uint32 = 39053621
+	Table_IngressPipeUpstreamLines           uint32 = 33956689
 	Table_IngressPipeUpstreamAttachmentsV4   uint32 = 44507663
 	Table_IngressPipeAclAcls                 uint32 = 43911884
-	Table_IngressPipeUpstreamLines           uint32 = 33956689
-	Table_IngressPipeUpstreamRoutesV4        uint32 = 40314915
+	Table_IngressPipeUpstreamPppoePunts      uint32 = 39053621
 	Table_IngressPipeIfTypes                 uint32 = 38498675
 	Table_IngressPipeDownstreamLinesV4       uint32 = 44334275
+	Table_IngressPipeRoutingRoutesV4         uint32 = 40572658
 	Table_IngressPipeDownstreamVids          uint32 = 34456456
 	Table_IngressPipeDownstreamPppoeSessions uint32 = 39589935
-	Table_IngressPipeDownstreamRoutesV4      uint32 = 44140312
 	// Indirect Counter IDs
-	Counter_IngressPipeUpstreamTtlExpired   uint32 = 307117173
-	Counter_IngressPipeDownstreamRouted     uint32 = 315756728
-	Counter_IngressPipeUpstreamRouted       uint32 = 310793502
-	Counter_IngressPipeUpstreamSpoofed      uint32 = 314616893
-	Counter_IngressPipeUpstreamPunted       uint32 = 310787420
-	Counter_IngressPipeUpstreamAll          uint32 = 304792521
-	Counter_IngressPipeDownstreamDropped    uint32 = 315685570
-	Counter_IngressPipeDownstreamTtlExpired uint32 = 305954198
+	Counter_IngressPipeRoutingRouted     uint32 = 307231920
+	Counter_IngressPipeUpstreamSpoofed   uint32 = 314616893
+	Counter_IngressPipeUpstreamPunted    uint32 = 310787420
+	Counter_IngressPipeUpstreamAll       uint32 = 304792521
+	Counter_IngressPipeDownstreamDropped uint32 = 315685570
+	Counter_IngressPipeRoutingTtlExpired uint32 = 314096939
 	// Direct Counter IDs
 	DirectCounter_IfTypes    uint32 = 331661032
 	DirectCounter_MyStations uint32 = 333390111
 	DirectCounter_Acls       uint32 = 325583051
 	// Action IDs
 	Action_IngressPipeSetIfType              uint32 = 18538368
-	Action_IngressPipeDownstreamRouteV4      uint32 = 23530511
+	Action_IngressPipeRoutingRouteV4         uint32 = 21408227
 	Action_IngressPipeDownstreamSetVids      uint32 = 23385620
 	Action_IngressPipeUpstreamPunt           uint32 = 27908888
 	Action_IngressPipeSetMyStation           uint32 = 29456969
@@ -81,8 +77,8 @@ const (
 	Action_IngressPipeAclDrop                uint32 = 29272903
 	Action_IngressPipeUpstreamSetLine        uint32 = 17659136
 	Action_Nop                               uint32 = 28485346
-	Action_IngressPipeUpstreamRouteV4        uint32 = 31033793
 	Action_IngressPipeDownstreamSetPppoeSess uint32 = 27412451
+	Action_IngressPipeUpstreamAllow          uint32 = 23630800
 	Action_IngressPipeUpstreamReject         uint32 = 18981580
 	Action_IngressPipeDownstreamMiss         uint32 = 27308170
 	Action_IngressPipeAclSetPort             uint32 = 21835758
@@ -96,13 +92,10 @@ const (
 	ActionParam_IngressPipeUpstreamSetLine_LineId             uint32 = 1
 	ActionParam_IngressPipeDownstreamSetVids_STag             uint32 = 2
 	ActionParam_IngressPipeDownstreamSetVids_CTag             uint32 = 1
-	ActionParam_IngressPipeUpstreamRouteV4_Dmac               uint32 = 2
-	ActionParam_IngressPipeUpstreamRouteV4_Port               uint32 = 1
-	ActionParam_IngressPipeDownstreamRouteV4_Dmac             uint32 = 2
-	ActionParam_IngressPipeDownstreamRouteV4_Port             uint32 = 1
+	ActionParam_IngressPipeRoutingRouteV4_Dmac                uint32 = 2
+	ActionParam_IngressPipeRoutingRouteV4_Port                uint32 = 1
 	// Action Profile IDs
-	ActionProfile_IngressPipeDownstreamEcmp uint32 = 287433378
-	ActionProfile_IngressPipeUpstreamEcmp   uint32 = 286372544
+	ActionProfile_IngressPipeRoutingEcmp uint32 = 293424976
 	// Packet Metadata IDs
 	PacketMeta_IngressPort uint32 = 1
 	PacketMeta_EgressPort  uint32 = 1

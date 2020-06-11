@@ -293,12 +293,11 @@ control IngressUpstream(
     inout parsed_headers_t hdr,
     inout local_metadata_t lmeta,
     inout standard_metadata_t smeta) {
-    
+
     counter(MAX_LINES, CounterType.packets_and_bytes) all;
     counter(MAX_LINES, CounterType.packets_and_bytes) punted;
     counter(MAX_LINES, CounterType.packets_and_bytes) spoofed;
-    counter(MAX_LINES, CounterType.packets_and_bytes) routed;
-    
+
     action set_line(bit<32> line_id) {
         lmeta.line_id = line_id;
     }
@@ -340,9 +339,21 @@ control IngressUpstream(
         const default_action = nop;
     }
 
+    @hidden
+    action decap(bit<16> eth_type) {
+        hdr.eth_type.value = eth_type;
+        hdr.vlan.setInvalid();
+        hdr.vlan2.setInvalid();
+        hdr.pppoe.setInvalid();
+    }
+
     action reject() {
         spoofed.count(lmeta.line_id);
         drop_now(smeta);
+    }
+
+    action allow() {
+        decap(ETHERTYPE_IPV4);
     }
 
     // Provides anti-spoofing.
@@ -356,60 +367,14 @@ control IngressUpstream(
             hdr.pppoe.sess_id     : exact @name("pppoe_sess_id");
         }
         actions = {
-            nop;
+            allow;
             @defaultonly reject;
         }
         size = MAX_ATTACH_PER_LINE * MAX_LINES;
         const default_action = reject;
     }
 
-    @hidden
-    action decap(bit<16> eth_type) {
-        hdr.eth_type.value = eth_type;
-        hdr.vlan.setInvalid();
-        hdr.vlan2.setInvalid();
-        hdr.pppoe.setInvalid();
-    }
-
-    @hidden
-    action route(port_t port, bit<48> dmac) {
-        smeta.egress_spec = port;
-        hdr.ethernet.src_addr = lmeta.my_mac;
-        hdr.ethernet.dst_addr = dmac;
-        routed.count(lmeta.line_id);
-    }
-
-    action route_v4(port_t port, bit<48> dmac) {
-        decap(ETHERTYPE_IPV4);
-        route(port, dmac);
-    }
-
-    table routes_v4 {
-        key = {
-            hdr.ipv4.dst_addr : lpm @name("ipv4_dst");
-            // The following header fields are used to computed the ECMP hash.
-            // They're NOT part of the match key provided by the controller.
-            hdr.ipv4.dst_addr : selector;
-            hdr.ipv4.src_addr : selector;
-            lmeta.ip_proto    : selector;
-            lmeta.l4_sport    : selector;
-            lmeta.l4_dport    : selector;
-        }
-        actions = {
-            route_v4;
-            @defaultonly nop;
-        }
-        default_action = nop();
-        // BUG: action profiles don't get a fully qualified name in P4Info.
-        @name("IngressPipe.upstream.ecmp")
-        @max_group_size(MAX_ECMP_GROUP_SIZE)
-        implementation = action_selector(HashAlgorithm.crc16, 32w1024, 32w16);
-        size = MAX_UPSTREAM_ROUTES;
-    }
-
-    TtlCheck() ttl;
-
-    apply { 
+    apply {
         lines.apply();
         all.count(lmeta.line_id);
         pppoe_punts.apply();
@@ -421,9 +386,7 @@ control IngressUpstream(
         // might punt or do something else in ACL.
         if (hdr.ipv4.isValid()) {
             attachments_v4.apply();
-            routes_v4.apply();
         }
-        ttl.apply(hdr, lmeta, smeta);
     }
 }
 
@@ -431,9 +394,8 @@ control IngressDownstream(
     inout parsed_headers_t hdr,
     inout local_metadata_t lmeta,
     inout standard_metadata_t smeta) {
-    
+
     counter(MAX_LINES, CounterType.packets_and_bytes) dropped;
-    counter(MAX_LINES, CounterType.packets_and_bytes) routed;
 
     // In downstream, we expect all tables to be matched.
     // Any table miss will cause the packet to be dropped
@@ -476,22 +438,6 @@ control IngressDownstream(
         const default_action = miss;
     }
 
-    action set_pppoe_sess(bit<16> pppoe_sess_id) {
-        lmeta.pppoe_sess_id = pppoe_sess_id;
-    }
-
-    table pppoe_sessions {
-        key = {
-            lmeta.line_id: exact @name("line_id");
-        }
-        actions = {
-            set_pppoe_sess;
-            @defaultonly miss;
-        }
-        size = MAX_LINES;
-        const default_action = miss;
-    }
-
     @hidden
     action encap(bit<16> pppoe_proto) {
         // Outer VLAN (s_tag)
@@ -517,22 +463,55 @@ control IngressDownstream(
         hdr.pppoe.proto   = pppoe_proto;
     }
 
+    action set_pppoe_sess(bit<16> pppoe_sess_id) {
+        lmeta.pppoe_sess_id = pppoe_sess_id;
+        encap(PPPOE_PROTO_IP4);
+    }
+
+    table pppoe_sessions {
+        key = {
+            lmeta.line_id: exact @name("line_id");
+        }
+        actions = {
+            set_pppoe_sess;
+            @defaultonly miss;
+        }
+        size = MAX_LINES;
+        const default_action = miss;
+    }
+
+    apply {
+        lmeta.line_id = LINE_UNKNOWN;
+        lines_v4.apply();
+        vids.apply();
+        pppoe_sessions.apply();
+    }
+}
+
+control Routing(
+    inout parsed_headers_t hdr,
+    inout local_metadata_t lmeta,
+    inout standard_metadata_t smeta) {
+
+    counter(MAX_LINES, CounterType.packets_and_bytes) routed;
+
     @hidden
     action route(port_t port, bit<48> dmac) {
-        smeta.egress_spec  = port;
+        smeta.egress_spec = port;
         hdr.ethernet.src_addr = lmeta.my_mac;
         hdr.ethernet.dst_addr = dmac;
         routed.count(lmeta.line_id);
     }
 
     action route_v4(port_t port, bit<48> dmac) {
-        encap(PPPOE_PROTO_IP4);
         route(port, dmac);
     }
 
-    table routes_v4 {
+     table routes_v4 {
         key = {
-            lmeta.line_id     : lpm @name("line_id");
+            hdr.ipv4.dst_addr : lpm @name("ipv4_dst");
+            // The following header fields are used to computed the ECMP hash.
+            // They're NOT part of the match key provided by the controller.
             hdr.ipv4.dst_addr : selector;
             hdr.ipv4.src_addr : selector;
             lmeta.ip_proto    : selector;
@@ -541,23 +520,22 @@ control IngressDownstream(
         }
         actions = {
             route_v4;
-            @defaultonly miss;
+            @defaultonly nop;
         }
-        default_action = miss;
-        @name("IngressPipe.downstream.ecmp")
+        default_action = nop();
+        // BUG: action profiles don't get a fully qualified name in P4Info.
+        @name("IngressPipe.routing.ecmp")
         @max_group_size(MAX_ECMP_GROUP_SIZE)
         implementation = action_selector(HashAlgorithm.crc16, 32w1024, 32w16);
-        size = MAX_LINES;
+        size = MAX_UPSTREAM_ROUTES;
     }
 
     TtlCheck() ttl;
 
     apply {
-        lmeta.line_id = LINE_UNKNOWN;
-        lines_v4.apply();
-        vids.apply();
-        pppoe_sessions.apply();
-        routes_v4.apply();
+        if(hdr.ipv4.isValid()) {
+            routes_v4.apply();
+        }
         ttl.apply(hdr, lmeta, smeta);
     }
 }
@@ -664,6 +642,7 @@ control IngressPipe(
 
     IngressUpstream() upstream;
     IngressDownstream() downstream;
+    Routing() routing;
     Acl() acl;
 
     apply {
@@ -683,6 +662,7 @@ control IngressPipe(
             } else if (lmeta.if_type == IF_CORE) {
                 downstream.apply(hdr, lmeta, smeta);
             }
+            routing.apply(hdr, lmeta, smeta);
         }
 
         // FIXME: If we want to do ACL after routing, then we need to make sure
