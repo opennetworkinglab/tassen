@@ -204,6 +204,34 @@ func createFwdClassifierEntry(port []byte, EthDst []byte, prio int32) v1.TableEn
 	}
 }
 
+func createPppoePuntEntry(pppoeCode []byte, pppoeProto []byte, prio int32) v1.TableEntry {
+	match := []*v1.FieldMatch{{
+		FieldId: Hdr_FabricIngressBngIngressUpstreamTPppoeCp_PppoeCode,
+		FieldMatchType: &v1.FieldMatch_Exact_{
+			Exact: &v1.FieldMatch_Exact{
+				Value: pppoeCode,
+			}}},
+	}
+	if pppoeProto != nil {
+		match = append(match, &v1.FieldMatch{
+			FieldId: Hdr_FabricIngressBngIngressUpstreamTPppoeCp_PppoeProtocol,
+			FieldMatchType: &v1.FieldMatch_Ternary_{
+				Ternary: &v1.FieldMatch_Ternary{
+					Value: pppoeProto,
+					Mask:  []byte{0xFF, 0xFF},
+				}}})
+	}
+	return v1.TableEntry{
+		TableId: Table_FabricIngressBngIngressUpstreamTPppoeCp,
+		Match:   match,
+		Action: &v1.TableAction{
+			Type: &v1.TableAction_Action{Action: &v1.Action{
+				ActionId: Action_FabricIngressBngIngressUpstreamPuntToCpu,
+			}}},
+		Priority: prio,
+	}
+}
+
 func createHashedSelectorMember(e *translate.NextHopEntry, smac []byte) v1.ActionProfileMember {
 	return v1.ActionProfileMember{
 		ActionProfileId: ActionProfile_FabricIngressNextHashedSelector,
@@ -266,7 +294,7 @@ func createNextVlanEntry(e *translate.RouteV4Entry, outputTag []byte) v1.TableEn
 		Match: []*v1.FieldMatch{{
 			FieldId: Hdr_FabricIngressForwardingRoutingV4_Ipv4Dst,
 			FieldMatchType: &v1.FieldMatch_Exact_{Exact: &v1.FieldMatch_Exact{
-				Value:     getNextIdValue(e.NextHopGroupId),
+				Value: getNextIdValue(e.NextHopGroupId),
 			}}}},
 		Action: &v1.TableAction{Type: &v1.TableAction_Action{Action: &v1.Action{
 			ActionId: Action_FabricIngressNextSetVlan,
@@ -292,14 +320,14 @@ func createLineMapEntry(sTag []byte, cTag []byte, lineId []byte) v1.TableEntry {
 			}}},
 	}
 	return v1.TableEntry{
-		TableId:  Table_FabricIngressBngIngressTLineMap,
-		Match:    matches,
-		Action:   &v1.TableAction{Type: &v1.TableAction_Action{Action: &v1.Action{
-				ActionId: Action_FabricIngressBngIngressSetLine,
-				Params: []*v1.Action_Param{{
-						ParamId: ActionParam_FabricIngressBngIngressSetLine_LineId,
-						Value:   lineId,
-				}}}}},
+		TableId: Table_FabricIngressBngIngressTLineMap,
+		Match:   matches,
+		Action: &v1.TableAction{Type: &v1.TableAction_Action{Action: &v1.Action{
+			ActionId: Action_FabricIngressBngIngressSetLine,
+			Params: []*v1.Action_Param{{
+				ParamId: ActionParam_FabricIngressBngIngressSetLine_LineId,
+				Value:   lineId,
+			}}}}},
 	}
 }
 
@@ -322,11 +350,11 @@ func createPppoeTermV4(lineId []byte, ipv4Addr []byte, pppoeSessId []byte) v1.Ta
 			}}},
 	}
 	return v1.TableEntry{
-		TableId:  Table_FabricIngressBngIngressUpstreamTPppoeTermV4,
-		Match:    matches,
-		Action:   &v1.TableAction{Type: &v1.TableAction_Action{Action: &v1.Action{
+		TableId: Table_FabricIngressBngIngressUpstreamTPppoeTermV4,
+		Match:   matches,
+		Action: &v1.TableAction{Type: &v1.TableAction_Action{Action: &v1.Action{
 			ActionId: Action_FabricIngressBngIngressUpstreamTermEnabledV4,
-			}}},
+		}}},
 	}
 }
 

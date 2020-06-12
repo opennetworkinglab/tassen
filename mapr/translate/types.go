@@ -95,3 +95,18 @@ type Ipv4LpmKey string
 func ToIpv4LpmKey(addr []byte, prefixLen int32) Ipv4LpmKey {
 	return Ipv4LpmKey(fmt.Sprintf("%x/%d", addr, prefixLen))
 }
+
+type CtrlPuntedEntry struct {
+	PppoeCode  []byte
+	PppoeProto []byte
+}
+
+func (c CtrlPuntedEntry) String() string {
+	return fmt.Sprintf("PPPoECode: %x, PPPoEProto: %x", c.PppoeCode, c.PppoeProto)
+}
+
+type CtrlPuntedKey string
+
+func ToCtrlPuntedKey(pppoeCode []byte, pppoeProto []byte) CtrlPuntedKey {
+	return CtrlPuntedKey(fmt.Sprintf("%x/%x", pppoeCode, pppoeProto))
+}
