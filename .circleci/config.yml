@@ -8,6 +8,7 @@ jobs:
       - run: make deps build
       - run: make check-self
       - run: make check-dummy
+      - run: make check-fabric TEST=upstream.PppoeIp4UnicastTest
 
 workflows:
   main:
