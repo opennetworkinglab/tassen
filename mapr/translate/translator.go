@@ -43,7 +43,7 @@ type Processor interface {
 	HandleRouteV4NextHopEntry(e *NextHopEntry, uType p4v1.Update_Type) ([]*p4v1.Update, error)
 	HandleRouteV4NextHopGroup(e *NextHopGroup, uType p4v1.Update_Type) ([]*p4v1.Update, error)
 	HandleRouteV4Entry(e *RouteV4Entry, uType p4v1.Update_Type) ([]*p4v1.Update, error)
-	HandlePpppoePunts(e *CtrlPuntedEntry, uType p4v1.Update_Type) ([]*p4v1.Update, error)
+	HandlePpppoePunts(e *PppoePuntedEntry, uType p4v1.Update_Type) ([]*p4v1.Update, error)
 }
 
 // Translator context.
@@ -73,7 +73,7 @@ func (p context) Target() P4RtStore {
 type LogicalStore struct {
 	IfTypes                map[PortKey]*IfTypeEntry
 	MyStations             map[PortKey]*MyStationEntry
-	CtrlPunted             map[CtrlPuntedKey]*CtrlPuntedEntry
+	CtrlPunted             map[CtrlPuntedKey]*PppoePuntedEntry
 	UpstreamAttachments    map[LineIdKey]*AttachmentEntry
 	DownstreamAttachments  map[LineIdKey]*AttachmentEntry
 	UpstreamRoutesV4       map[Ipv4LpmKey]*RouteV4Entry
@@ -87,7 +87,7 @@ func NewContext() Context {
 		logical: LogicalStore{
 			IfTypes:                make(map[PortKey]*IfTypeEntry),
 			MyStations:             make(map[PortKey]*MyStationEntry),
-			CtrlPunted:             make(map[CtrlPuntedKey]*CtrlPuntedEntry),
+			CtrlPunted:             make(map[CtrlPuntedKey]*PppoePuntedEntry),
 			UpstreamAttachments:    make(map[LineIdKey]*AttachmentEntry),
 			DownstreamAttachments:  make(map[LineIdKey]*AttachmentEntry),
 			UpstreamRoutesV4:       make(map[Ipv4LpmKey]*RouteV4Entry),
@@ -500,8 +500,8 @@ func parseUpstreamRouteV4Entry(t *p4v1.TableEntry) (RouteV4Entry, error) {
 	return r, nil
 }
 
-func parsePppoePunts(t *p4v1.TableEntry) (CtrlPuntedEntry, error) {
-	c := CtrlPuntedEntry{}
+func parsePppoePunts(t *p4v1.TableEntry) (PppoePuntedEntry, error) {
+	c := PppoePuntedEntry{}
 	for _, m := range t.Match {
 		switch m.FieldId {
 		case Hdr_IngressPipeUpstreamPppoePunts_PppoeCode:

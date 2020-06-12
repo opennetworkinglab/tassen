@@ -141,7 +141,7 @@ func (p fabricProcessor) HandleRouteV4Entry(e *translate.RouteV4Entry, uType v1.
 	return []*v1.Update{createUpdateEntry(&r, uType), createUpdateEntry(&v, uType)}, nil
 }
 
-func (p fabricProcessor) HandlePpppoePunts(e *translate.CtrlPuntedEntry, uType v1.Update_Type) ([]*v1.Update, error) {
+func (p fabricProcessor) HandlePpppoePunts(e *translate.PppoePuntedEntry, uType v1.Update_Type) ([]*v1.Update, error) {
 	log.Tracef("PppoePuntEntry={ %s }", e)
 	t := createPppoePuntEntry(e.PppoeCode, e.PppoeProto, defaultPrio)
 	return []*v1.Update{createUpdateEntry(&t, uType)}, nil
