@@ -10,10 +10,10 @@ import (
 // Implementation of a Processor interface for ONF's fabric.p4.
 
 const (
-	defaultInternalTag     uint16 = 4094
-	defaultPrio            int32  = 1
-	FwdType_FwdIpv4Unicast byte   = 0x02
-	EthTypeIpv4            uint16 = 0x0800
+	defaultInternalTag uint16 = 4094
+	defaultPrio        int32  = 1
+	FwdTypeIpv4Unicast byte   = 0x02
+	EthTypeIpv4        uint16 = 0x0800
 )
 
 type fabricProcessor struct {
@@ -49,59 +49,128 @@ func (p fabricProcessor) HandleMyStationEntry(e *translate.MyStationEntry, uType
 	return []*v1.Update{createUpdateEntry(&phyTableEntry, uType)}, nil
 }
 
-func (p fabricProcessor) HandleAttachmentEntry(a *translate.AttachmentEntry, ok bool) ([]*v1.Update, error) {
+func (p fabricProcessor) HandleAttachmentEntry(a *translate.AttachmentEntry, ok bool) (targetUpdateEntries []*v1.Update, err error) {
 	log.Tracef("AttachmentEntry={ %s }, complete=%v", a, ok)
 	if ok {
-		// The attachment is complete, generate the rules
+		// The attachment is complete, generate the attachment-specific table entries
+		targetTableEntries := make([]*v1.TableEntry, 0)
 		switch a.Direction {
 		case translate.DirectionUpstream:
 			// Ingress Port Vlan for double tagged access port
 			ingressPortVlanEntry := createIngressPortVlanEntryPermit(a.Port, a.STag, a.CTag, nil, defaultPrio)
-			// BNG specific rules
-			// - t_line_map
+			// t_line_map
 			lineMapEntry := createLineMapEntry(a.STag, a.CTag, a.LineId)
-			// - t_pppoe_term_v4
+			// t_pppoe_term_v4
 			pppoeTermV4Entry := createPppoeTermV4(a.LineId, a.Ipv4Addr, a.PppoeSessId)
-
-			targetUpdateEntries := make([]*v1.Update, 0)
-			// Query target store to understand if insert or modify
-			for _, v := range []*v1.TableEntry{&ingressPortVlanEntry, &lineMapEntry, &pppoeTermV4Entry} {
-				key := translate.KeyFromTableEntry(v)
-				targetTableEntry := p.ctx.Target().GetTableEntry(&key)
-				updateType := v1.Update_INSERT
-				if targetTableEntry != nil {
-					// TODO: we could filter only the modified entries instead of always pushing a MODIFY to the target
-					updateType = v1.Update_MODIFY
-				}
-				targetUpdateEntries = append(targetUpdateEntries, createUpdateEntry(v, updateType))
-			}
-			return targetUpdateEntries, nil
+			targetTableEntries = append(targetTableEntries, &lineMapEntry, &ingressPortVlanEntry, &pppoeTermV4Entry)
+			targetUpdateEntries = insertOrModifyTableEntries(p, targetTableEntries)
 		case translate.DirectionDownstream:
-			log.Tracef("fabricProcessor.HandleAttachmentEntry(): Downstream direction not implemented")
+			// Need to retrieve the switchMac from the MyStation entry
+			x := p.ctx.Logical().MyStations[translate.ToPortKey(a.Port)]
+			if x == nil {
+				targetUpdateEntries = nil
+				err = fmt.Errorf("missing MyStation entry for port %x, cannot derive source MAC", a.Port)
+				return
+			}
+			// forwarding.routing_v4 entry
+			routeV4Entry := createRouteV4Entry(getUInt32FromByteSlice(a.LineId), a.Ipv4Addr, 32)
+			// next.routing_hashed entry
+			nextHashedEntry := createNextHashedEntry(getUInt32FromByteSlice(a.LineId))
+			// hashedSelector member
+			// FIXME (daniele): Can member ID clash with other member ID? Currently we are using Line ID as Member ID
+			hashedSelectorMember := createHashedSelectorMember(getUInt32FromByteSlice(a.LineId), a.Port, a.MacAddr, x.EthDst)
+			memberKey := translate.KeyFromActProfMember(&hashedSelectorMember)
+			updateTypeMember := v1.Update_INSERT
+			if targetSelectorMember := p.ctx.Target().GetActProfMember(&memberKey); targetSelectorMember != nil {
+				updateTypeMember = v1.Update_MODIFY
+			}
+			// hashedSelector group
+			actionProfileGroup := v1.ActionProfileGroup{
+				ActionProfileId: ActionProfile_FabricIngressNextHashedSelector,
+				GroupId:         getUInt32FromByteSlice(a.LineId),
+				Members: []*v1.ActionProfileGroup_Member{{
+					MemberId: getUInt32FromByteSlice(a.LineId),
+					Weight:   1,
+				}},
+				MaxSize: 1,
+			}
+			groupKey := translate.KeyFromActProfGroup(&actionProfileGroup)
+			updateTypeGroup := v1.Update_INSERT
+			if targetGroup := p.ctx.Target().GetActProfGroup(&groupKey); targetGroup != nil {
+				updateTypeGroup = v1.Update_MODIFY
+			}
+
+			// next.next_vlan to push double vlan tag
+			pushDoubleVlan := createNextVlanEntry(getUInt32FromByteSlice(a.LineId), a.STag, a.CTag)
+			// t_line_map
+			lineMapEntry := createLineMapEntry(a.STag, a.CTag, a.LineId)
+			// t_line_sessionMap
+			lineSessionMap := createLineSessionMap(a.LineId, a.PppoeSessId)
+			targetTableEntries = append(targetTableEntries, &lineMapEntry, &lineSessionMap, &routeV4Entry, &nextHashedEntry, &pushDoubleVlan)
+
+			// Make sure to have member, group and then next.routing_hashed entry
+			targetUpdateEntries = append(targetUpdateEntries, createUpdateActProfMember(&hashedSelectorMember, updateTypeMember))
+			targetUpdateEntries = append(targetUpdateEntries, createUpdateActProfGroup(&actionProfileGroup, updateTypeGroup))
+			targetUpdateEntries = append(targetUpdateEntries, insertOrModifyTableEntries(p, targetTableEntries)...)
 		}
 	} else {
+		// Query target store to understand which entries to remove
+		delEntries := make([]*v1.TableEntry, 0)
 		switch a.Direction {
 		case translate.DirectionUpstream:
-			// Query target store to understand which entries to remove
-			toBeRemovedEntries := make([]*v1.TableEntry, 0)
 			if a.LineId != nil {
-				toBeRemovedEntries = append(toBeRemovedEntries, getTargetEntriesUpstreamByLineId(p, a.LineId)...)
-			}
-			if a.STag != nil && a.CTag != nil && a.Port != nil {
-				tempRule := createIngressPortVlanEntryPermit(a.Port, a.STag, a.CTag, nil, defaultPrio)
-				key := translate.KeyFromTableEntry(&tempRule)
-				remEntry := p.ctx.Target().GetTableEntry(&key)
-				// Otherwise it will append nil
-				if remEntry != nil {
-					toBeRemovedEntries = append(toBeRemovedEntries, p.ctx.Target().GetTableEntry(&key))
+				delEntries = append(delEntries, getTargetEntriesUpstreamByLineId(p, a.LineId)...)
+				if p.ctx.Logical().DownstreamAttachments[translate.ToLineIdKey(a.LineId)] != nil {
+					log.Trace("Leaving TLineMap entry on the target because Downstream Attachment is still present")
+					removeFirstTLineMap(delEntries)
 				}
 			}
-			return createUpdateEntries(toBeRemovedEntries, v1.Update_DELETE), nil
+			// Specific case for the ingress port VLAN entry
+			if a.STag != nil && a.CTag != nil && a.Port != nil {
+				// FIXME: if the first Logical rule removed is the upstream.attachments_v4 we'll never reach this point when removing rules
+				// Create a "fake" rule just to get the key from the translate.KeyFromTableEntry helper method
+				tempRule := createIngressPortVlanEntryPermit(a.Port, a.STag, a.CTag, nil, defaultPrio)
+				key := translate.KeyFromTableEntry(&tempRule)
+				// Otherwise it will append nil
+				if remEntry := p.ctx.Target().GetTableEntry(&key); remEntry != nil {
+					delEntries = append(delEntries, p.ctx.Target().GetTableEntry(&key))
+				}
+			}
+			targetUpdateEntries = append(targetUpdateEntries, createUpdateEntries(delEntries, v1.Update_DELETE)...)
 		case translate.DirectionDownstream:
-			log.Tracef("fabricProcessor.HandleAttachmentEntry(): Downstream direction not implemented")
+			downEntries := make([]*v1.Update, 0)
+			if a.LineId != nil {
+				delEntries = append(delEntries, getTargetEntriesDownstreamByLineId(p, a.LineId)...)
+				if p.ctx.Logical().UpstreamAttachments[translate.ToLineIdKey(a.LineId)] != nil {
+					log.Trace("Leaving TLineMap entry on the target because Upstream Attachment is still present")
+					removeFirstTLineMap(delEntries)
+				}
+				// Retrieve also group and member used for routing
+				// This works since we used line ID as group ID and member ID.
+				groupMemberKey := translate.ActProfGroupKey(ActionProfile_FabricIngressNextHashedSelector, getUInt32FromByteSlice(a.LineId))
+				// Make sure the group is removed before the member
+				if group := p.ctx.Target().GetActProfGroup(&groupMemberKey); group != nil {
+					downEntries = append(downEntries, createUpdateActProfGroup(group, v1.Update_DELETE))
+				}
+				// In downstream we have a single member
+				if member := p.ctx.Target().GetActProfMember(&groupMemberKey); member != nil {
+					downEntries = append(downEntries, createUpdateActProfMember(member, v1.Update_DELETE))
+				}
+			}
+			targetUpdateEntries = append(targetUpdateEntries, createUpdateEntries(delEntries, v1.Update_DELETE)...)
+			targetUpdateEntries = append(targetUpdateEntries, downEntries...)
 		}
 	}
-	return nil, nil
+	return
+}
+
+func removeFirstTLineMap(updateEntries []*v1.TableEntry) {
+	for i, v := range updateEntries {
+		if v.TableId == Table_FabricIngressBngIngressTLineMap {
+			updateEntries = append(updateEntries[:i], updateEntries[i+1:]...)
+			return
+		}
+	}
 }
 
 func (p fabricProcessor) HandleRouteV4NextHopEntry(e *translate.NextHopEntry, uType v1.Update_Type) ([]*v1.Update, error) {
@@ -110,7 +179,7 @@ func (p fabricProcessor) HandleRouteV4NextHopEntry(e *translate.NextHopEntry, uT
 	if x == nil {
 		return nil, fmt.Errorf("missing MyStation entry for port %x, cannot derive source MAC", e.Port)
 	}
-	m := createHashedSelectorMember(e, x.EthDst)
+	m := createHashedSelectorMember(e.Id, e.Port, e.MacAddr, x.EthDst)
 	return []*v1.Update{createUpdateActProfMember(&m, uType)}, nil
 }
 
@@ -136,7 +205,12 @@ func (p fabricProcessor) HandleRouteV4NextHopGroup(g *translate.NextHopGroup, uT
 
 func (p fabricProcessor) HandleRouteV4Entry(e *translate.RouteV4Entry, uType v1.Update_Type) ([]*v1.Update, error) {
 	log.Tracef("RouteV4Entry={ %s }", e)
-	r := createRouteV4Entry(e)
-	v := createNextVlanEntry(e, getVlanIdValue(defaultInternalTag))
-	return []*v1.Update{createUpdateEntry(&r, uType), createUpdateEntry(&v, uType)}, nil
+	r := createRouteV4Entry(e.NextHopGroupId, e.Ipv4Addr, e.PrefixLen)
+	switch e.Direction {
+	case translate.DirectionUpstream:
+		v := createNextVlanEntry(e.NextHopGroupId, getVlanIdValue(defaultInternalTag), nil)
+		return []*v1.Update{createUpdateEntry(&r, uType), createUpdateEntry(&v, uType)}, nil
+	default:
+		return nil, fmt.Errorf("undefined route direction")
+	}
 }
