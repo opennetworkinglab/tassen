@@ -95,3 +95,11 @@ type Ipv4LpmKey string
 func ToIpv4LpmKey(addr []byte, prefixLen int32) Ipv4LpmKey {
 	return Ipv4LpmKey(fmt.Sprintf("%x/%d", addr, prefixLen))
 }
+
+type AclEntry p4v1.TableEntry
+
+type AclKey string
+
+func ToAclKey(t *AclEntry) AclKey {
+	return AclKey(KeyFromTableEntry((*p4v1.TableEntry)(t)))
+}

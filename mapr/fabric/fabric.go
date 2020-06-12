@@ -140,3 +140,12 @@ func (p fabricProcessor) HandleRouteV4Entry(e *translate.RouteV4Entry, uType v1.
 	v := createNextVlanEntry(e, getVlanIdValue(defaultInternalTag))
 	return []*v1.Update{createUpdateEntry(&r, uType), createUpdateEntry(&v, uType)}, nil
 }
+
+func (p fabricProcessor) HandleAclEntry(e *translate.AclEntry, uType v1.Update_Type) ([]*v1.Update, error) {
+	log.Tracef("AclEntry={ %s }", e)
+	t, err := createAclEntry(e)
+	if err != nil {
+		return nil, err
+	}
+	return []*v1.Update{createUpdateEntry(&t, uType)}, nil
+}
