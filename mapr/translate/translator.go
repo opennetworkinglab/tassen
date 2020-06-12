@@ -178,7 +178,8 @@ func (t translator) translateOrStore(u *p4v1.Update, translate bool) ([]*p4v1.Up
 				}
 				return nil, nil
 			}
-		case Table_IngressPipeUpstreamLines, Table_IngressPipeUpstreamAttachmentsV4:
+		case Table_IngressPipeUpstreamLines, Table_IngressPipeUpstreamAttachmentsV4,
+			Table_IngressPipeDownstreamLinesV4, Table_IngressPipeDownstreamAttachmentsV4:
 			x, ok, err := t.evalAttachment(e.TableEntry)
 			if err != nil {
 				return nil, err
@@ -283,6 +284,10 @@ func (t translator) evalAttachment(e *p4v1.TableEntry) (a AttachmentEntry, ok bo
 		err = parseUpstreamLineEntry(e, &a)
 	case Table_IngressPipeUpstreamAttachmentsV4:
 		err = parseUpstreamAttachmentV4Entry(e, &a)
+	case Table_IngressPipeDownstreamLinesV4:
+		err = parseDownstreamLinesV4Entry(e, &a)
+	case Table_IngressPipeDownstreamAttachmentsV4:
+		err = parseDownstreamAttachmentsV4(e, &a)
 	default:
 		err = fmt.Errorf("table ID %d is not attachment-level", e.TableId)
 	}
@@ -372,6 +377,66 @@ func parseMyStationEntry(t *p4v1.TableEntry) (MyStationEntry, error) {
 		return MyStationEntry{}, fmt.Errorf("invalid Action %s", t.GetAction())
 	}
 	return entry, nil
+}
+
+func parseDownstreamLinesV4Entry(t *p4v1.TableEntry, a *AttachmentEntry) error {
+	a.Direction = DirectionDownstream
+	for _, m := range t.Match {
+		switch m.FieldId {
+		case Hdr_IngressPipeDownstreamLinesV4_Ipv4Dst:
+			a.Ipv4Addr = m.GetExact().Value
+		default:
+			return fmt.Errorf("invalid %T ID %d", m, m.FieldId)
+		}
+	}
+	// Parse action
+	act := t.GetAction().GetAction()
+	if act == nil || act.ActionId != Action_IngressPipeDownstreamSetLine {
+		return fmt.Errorf("invalid Action %s", t.GetAction())
+	}
+	for _, p := range act.Params {
+		switch p.ParamId {
+		case ActionParam_IngressPipeDownstreamSetLine_LineId:
+			a.LineId = p.Value
+		default:
+			return fmt.Errorf("invalid %T ID %d", p, p.ParamId)
+		}
+	}
+	return nil
+}
+
+func parseDownstreamAttachmentsV4(t *p4v1.TableEntry, a *AttachmentEntry) error {
+	a.Direction = DirectionDownstream
+	for _, m := range t.Match {
+		switch m.FieldId {
+		case Hdr_IngressPipeDownstreamAttachmentsV4_LineId:
+			a.LineId = m.GetExact().Value
+		default:
+			return fmt.Errorf("invalid %T ID %d", m, m.FieldId)
+		}
+	}
+	// Parse action
+	act := t.GetAction().GetAction()
+	if act == nil || act.ActionId != Action_IngressPipeDownstreamSetPppoeAttachmentV4 {
+		return fmt.Errorf("invalid Action %s", t.GetAction())
+	}
+	for _, p := range act.Params {
+		switch p.ParamId {
+		case ActionParam_IngressPipeDownstreamSetPppoeAttachmentV4_Port:
+			a.Port = p.Value
+		case ActionParam_IngressPipeDownstreamSetPppoeAttachmentV4_Dmac:
+			a.MacAddr = p.Value
+		case ActionParam_IngressPipeDownstreamSetPppoeAttachmentV4_STag:
+			a.STag = p.Value
+		case ActionParam_IngressPipeDownstreamSetPppoeAttachmentV4_CTag:
+			a.CTag = p.Value
+		case ActionParam_IngressPipeDownstreamSetPppoeAttachmentV4_PppoeSessId:
+			a.PppoeSessId = p.Value
+		default:
+			return fmt.Errorf("invalid %T ID %d", p, p.ParamId)
+		}
+	}
+	return nil
 }
 
 func parseUpstreamLineEntry(t *p4v1.TableEntry, a *AttachmentEntry) error {
