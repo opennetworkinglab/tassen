@@ -53,6 +53,10 @@ func getNextIdValue(nextId uint32) []byte {
 	return bytes
 }
 
+func getUInt32FromByteSlice(val []byte) uint32 {
+	return binary.BigEndian.Uint32(val)
+}
+
 func createEgressVlanPopEntry(port []byte, internalVlan uint16) v1.TableEntry {
 	matchVlanId := v1.FieldMatch{
 		FieldId: Hdr_FabricEgressEgressNextEgressVlan_VlanId,
@@ -192,7 +196,7 @@ func createFwdClassifierEntry(port []byte, EthDst []byte, prio int32) v1.TableEn
 			Params: []*v1.Action_Param{
 				{
 					ParamId: ActionParam_FabricIngressFilteringSetForwardingType_FwdType,
-					Value:   []byte{FwdType_FwdIpv4Unicast}},
+					Value:   []byte{FwdTypeIpv4Unicast}},
 			},
 		}},
 	}
@@ -232,24 +236,24 @@ func createPppoePuntEntry(pppoeCode []byte, pppoeProto []byte, prio int32) v1.Ta
 	}
 }
 
-func createHashedSelectorMember(e *translate.NextHopEntry, smac []byte) v1.ActionProfileMember {
+func createHashedSelectorMember(memberId uint32, port []byte, dMac []byte, sMac []byte) v1.ActionProfileMember {
 	return v1.ActionProfileMember{
 		ActionProfileId: ActionProfile_FabricIngressNextHashedSelector,
-		MemberId:        e.Id,
+		MemberId:        memberId,
 		Action: &v1.Action{
 			ActionId: Action_FabricIngressNextRoutingHashed,
 			Params: []*v1.Action_Param{
 				{
 					ParamId: ActionParam_FabricIngressNextRoutingHashed_PortNum,
-					Value:   e.Port,
+					Value:   port,
 				},
 				{
 					ParamId: ActionParam_FabricIngressNextRoutingHashed_Dmac,
-					Value:   e.MacAddr,
+					Value:   dMac,
 				},
 				{
 					ParamId: ActionParam_FabricIngressNextRoutingHashed_Smac,
-					Value:   smac,
+					Value:   sMac,
 				},
 			},
 		},
@@ -269,41 +273,56 @@ func createNextHashedEntry(nextId uint32) v1.TableEntry {
 	}
 }
 
-func createRouteV4Entry(e *translate.RouteV4Entry) v1.TableEntry {
+func createRouteV4Entry(nextId uint32, ipv4Addr []byte, prefixLen int32) v1.TableEntry {
 	return v1.TableEntry{
 		TableId: Table_FabricIngressForwardingRoutingV4,
 		Match: []*v1.FieldMatch{{
 			FieldId: Hdr_FabricIngressForwardingRoutingV4_Ipv4Dst,
 			FieldMatchType: &v1.FieldMatch_Lpm{Lpm: &v1.FieldMatch_LPM{
-				Value:     e.Ipv4Addr,
-				PrefixLen: e.PrefixLen,
+				Value:     ipv4Addr,
+				PrefixLen: prefixLen,
 			}}}},
 		Action: &v1.TableAction{Type: &v1.TableAction_Action{Action: &v1.Action{
 			ActionId: Action_FabricIngressForwardingSetNextIdRoutingV4,
 			Params: []*v1.Action_Param{{
 				ParamId: ActionParam_FabricIngressForwardingSetNextIdRoutingV4_NextId,
-				Value:   getNextIdValue(e.NextHopGroupId),
+				Value:   getNextIdValue(nextId),
 			}},
 		}}},
 	}
 }
 
-func createNextVlanEntry(e *translate.RouteV4Entry, outputTag []byte) v1.TableEntry {
+func createNextVlanEntry(nextId uint32, vlanId []byte, innerVlanid []byte) v1.TableEntry {
+	var action *v1.TableAction
+	if innerVlanid == nil {
+		action = &v1.TableAction{Type: &v1.TableAction_Action{Action: &v1.Action{
+			ActionId: Action_FabricIngressNextSetVlan,
+			Params: []*v1.Action_Param{{
+				ParamId: ActionParam_FabricIngressNextSetVlan_VlanId,
+				Value:   vlanId,
+			}},
+		}}}
+	} else {
+		action = &v1.TableAction{Type: &v1.TableAction_Action{Action: &v1.Action{
+			ActionId: Action_FabricIngressNextSetDoubleVlan,
+			Params: []*v1.Action_Param{{
+				ParamId: ActionParam_FabricIngressNextSetDoubleVlan_OuterVlanId,
+				Value:   vlanId,
+			}, {
+				ParamId: ActionParam_FabricIngressNextSetDoubleVlan_InnerVlanId,
+				Value:   innerVlanid,
+			}},
+		}}}
+	}
+
 	return v1.TableEntry{
 		TableId: Table_FabricIngressNextNextVlan,
 		Match: []*v1.FieldMatch{{
 			FieldId: Hdr_FabricIngressForwardingRoutingV4_Ipv4Dst,
 			FieldMatchType: &v1.FieldMatch_Exact_{Exact: &v1.FieldMatch_Exact{
-				Value: getNextIdValue(e.NextHopGroupId),
+				Value: getNextIdValue(nextId),
 			}}}},
-		Action: &v1.TableAction{Type: &v1.TableAction_Action{Action: &v1.Action{
-			ActionId: Action_FabricIngressNextSetVlan,
-			Params: []*v1.Action_Param{{
-				ParamId: ActionParam_FabricIngressNextSetVlan_VlanId,
-				Value:   outputTag,
-			}},
-		}}},
-	}
+		Action: action}
 }
 
 func createLineMapEntry(sTag []byte, cTag []byte, lineId []byte) v1.TableEntry {
@@ -358,13 +377,33 @@ func createPppoeTermV4(lineId []byte, ipv4Addr []byte, pppoeSessId []byte) v1.Ta
 	}
 }
 
+func createLineSessionMap(lineId []byte, pppoeSessId []byte) v1.TableEntry {
+	return v1.TableEntry{
+		TableId: Table_FabricIngressBngIngressDownstreamTLineSessionMap,
+		Match: []*v1.FieldMatch{{
+			FieldId: Hdr_FabricIngressBngIngressDownstreamTLineSessionMap_LineId,
+			FieldMatchType: &v1.FieldMatch_Exact_{
+				Exact: &v1.FieldMatch_Exact{
+					Value: lineId,
+				}}}},
+		Action: &v1.TableAction{Type: &v1.TableAction_Action{Action: &v1.Action{
+			ActionId: Action_FabricIngressBngIngressDownstreamSetSession,
+			Params: []*v1.Action_Param{{
+				ParamId: ActionParam_FabricIngressBngIngressDownstreamSetSession_PppoeSessionId,
+				Value:   pppoeSessId,
+			}}}}},
+	}
+}
+
+// Get all the table entries for the upstream direction for a given line ID
 func getTargetEntriesUpstreamByLineId(p fabricProcessor, lineId []byte) []*v1.TableEntry {
 	return p.ctx.Target().FilterTableEntries(
 		func(entry *v1.TableEntry) bool {
 			if entry.TableId == Table_FabricIngressBngIngressTLineMap &&
 				entry.GetAction().GetAction().ActionId == Action_FabricIngressBngIngressSetLine {
 				for _, v := range entry.GetAction().GetAction().GetParams() {
-					if bytes.Equal(v.Value, lineId) {
+					if v.ParamId == ActionParam_FabricIngressBngIngressSetLine_LineId &&
+						bytes.Equal(v.Value, lineId) {
 						return true
 					}
 				}
@@ -379,4 +418,69 @@ func getTargetEntriesUpstreamByLineId(p fabricProcessor, lineId []byte) []*v1.Ta
 			}
 			return false
 		})
+}
+
+// Get all the table entries for the downstream direction for a given line ID
+func getTargetEntriesDownstreamByLineId(p fabricProcessor, lineId []byte) []*v1.TableEntry {
+	return p.ctx.Target().FilterTableEntries(
+		func(entry *v1.TableEntry) bool {
+			if entry.TableId == Table_FabricIngressBngIngressTLineMap &&
+				entry.GetAction().GetAction().ActionId == Action_FabricIngressBngIngressSetLine {
+				for _, v := range entry.GetAction().GetAction().GetParams() {
+					if v.ParamId == ActionParam_FabricIngressBngIngressSetLine_LineId &&
+						bytes.Equal(v.Value, lineId) {
+						return true
+					}
+				}
+			}
+			if entry.TableId == Table_FabricIngressBngIngressDownstreamTLineSessionMap {
+				for _, m := range entry.GetMatch() {
+					if m.FieldId == Hdr_FabricIngressBngIngressDownstreamTLineSessionMap_LineId &&
+						bytes.Equal(m.GetExact().Value, lineId) {
+						return true
+					}
+				}
+			}
+			if entry.TableId == Table_FabricIngressForwardingRoutingV4 &&
+				entry.GetAction().GetAction().ActionId == Action_FabricIngressForwardingSetNextIdRoutingV4 {
+				for _, v := range entry.GetAction().GetAction().GetParams() {
+					if v.ParamId == ActionParam_FabricIngressForwardingSetNextIdRoutingV4_NextId &&
+						bytes.Equal(v.Value, lineId) {
+						return true
+					}
+				}
+			}
+			if entry.TableId == Table_FabricIngressNextHashed {
+				for _, m := range entry.GetMatch() {
+					if m.FieldId == Hdr_FabricIngressNextHashed_NextId &&
+						bytes.Equal(m.GetExact().Value, lineId) {
+						return true
+					}
+				}
+			}
+			if entry.TableId == Table_FabricIngressNextNextVlan {
+				for _, m := range entry.GetMatch() {
+					if m.FieldId == Hdr_FabricIngressNextNextVlan_NextId &&
+						bytes.Equal(m.GetExact().Value, lineId) {
+						return true
+					}
+				}
+			}
+			return false
+		})
+}
+
+func insertOrModifyTableEntries(p fabricProcessor, tableEntries []*v1.TableEntry) (updateEntries []*v1.Update) {
+	// Query target store to understand if insert or modify
+	for _, v := range tableEntries {
+		key := translate.KeyFromTableEntry(v)
+		targetTableEntry := p.ctx.Target().GetTableEntry(&key)
+		updateType := v1.Update_INSERT
+		if targetTableEntry != nil {
+			// TODO: we could filter only the updated entries instead of always pushing a MODIFY to the target
+			updateType = v1.Update_MODIFY
+		}
+		updateEntries = append(updateEntries, createUpdateEntry(v, updateType))
+	}
+	return
 }
