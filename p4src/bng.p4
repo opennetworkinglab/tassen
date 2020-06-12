@@ -459,39 +459,6 @@ control IngressDownstream(
         const default_action = miss;
     }
 
-    action set_vids(bit<12> c_tag, bit<12> s_tag) {
-        lmeta.c_tag = c_tag;
-        lmeta.s_tag = s_tag;
-    }
-
-    table vids {
-        key = {
-            lmeta.line_id: exact @name("line_id");
-        }
-        actions = {
-            set_vids;
-            @defaultonly miss;
-        }
-        size = MAX_LINES;
-        const default_action = miss;
-    }
-
-    action set_pppoe_sess(bit<16> pppoe_sess_id) {
-        lmeta.pppoe_sess_id = pppoe_sess_id;
-    }
-
-    table pppoe_sessions {
-        key = {
-            lmeta.line_id: exact @name("line_id");
-        }
-        actions = {
-            set_pppoe_sess;
-            @defaultonly miss;
-        }
-        size = MAX_LINES;
-        const default_action = miss;
-    }
-
     @hidden
     action encap(bit<16> pppoe_proto) {
         // Outer VLAN (s_tag)
@@ -525,29 +492,28 @@ control IngressDownstream(
         routed.count(lmeta.line_id);
     }
 
-    action route_v4(port_t port, bit<48> dmac) {
+    action set_pppoe_attachment_v4(
+        port_t port, bit<48> dmac,
+        bit<12> s_tag, bit<12> c_tag,
+        bit<16> pppoe_sess_id)
+    {
+        lmeta.s_tag = s_tag;
+        lmeta.c_tag = c_tag;
+        lmeta.pppoe_sess_id = pppoe_sess_id;
         encap(PPPOE_PROTO_IP4);
         route(port, dmac);
     }
 
-    table routes_v4 {
+    table attachments_v4 {
         key = {
-            lmeta.line_id     : lpm @name("line_id");
-            hdr.ipv4.dst_addr : selector;
-            hdr.ipv4.src_addr : selector;
-            lmeta.ip_proto    : selector;
-            lmeta.l4_sport    : selector;
-            lmeta.l4_dport    : selector;
+            lmeta.line_id: exact @name("line_id");
         }
         actions = {
-            route_v4;
+            set_pppoe_attachment_v4;
             @defaultonly miss;
         }
-        default_action = miss;
-        @name("IngressPipe.downstream.ecmp")
-        @max_group_size(MAX_ECMP_GROUP_SIZE)
-        implementation = action_selector(HashAlgorithm.crc16, 32w1024, 32w16);
         size = MAX_LINES;
+        const default_action = miss;
     }
 
     TtlCheck() ttl;
@@ -555,9 +521,9 @@ control IngressDownstream(
     apply {
         lmeta.line_id = LINE_UNKNOWN;
         lines_v4.apply();
-        vids.apply();
-        pppoe_sessions.apply();
-        routes_v4.apply();
+        // Routing is implicit for downstream and
+        // performed by attachments_v4.
+        attachments_v4.apply();
         ttl.apply(hdr, lmeta, smeta);
     }
 }

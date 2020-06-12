@@ -113,7 +113,7 @@ tables {
   preamble {
     id: 44507663
     name: "IngressPipe.upstream.attachments_v4"
-    alias: "attachments_v4"
+    alias: "upstream.attachments_v4"
   }
   match_fields {
     id: 1
@@ -154,7 +154,7 @@ tables {
   preamble {
     id: 40314915
     name: "IngressPipe.upstream.routes_v4"
-    alias: "upstream.routes_v4"
+    alias: "routes_v4"
   }
   match_fields {
     id: 1
@@ -198,9 +198,9 @@ tables {
 }
 tables {
   preamble {
-    id: 34456456
-    name: "IngressPipe.downstream.vids"
-    alias: "vids"
+    id: 50044735
+    name: "IngressPipe.downstream.attachments_v4"
+    alias: "downstream.attachments_v4"
   }
   match_fields {
     id: 1
@@ -209,7 +209,7 @@ tables {
     match_type: EXACT
   }
   action_refs {
-    id: 23385620
+    id: 32146370
   }
   action_refs {
     id: 27308170
@@ -217,52 +217,6 @@ tables {
     scope: DEFAULT_ONLY
   }
   const_default_action_id: 27308170
-  size: 8192
-}
-tables {
-  preamble {
-    id: 39589935
-    name: "IngressPipe.downstream.pppoe_sessions"
-    alias: "pppoe_sessions"
-  }
-  match_fields {
-    id: 1
-    name: "line_id"
-    bitwidth: 32
-    match_type: EXACT
-  }
-  action_refs {
-    id: 27412451
-  }
-  action_refs {
-    id: 27308170
-    annotations: "@defaultonly"
-    scope: DEFAULT_ONLY
-  }
-  const_default_action_id: 27308170
-  size: 8192
-}
-tables {
-  preamble {
-    id: 44140312
-    name: "IngressPipe.downstream.routes_v4"
-    alias: "downstream.routes_v4"
-  }
-  match_fields {
-    id: 1
-    name: "line_id"
-    bitwidth: 32
-    match_type: LPM
-  }
-  action_refs {
-    id: 23530511
-  }
-  action_refs {
-    id: 27308170
-    annotations: "@defaultonly"
-    scope: DEFAULT_ONLY
-  }
-  implementation_id: 287433378
   size: 8192
 }
 tables {
@@ -410,7 +364,7 @@ actions {
   preamble {
     id: 31033793
     name: "IngressPipe.upstream.route_v4"
-    alias: "upstream.route_v4"
+    alias: "route_v4"
   }
   params {
     id: 1
@@ -444,38 +398,9 @@ actions {
 }
 actions {
   preamble {
-    id: 23385620
-    name: "IngressPipe.downstream.set_vids"
-    alias: "set_vids"
-  }
-  params {
-    id: 1
-    name: "c_tag"
-    bitwidth: 12
-  }
-  params {
-    id: 2
-    name: "s_tag"
-    bitwidth: 12
-  }
-}
-actions {
-  preamble {
-    id: 27412451
-    name: "IngressPipe.downstream.set_pppoe_sess"
-    alias: "set_pppoe_sess"
-  }
-  params {
-    id: 1
-    name: "pppoe_sess_id"
-    bitwidth: 16
-  }
-}
-actions {
-  preamble {
-    id: 23530511
-    name: "IngressPipe.downstream.route_v4"
-    alias: "downstream.route_v4"
+    id: 32146370
+    name: "IngressPipe.downstream.set_pppoe_attachment_v4"
+    alias: "set_pppoe_attachment_v4"
   }
   params {
     id: 1
@@ -486,6 +411,21 @@ actions {
     id: 2
     name: "dmac"
     bitwidth: 48
+  }
+  params {
+    id: 3
+    name: "s_tag"
+    bitwidth: 12
+  }
+  params {
+    id: 4
+    name: "c_tag"
+    bitwidth: 12
+  }
+  params {
+    id: 5
+    name: "pppoe_sess_id"
+    bitwidth: 16
   }
 }
 actions {
@@ -518,20 +458,9 @@ action_profiles {
   preamble {
     id: 286372544
     name: "IngressPipe.upstream.ecmp"
-    alias: "upstream.ecmp"
+    alias: "ecmp"
   }
   table_ids: 40314915
-  with_selector: true
-  size: 1024
-  max_group_size: 16
-}
-action_profiles {
-  preamble {
-    id: 287433378
-    name: "IngressPipe.downstream.ecmp"
-    alias: "downstream.ecmp"
-  }
-  table_ids: 44140312
   with_selector: true
   size: 1024
   max_group_size: 16
