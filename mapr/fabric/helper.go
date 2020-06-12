@@ -408,8 +408,8 @@ func createMatchAcl(value []byte, mask []byte, fieldId uint32) *v1.FieldMatch {
 			Ternary: &v1.FieldMatch_Ternary{
 				Value: value,
 				Mask:  mask,
-			},
-		},
+			}}}
+}
 
 func createLineSessionMap(lineId []byte, pppoeSessId []byte) v1.TableEntry {
 	return v1.TableEntry{
