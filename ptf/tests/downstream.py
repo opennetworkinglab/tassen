@@ -64,7 +64,7 @@ class PppoeIp4UnicastTest(P4RuntimeTest):
         self.insert(self.helper.build_table_entry(
             table_name='IngressPipe.if_types',
             match_fields={
-                'port': self.port1
+                'port': self.port2
             },
             action_name='IngressPipe.set_if_type',
             action_params={

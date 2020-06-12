@@ -222,7 +222,6 @@ func (t translator) translateOrStore(u *p4v1.Update, translate bool) ([]*p4v1.Up
 				return nil, nil
 			}
 		// TODO: case Table_UpstreamPppoePunts // device-level
-		// TODO: downstream tables
 		default:
 			return nil, fmt.Errorf("invalid table ID %v", e.TableEntry.TableId)
 		}
