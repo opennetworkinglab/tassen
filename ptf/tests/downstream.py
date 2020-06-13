@@ -61,12 +61,31 @@ class PppoeIp4UnicastTest(P4RuntimeTest):
             }
         ))
 
+        self.insert(self.helper.build_table_entry(
+            table_name='IngressPipe.if_types',
+            match_fields={
+                'port': self.port2
+            },
+            action_name='IngressPipe.set_if_type',
+            action_params={
+                'if_type': IF_ACCESS,
+            }
+        ))
+
         # Consider the given pkt's eth dst addr
         # as the bng mac.
         self.insert(self.helper.build_table_entry(
             table_name='IngressPipe.my_stations',
             match_fields={
                 'port': self.port1,
+                'eth_dst': pkt[Ether].dst,
+            },
+            action_name='IngressPipe.set_my_station'
+        ))
+        self.insert(self.helper.build_table_entry(
+            table_name='IngressPipe.my_stations',
+            match_fields={
+                'port': self.port2,
                 'eth_dst': pkt[Ether].dst,
             },
             action_name='IngressPipe.set_my_station'
@@ -82,44 +101,18 @@ class PppoeIp4UnicastTest(P4RuntimeTest):
         ))
 
         self.insert(self.helper.build_table_entry(
-            table_name='IngressPipe.downstream.vids',
+            table_name='IngressPipe.downstream.attachments_v4',
             match_fields={
                 'line_id': line_id
             },
-            action_name='IngressPipe.downstream.set_vids',
+            action_name='IngressPipe.downstream.set_pppoe_attachment_v4',
             action_params={
+                'port': self.port2,
+                'dmac': next_hop_mac,
+                's_tag': s_tag,
                 'c_tag': c_tag,
-                's_tag': s_tag
-            }
-        ))
-
-        self.insert(self.helper.build_table_entry(
-            table_name='IngressPipe.downstream.pppoe_sessions',
-            match_fields={
-                'line_id': line_id
-            },
-            action_name='IngressPipe.downstream.set_pppoe_sess',
-            action_params={
                 'pppoe_sess_id': pppoe_sess_id,
             }
-        ))
-
-        self.insert(self.helper.build_act_prof_group(
-            act_prof_name="IngressPipe.downstream.ecmp",
-            group_id=line_id,
-            actions=[
-                ('IngressPipe.downstream.route_v4',
-                    {'dmac': next_hop_mac, 'port': self.port2}),
-            ]
-        ))
-
-        # Insert routing entry
-        self.insert(self.helper.build_table_entry(
-            table_name='IngressPipe.downstream.routes_v4',
-            match_fields={
-                'line_id': line_id
-            },
-            group_id=line_id
         ))
 
         # Transform the given input packet as it would be transmitted out of an ONU.
