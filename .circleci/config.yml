@@ -10,6 +10,7 @@ jobs:
       - run: make check-dummy
       - run: make check-fabric TEST=upstream.PppoeIp4UnicastTest
       - run: make check-fabric TEST=downstream.PppoeIp4UnicastTest
+      - run: make check-fabric TEST=packetio.PacketInPppoeTest
 
 workflows:
   main:
