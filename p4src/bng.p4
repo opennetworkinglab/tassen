@@ -785,6 +785,20 @@ control EgressPipe(
             exit;
         }
 
+        // TODO: Consider switching to PSA to count post-encap/decap bytes
+        // In v1model, byte counters in the egress pipe are incremented with the
+        // same pkt size seen at ingress. For example, even if upstream packets
+        // get decapsulated in ingress, egress counters will still account for
+        // access headers (VLAN and PPPoE). That might be a problem for
+        // operators that do volume-based billing, which need to maintain stats
+        // only for data effectivelly sent/received by an attachment, i.e.,
+        // without counting bytes for the access headers. While the control
+        // plane can approximate such stats (e.g., by knowing the pkt count and
+        // for access headers with fixed size), the right solution to this
+        // problem would be to use a different architecture other than v1model,
+        // such as PSA, where pkts are deparased at the end of ingress, and
+        // parsed again at egress. With PSA, if we decapsulate pkts in the
+        // ingress pipe, the egress pipe should see shorter size pkts.
         accounting.apply(hdr, lmeta, smeta);
     }
 }

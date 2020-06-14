@@ -453,6 +453,17 @@ class P4RuntimeTest(BaseTest):
             self.reqs.append(req)
         return rep
 
+    def read_request(self, req):
+        entities = []
+        try:
+            for resp in self.stub.Read(req):
+                entities.extend(resp.entities)
+        except grpc.RpcError as e:
+            if e.code() != grpc.StatusCode.UNKNOWN:
+                raise e
+            raise P4RuntimeException(e)
+        return entities
+
     def insert(self, entity):
         if isinstance(entity, list) or isinstance(entity, tuple):
             for e in entity:
@@ -479,6 +490,44 @@ class P4RuntimeTest(BaseTest):
         election_id.high = 0
         election_id.low = self.election_id
         return req
+
+    def get_new_read_request(self):
+        req = p4runtime_pb2.ReadRequest()
+        req.device_id = self.device_id
+        return req
+
+    def read_counter(self, name, index, typ='BOTH'):
+        # Check counter type with P4Info
+        counter = self.helper.get('counters', name=name)
+        counter_type_unit = p4info_pb2.CounterSpec.Unit.items()[counter.spec.unit][0]
+        if counter_type_unit != "BOTH" and counter_type_unit != typ:
+            raise Exception("Counter " + name + " is of type " +
+                            counter_type_unit + ", but requested: " + typ)
+        req = self.get_new_read_request()
+        entity = req.entities.add()
+        counter_entry = entity.counter_entry
+        c_id = self.helper.get_counters_id(name)
+        counter_entry.counter_id = c_id
+        index_ = counter_entry.index
+        index_.index = index
+
+        for entity in self.read_request(req):
+            if entity.HasField("counter_entry"):
+                if typ == 'BOTH':
+                    return entity.counter_entry.data.packet_count, \
+                           entity.counter_entry.data.byte_count
+                elif typ == "PACKETS":
+                    return entity.counter_entry.data.packet_count
+                elif typ == "BYTES":
+                    return entity.counter_entry.data.byte_count
+
+        return (None, None) if typ == 'BOTH' else None
+
+    def read_pkt_count(self, name, index):
+        return self.read_counter(name, index, typ="PACKETS")
+
+    def read_byte_count(self, name, index):
+        return self.read_counter(name, index, typ="BYTES")
 
     def insert_pre_multicast_group(self, group_id, ports):
         req = self.get_new_write_request()

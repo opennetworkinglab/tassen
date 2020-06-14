@@ -23,7 +23,7 @@
 #     make check TEST=downstream.<TEST CLASS NAME>
 #
 # For example:
-#     make check TEST=downstream.PacketOutTest
+#     make check TEST=downstream.PppoeIp4UnicastTest
 # ------------------------------------------------------------------------------
 
 from base_test import *

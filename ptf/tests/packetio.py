@@ -80,7 +80,7 @@ class PacketOutTest(P4RuntimeTest):
 
 
 @group("packetio")
-class PacketInTest(P4RuntimeTest):
+class AclPacketInTest(P4RuntimeTest):
     """Tests controller packet-in capability by matching on the packet EtherType
     and cloning to the CPU port.
     """
@@ -123,7 +123,7 @@ class PacketInTest(P4RuntimeTest):
 
 # TODO: add test for LCP, IPCP, CHAP/PAP, keep-alive control plane packets
 @group("packetio")
-class PacketInPppoeTest(P4RuntimeTest):
+class PppoePuntTest(P4RuntimeTest):
     """Tests controller packet-in capability by matching PPPoE Control Plane packets
     """
 
@@ -136,10 +136,8 @@ class PacketInPppoeTest(P4RuntimeTest):
                            "dummy pppoed payload",
                    }
 
-        print ""
         for pkt_type, pkt in packets.items():
-            print "Testing %s packet..." \
-                  % (pkt_type)
+            print_inline("%s ... " % pkt_type)
             self.testPacket(pkt)
 
     @autocleanup
