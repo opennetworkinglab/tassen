@@ -86,8 +86,8 @@ P4INFO_GO := mapr/translate/p4info.go mapr/fabric/p4info.go
 p4info-go: $(P4INFO_GO)
 $(P4INFO_GO):
 	$(info *** Generating go constants: $< -> $@)
-	@docker run -v ${curr_dir}:/tassen -w /tassen \
+	@docker run --rm -v ${curr_dir}:/tassen -w /tassen \
 		--entrypoint ./util/go-gen-p4-const.py $(PTF_IMG) \
 		--output $@ --p4info $<
-	@docker run -v ${curr_dir}:/tassen -w /tassen \
+	@docker run --rm -v ${curr_dir}:/tassen -w /tassen \
 		${GOLANG_IMG} gofmt -w $@
