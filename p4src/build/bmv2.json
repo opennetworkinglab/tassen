@@ -7,15 +7,18 @@
         ["tmp", 16, false],
         ["tmp_0", 16, false],
         ["userMetadata.if_type", 3, false],
+        ["userMetadata.direction", 3, false],
         ["userMetadata.my_mac", 48, false],
         ["userMetadata.ip_proto", 8, false],
         ["userMetadata.l4_sport", 16, false],
         ["userMetadata.l4_dport", 16, false],
         ["userMetadata.line_id", 32, false],
+        ["userMetadata.cos_id", 32, false],
+        ["userMetadata.accounting_id", 32, false],
         ["userMetadata.s_tag", 12, false],
         ["userMetadata.c_tag", 12, false],
         ["userMetadata.pppoe_sess_id", 16, false],
-        ["_padding_6", 5, false]
+        ["_padding_6", 2, false]
       ]
     },
     {
@@ -786,7 +789,7 @@
       "id" : 0,
       "source_info" : {
         "filename" : "p4src/bng.p4",
-        "line" : 730,
+        "line" : 858,
         "column" : 8,
         "source_fragment" : "DeparserImpl"
       },
@@ -801,7 +804,7 @@
       "id" : 0,
       "source_info" : {
         "filename" : "p4src/bng.p4",
-        "line" : 606,
+        "line" : 687,
         "column" : 8,
         "source_fragment" : "counters"
       },
@@ -813,7 +816,7 @@
       "id" : 1,
       "source_info" : {
         "filename" : "p4src/bng.p4",
-        "line" : 627,
+        "line" : 708,
         "column" : 8,
         "source_fragment" : "counters"
       },
@@ -825,7 +828,7 @@
       "id" : 2,
       "source_info" : {
         "filename" : "p4src/bng.p4",
-        "line" : 575,
+        "line" : 656,
         "column" : 8,
         "source_fragment" : "counters"
       },
@@ -837,7 +840,7 @@
       "id" : 3,
       "source_info" : {
         "filename" : "p4src/bng.p4",
-        "line" : 297,
+        "line" : 374,
         "column" : 54,
         "source_fragment" : "all"
       },
@@ -849,7 +852,7 @@
       "id" : 4,
       "source_info" : {
         "filename" : "p4src/bng.p4",
-        "line" : 298,
+        "line" : 375,
         "column" : 54,
         "source_fragment" : "punted"
       },
@@ -861,7 +864,7 @@
       "id" : 5,
       "source_info" : {
         "filename" : "p4src/bng.p4",
-        "line" : 299,
+        "line" : 376,
         "column" : 54,
         "source_fragment" : "spoofed"
       },
@@ -873,7 +876,7 @@
       "id" : 6,
       "source_info" : {
         "filename" : "p4src/bng.p4",
-        "line" : 300,
+        "line" : 377,
         "column" : 54,
         "source_fragment" : "routed"
       },
@@ -885,7 +888,7 @@
       "id" : 7,
       "source_info" : {
         "filename" : "p4src/bng.p4",
-        "line" : 278,
+        "line" : 297,
         "column" : 54,
         "source_fragment" : "expired"
       },
@@ -897,7 +900,7 @@
       "id" : 8,
       "source_info" : {
         "filename" : "p4src/bng.p4",
-        "line" : 435,
+        "line" : 514,
         "column" : 54,
         "source_fragment" : "dropped"
       },
@@ -909,7 +912,7 @@
       "id" : 9,
       "source_info" : {
         "filename" : "p4src/bng.p4",
-        "line" : 436,
+        "line" : 515,
         "column" : 54,
         "source_fragment" : "routed"
       },
@@ -921,11 +924,59 @@
       "id" : 10,
       "source_info" : {
         "filename" : "p4src/bng.p4",
-        "line" : 278,
+        "line" : 297,
         "column" : 54,
         "source_fragment" : "expired"
       },
       "size" : 8192,
+      "is_direct" : false
+    },
+    {
+      "name" : "IngressPipe.accounting.upstream",
+      "id" : 11,
+      "source_info" : {
+        "filename" : "p4src/bng.p4",
+        "line" : 317,
+        "column" : 65,
+        "source_fragment" : "upstream"
+      },
+      "size" : 131073,
+      "is_direct" : false
+    },
+    {
+      "name" : "IngressPipe.accounting.downstream",
+      "id" : 12,
+      "source_info" : {
+        "filename" : "p4src/bng.p4",
+        "line" : 318,
+        "column" : 65,
+        "source_fragment" : "downstream"
+      },
+      "size" : 131073,
+      "is_direct" : false
+    },
+    {
+      "name" : "EgressPipe.accounting.upstream",
+      "id" : 13,
+      "source_info" : {
+        "filename" : "p4src/bng.p4",
+        "line" : 317,
+        "column" : 65,
+        "source_fragment" : "upstream"
+      },
+      "size" : 131073,
+      "is_direct" : false
+    },
+    {
+      "name" : "EgressPipe.accounting.downstream",
+      "id" : 14,
+      "source_info" : {
+        "filename" : "p4src/bng.p4",
+        "line" : 318,
+        "column" : 65,
+        "source_fragment" : "downstream"
+      },
+      "size" : 131073,
       "is_direct" : false
     }
   ],
@@ -936,7 +987,7 @@
       "id" : 0,
       "source_info" : {
         "filename" : "p4src/bng.p4",
-        "line" : 683,
+        "line" : 811,
         "column" : 8,
         "source_fragment" : "update_checksum( ..."
       },
@@ -997,7 +1048,7 @@
       "id" : 1,
       "source_info" : {
         "filename" : "p4src/bng.p4",
-        "line" : 709,
+        "line" : 837,
         "column" : 8,
         "source_fragment" : "verify_checksum( ..."
       },
@@ -1105,7 +1156,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 59,
+            "line" : 75,
             "column" : 42,
             "source_fragment" : "smeta) { ..."
           }
@@ -1124,7 +1175,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 59,
+            "line" : 75,
             "column" : 42,
             "source_fragment" : "smeta) { ..."
           }
@@ -1143,7 +1194,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 59,
+            "line" : 75,
             "column" : 42,
             "source_fragment" : "smeta) { ..."
           }
@@ -1162,7 +1213,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 59,
+            "line" : 75,
             "column" : 42,
             "source_fragment" : "smeta) { ..."
           }
@@ -1181,7 +1232,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 59,
+            "line" : 75,
             "column" : 42,
             "source_fragment" : "smeta) { ..."
           }
@@ -1200,7 +1251,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 59,
+            "line" : 75,
             "column" : 42,
             "source_fragment" : "smeta) { ..."
           }
@@ -1219,7 +1270,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 59,
+            "line" : 75,
             "column" : 42,
             "source_fragment" : "smeta) { ..."
           }
@@ -1238,7 +1289,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 59,
+            "line" : 75,
             "column" : 42,
             "source_fragment" : "smeta) { ..."
           }
@@ -1257,7 +1308,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 59,
+            "line" : 75,
             "column" : 42,
             "source_fragment" : "smeta) { ..."
           }
@@ -1276,7 +1327,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 59,
+            "line" : 75,
             "column" : 42,
             "source_fragment" : "smeta) { ..."
           }
@@ -1295,7 +1346,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 59,
+            "line" : 75,
             "column" : 42,
             "source_fragment" : "smeta) { ..."
           }
@@ -1314,7 +1365,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 59,
+            "line" : 75,
             "column" : 42,
             "source_fragment" : "smeta) { ..."
           }
@@ -1333,7 +1384,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 59,
+            "line" : 75,
             "column" : 42,
             "source_fragment" : "smeta) { ..."
           }
@@ -1352,7 +1403,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 59,
+            "line" : 75,
             "column" : 42,
             "source_fragment" : "smeta) { ..."
           }
@@ -1371,7 +1422,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 59,
+            "line" : 75,
             "column" : 42,
             "source_fragment" : "smeta) { ..."
           }
@@ -1390,7 +1441,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 59,
+            "line" : 75,
             "column" : 42,
             "source_fragment" : "smeta) { ..."
           }
@@ -1405,7 +1456,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 61,
+            "line" : 77,
             "column" : 4,
             "source_fragment" : "mark_to_drop(smeta)"
           }
@@ -1415,7 +1466,7 @@
           "parameters" : [],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 62,
+            "line" : 78,
             "column" : 4,
             "source_fragment" : "exit"
           }
@@ -1441,7 +1492,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 59,
+            "line" : 75,
             "column" : 42,
             "source_fragment" : "smeta) { ..."
           }
@@ -1460,7 +1511,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 59,
+            "line" : 75,
             "column" : 42,
             "source_fragment" : "smeta) { ..."
           }
@@ -1479,7 +1530,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 59,
+            "line" : 75,
             "column" : 42,
             "source_fragment" : "smeta) { ..."
           }
@@ -1498,7 +1549,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 59,
+            "line" : 75,
             "column" : 42,
             "source_fragment" : "smeta) { ..."
           }
@@ -1517,7 +1568,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 59,
+            "line" : 75,
             "column" : 42,
             "source_fragment" : "smeta) { ..."
           }
@@ -1536,7 +1587,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 59,
+            "line" : 75,
             "column" : 42,
             "source_fragment" : "smeta) { ..."
           }
@@ -1555,7 +1606,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 59,
+            "line" : 75,
             "column" : 42,
             "source_fragment" : "smeta) { ..."
           }
@@ -1574,7 +1625,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 59,
+            "line" : 75,
             "column" : 42,
             "source_fragment" : "smeta) { ..."
           }
@@ -1593,7 +1644,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 59,
+            "line" : 75,
             "column" : 42,
             "source_fragment" : "smeta) { ..."
           }
@@ -1612,7 +1663,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 59,
+            "line" : 75,
             "column" : 42,
             "source_fragment" : "smeta) { ..."
           }
@@ -1631,7 +1682,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 59,
+            "line" : 75,
             "column" : 42,
             "source_fragment" : "smeta) { ..."
           }
@@ -1650,7 +1701,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 59,
+            "line" : 75,
             "column" : 42,
             "source_fragment" : "smeta) { ..."
           }
@@ -1669,7 +1720,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 59,
+            "line" : 75,
             "column" : 42,
             "source_fragment" : "smeta) { ..."
           }
@@ -1688,7 +1739,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 59,
+            "line" : 75,
             "column" : 42,
             "source_fragment" : "smeta) { ..."
           }
@@ -1707,7 +1758,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 59,
+            "line" : 75,
             "column" : 42,
             "source_fragment" : "smeta) { ..."
           }
@@ -1726,7 +1777,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 59,
+            "line" : 75,
             "column" : 42,
             "source_fragment" : "smeta) { ..."
           }
@@ -1741,7 +1792,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 61,
+            "line" : 77,
             "column" : 4,
             "source_fragment" : "mark_to_drop(smeta)"
           }
@@ -1751,7 +1802,7 @@
           "parameters" : [],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 62,
+            "line" : 78,
             "column" : 4,
             "source_fragment" : "exit"
           }
@@ -1777,7 +1828,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 59,
+            "line" : 75,
             "column" : 42,
             "source_fragment" : "smeta) { ..."
           }
@@ -1796,7 +1847,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 59,
+            "line" : 75,
             "column" : 42,
             "source_fragment" : "smeta) { ..."
           }
@@ -1815,7 +1866,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 59,
+            "line" : 75,
             "column" : 42,
             "source_fragment" : "smeta) { ..."
           }
@@ -1834,7 +1885,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 59,
+            "line" : 75,
             "column" : 42,
             "source_fragment" : "smeta) { ..."
           }
@@ -1853,7 +1904,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 59,
+            "line" : 75,
             "column" : 42,
             "source_fragment" : "smeta) { ..."
           }
@@ -1872,7 +1923,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 59,
+            "line" : 75,
             "column" : 42,
             "source_fragment" : "smeta) { ..."
           }
@@ -1891,7 +1942,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 59,
+            "line" : 75,
             "column" : 42,
             "source_fragment" : "smeta) { ..."
           }
@@ -1910,7 +1961,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 59,
+            "line" : 75,
             "column" : 42,
             "source_fragment" : "smeta) { ..."
           }
@@ -1929,7 +1980,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 59,
+            "line" : 75,
             "column" : 42,
             "source_fragment" : "smeta) { ..."
           }
@@ -1948,7 +1999,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 59,
+            "line" : 75,
             "column" : 42,
             "source_fragment" : "smeta) { ..."
           }
@@ -1967,7 +2018,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 59,
+            "line" : 75,
             "column" : 42,
             "source_fragment" : "smeta) { ..."
           }
@@ -1986,7 +2037,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 59,
+            "line" : 75,
             "column" : 42,
             "source_fragment" : "smeta) { ..."
           }
@@ -2005,7 +2056,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 59,
+            "line" : 75,
             "column" : 42,
             "source_fragment" : "smeta) { ..."
           }
@@ -2024,7 +2075,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 59,
+            "line" : 75,
             "column" : 42,
             "source_fragment" : "smeta) { ..."
           }
@@ -2043,7 +2094,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 59,
+            "line" : 75,
             "column" : 42,
             "source_fragment" : "smeta) { ..."
           }
@@ -2062,7 +2113,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 59,
+            "line" : 75,
             "column" : 42,
             "source_fragment" : "smeta) { ..."
           }
@@ -2077,7 +2128,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 61,
+            "line" : 77,
             "column" : 4,
             "source_fragment" : "mark_to_drop(smeta)"
           }
@@ -2087,7 +2138,7 @@
           "parameters" : [],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 62,
+            "line" : 78,
             "column" : 4,
             "source_fragment" : "exit"
           }
@@ -2118,7 +2169,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 590,
+            "line" : 671,
             "column" : 8,
             "source_fragment" : "lmeta.if_type = if_type"
           }
@@ -2144,7 +2195,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 611,
+            "line" : 692,
             "column" : 8,
             "source_fragment" : "lmeta.my_mac = hdr.ethernet.dst_addr"
           }
@@ -2152,8 +2203,39 @@
       ]
     },
     {
-      "name" : "IngressPipe.upstream.set_line",
+      "name" : "IngressPipe.set_accounting_id",
       "id" : 10,
+      "runtime_data" : [
+        {
+          "name" : "accounting_id",
+          "bitwidth" : 32
+        }
+      ],
+      "primitives" : [
+        {
+          "op" : "assign",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["scalars", "userMetadata.accounting_id"]
+            },
+            {
+              "type" : "runtime_data",
+              "value" : 0
+            }
+          ],
+          "source_info" : {
+            "filename" : "p4src/bng.p4",
+            "line" : 713,
+            "column" : 8,
+            "source_fragment" : "lmeta.accounting_id = accounting_id"
+          }
+        }
+      ]
+    },
+    {
+      "name" : "IngressPipe.upstream.set_line",
+      "id" : 11,
       "runtime_data" : [
         {
           "name" : "line_id",
@@ -2175,7 +2257,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 303,
+            "line" : 380,
             "column" : 8,
             "source_fragment" : "lmeta.line_id = line_id"
           }
@@ -2184,7 +2266,7 @@
     },
     {
       "name" : "IngressPipe.upstream.punt",
-      "id" : 11,
+      "id" : 12,
       "runtime_data" : [],
       "primitives" : [
         {
@@ -2201,7 +2283,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 45,
+            "line" : 50,
             "column" : 24,
             "source_fragment" : "255; ..."
           }
@@ -2220,7 +2302,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 323,
+            "line" : 400,
             "column" : 8,
             "source_fragment" : "punted.count(lmeta.line_id)"
           }
@@ -2230,7 +2312,7 @@
           "parameters" : [],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 324,
+            "line" : 401,
             "column" : 8,
             "source_fragment" : "exit"
           }
@@ -2239,7 +2321,7 @@
     },
     {
       "name" : "IngressPipe.upstream.reject",
-      "id" : 12,
+      "id" : 13,
       "runtime_data" : [],
       "primitives" : [
         {
@@ -2256,7 +2338,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 344,
+            "line" : 421,
             "column" : 8,
             "source_fragment" : "spoofed.count(lmeta.line_id)"
           }
@@ -2479,7 +2561,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 61,
+            "line" : 77,
             "column" : 4,
             "source_fragment" : "mark_to_drop(smeta)"
           }
@@ -2489,7 +2571,7 @@
           "parameters" : [],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 62,
+            "line" : 78,
             "column" : 4,
             "source_fragment" : "exit"
           }
@@ -2498,7 +2580,7 @@
     },
     {
       "name" : "IngressPipe.upstream.route_v4",
-      "id" : 13,
+      "id" : 14,
       "runtime_data" : [
         {
           "name" : "port",
@@ -2524,7 +2606,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 33,
+            "line" : 38,
             "column" : 31,
             "source_fragment" : "0x0800; ..."
           }
@@ -2539,7 +2621,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 369,
+            "line" : 446,
             "column" : 8,
             "source_fragment" : "hdr.vlan.setInvalid()"
           }
@@ -2554,7 +2636,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 370,
+            "line" : 447,
             "column" : 8,
             "source_fragment" : "hdr.vlan2.setInvalid()"
           }
@@ -2569,7 +2651,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 371,
+            "line" : 448,
             "column" : 8,
             "source_fragment" : "hdr.pppoe.setInvalid()"
           }
@@ -2588,7 +2670,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 376,
+            "line" : 453,
             "column" : 8,
             "source_fragment" : "smeta.egress_spec = port; ..."
           }
@@ -2607,7 +2689,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 377,
+            "line" : 454,
             "column" : 8,
             "source_fragment" : "hdr.ethernet.src_addr = lmeta.my_mac"
           }
@@ -2626,7 +2708,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 378,
+            "line" : 455,
             "column" : 8,
             "source_fragment" : "hdr.ethernet.dst_addr = dmac; ..."
           }
@@ -2645,7 +2727,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 379,
+            "line" : 456,
             "column" : 8,
             "source_fragment" : "routed.count(lmeta.line_id)"
           }
@@ -2653,8 +2735,65 @@
       ]
     },
     {
+      "name" : "IngressPipe.upstream.cos.set_cos_id",
+      "id" : 15,
+      "runtime_data" : [
+        {
+          "name" : "cos_id",
+          "bitwidth" : 32
+        }
+      ],
+      "primitives" : [
+        {
+          "op" : "assign",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["scalars", "userMetadata.cos_id"]
+            },
+            {
+              "type" : "runtime_data",
+              "value" : 0
+            }
+          ],
+          "source_info" : {
+            "filename" : "p4src/bng.p4",
+            "line" : 335,
+            "column" : 8,
+            "source_fragment" : "lmeta.cos_id = cos_id"
+          }
+        }
+      ]
+    },
+    {
+      "name" : "IngressPipe.upstream.cos.set_cos_id",
+      "id" : 16,
+      "runtime_data" : [],
+      "primitives" : [
+        {
+          "op" : "assign",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["scalars", "userMetadata.cos_id"]
+            },
+            {
+              "type" : "hexstr",
+              "value" : "0x00000000"
+            }
+          ],
+          "source_info" : {
+            "filename" : "p4src/bng.p4",
+            "line" : 67,
+            "column" : 30,
+            "source_fragment" : "0; ..."
+          }
+        }
+      ]
+    },
+    {
       "name" : "IngressPipe.downstream.miss",
-      "id" : 14,
+      "id" : 17,
       "runtime_data" : [],
       "primitives" : [
         {
@@ -2671,7 +2810,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 442,
+            "line" : 521,
             "column" : 8,
             "source_fragment" : "dropped.count(lmeta.line_id)"
           }
@@ -2894,7 +3033,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 61,
+            "line" : 77,
             "column" : 4,
             "source_fragment" : "mark_to_drop(smeta)"
           }
@@ -2904,7 +3043,7 @@
           "parameters" : [],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 62,
+            "line" : 78,
             "column" : 4,
             "source_fragment" : "exit"
           }
@@ -2913,7 +3052,7 @@
     },
     {
       "name" : "IngressPipe.downstream.miss",
-      "id" : 15,
+      "id" : 18,
       "runtime_data" : [],
       "primitives" : [
         {
@@ -2930,7 +3069,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 442,
+            "line" : 521,
             "column" : 8,
             "source_fragment" : "dropped.count(lmeta.line_id)"
           }
@@ -3153,7 +3292,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 61,
+            "line" : 77,
             "column" : 4,
             "source_fragment" : "mark_to_drop(smeta)"
           }
@@ -3163,7 +3302,7 @@
           "parameters" : [],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 62,
+            "line" : 78,
             "column" : 4,
             "source_fragment" : "exit"
           }
@@ -3172,7 +3311,7 @@
     },
     {
       "name" : "IngressPipe.downstream.set_line",
-      "id" : 16,
+      "id" : 19,
       "runtime_data" : [
         {
           "name" : "line_id",
@@ -3194,7 +3333,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 447,
+            "line" : 526,
             "column" : 8,
             "source_fragment" : "lmeta.line_id = line_id"
           }
@@ -3203,7 +3342,7 @@
     },
     {
       "name" : "IngressPipe.downstream.set_pppoe_attachment_v4",
-      "id" : 17,
+      "id" : 20,
       "runtime_data" : [
         {
           "name" : "port",
@@ -3241,7 +3380,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 500,
+            "line" : 579,
             "column" : 8,
             "source_fragment" : "lmeta.s_tag = s_tag"
           }
@@ -3260,7 +3399,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 501,
+            "line" : 580,
             "column" : 8,
             "source_fragment" : "lmeta.c_tag = c_tag"
           }
@@ -3279,7 +3418,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 502,
+            "line" : 581,
             "column" : 8,
             "source_fragment" : "lmeta.pppoe_sess_id = pppoe_sess_id"
           }
@@ -3294,7 +3433,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 465,
+            "line" : 544,
             "column" : 8,
             "source_fragment" : "hdr.vlan.setValid()"
           }
@@ -3313,7 +3452,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 32,
+            "line" : 37,
             "column" : 31,
             "source_fragment" : "0x8100; ..."
           }
@@ -3332,7 +3471,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 467,
+            "line" : 546,
             "column" : 8,
             "source_fragment" : "hdr.vlan.pcp = 3w0"
           }
@@ -3351,7 +3490,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 468,
+            "line" : 547,
             "column" : 8,
             "source_fragment" : "hdr.vlan.dei = 1w0"
           }
@@ -3370,7 +3509,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 469,
+            "line" : 548,
             "column" : 8,
             "source_fragment" : "hdr.vlan.vid = lmeta.s_tag; ..."
           }
@@ -3385,7 +3524,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 471,
+            "line" : 550,
             "column" : 8,
             "source_fragment" : "hdr.vlan2.setValid()"
           }
@@ -3404,7 +3543,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 32,
+            "line" : 37,
             "column" : 31,
             "source_fragment" : "0x8100; ..."
           }
@@ -3423,7 +3562,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 473,
+            "line" : 552,
             "column" : 8,
             "source_fragment" : "hdr.vlan2.pcp = 3w0"
           }
@@ -3442,7 +3581,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 474,
+            "line" : 553,
             "column" : 8,
             "source_fragment" : "hdr.vlan2.dei = 1w0"
           }
@@ -3461,7 +3600,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 475,
+            "line" : 554,
             "column" : 8,
             "source_fragment" : "hdr.vlan2.vid = lmeta.c_tag; ..."
           }
@@ -3480,7 +3619,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 35,
+            "line" : 40,
             "column" : 33,
             "source_fragment" : "0x8864; ..."
           }
@@ -3495,7 +3634,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 478,
+            "line" : 557,
             "column" : 8,
             "source_fragment" : "hdr.pppoe.setValid()"
           }
@@ -3514,7 +3653,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 479,
+            "line" : 558,
             "column" : 8,
             "source_fragment" : "hdr.pppoe.ver = 4w1"
           }
@@ -3533,7 +3672,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 480,
+            "line" : 559,
             "column" : 8,
             "source_fragment" : "hdr.pppoe.type = 4w1"
           }
@@ -3552,7 +3691,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 481,
+            "line" : 560,
             "column" : 8,
             "source_fragment" : "hdr.pppoe.code = 8w0"
           }
@@ -3571,7 +3710,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 482,
+            "line" : 561,
             "column" : 8,
             "source_fragment" : "hdr.pppoe.sess_id = lmeta.pppoe_sess_id; ..."
           }
@@ -3613,7 +3752,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 483,
+            "line" : 562,
             "column" : 8,
             "source_fragment" : "hdr.pppoe.len = hdr.ipv4.len + 16w2"
           }
@@ -3632,7 +3771,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 42,
+            "line" : 47,
             "column" : 32,
             "source_fragment" : "0x21; ..."
           }
@@ -3651,7 +3790,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 489,
+            "line" : 568,
             "column" : 8,
             "source_fragment" : "smeta.egress_spec = port; ..."
           }
@@ -3670,7 +3809,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 490,
+            "line" : 569,
             "column" : 8,
             "source_fragment" : "hdr.ethernet.src_addr = lmeta.my_mac"
           }
@@ -3689,7 +3828,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 491,
+            "line" : 570,
             "column" : 8,
             "source_fragment" : "hdr.ethernet.dst_addr = dmac; ..."
           }
@@ -3708,7 +3847,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 492,
+            "line" : 571,
             "column" : 8,
             "source_fragment" : "routed.count(lmeta.line_id)"
           }
@@ -3716,8 +3855,65 @@
       ]
     },
     {
+      "name" : "IngressPipe.downstream.cos.set_cos_id",
+      "id" : 21,
+      "runtime_data" : [
+        {
+          "name" : "cos_id",
+          "bitwidth" : 32
+        }
+      ],
+      "primitives" : [
+        {
+          "op" : "assign",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["scalars", "userMetadata.cos_id"]
+            },
+            {
+              "type" : "runtime_data",
+              "value" : 0
+            }
+          ],
+          "source_info" : {
+            "filename" : "p4src/bng.p4",
+            "line" : 335,
+            "column" : 8,
+            "source_fragment" : "lmeta.cos_id = cos_id"
+          }
+        }
+      ]
+    },
+    {
+      "name" : "IngressPipe.downstream.cos.set_cos_id",
+      "id" : 22,
+      "runtime_data" : [],
+      "primitives" : [
+        {
+          "op" : "assign",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["scalars", "userMetadata.cos_id"]
+            },
+            {
+              "type" : "hexstr",
+              "value" : "0x00000000"
+            }
+          ],
+          "source_info" : {
+            "filename" : "p4src/bng.p4",
+            "line" : 67,
+            "column" : 30,
+            "source_fragment" : "0; ..."
+          }
+        }
+      ]
+    },
+    {
       "name" : "IngressPipe.acl.set_port",
-      "id" : 18,
+      "id" : 23,
       "runtime_data" : [
         {
           "name" : "port",
@@ -3739,7 +3935,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 537,
+            "line" : 618,
             "column" : 8,
             "source_fragment" : "smeta.egress_spec = port"
           }
@@ -3748,7 +3944,7 @@
     },
     {
       "name" : "IngressPipe.acl.punt",
-      "id" : 19,
+      "id" : 24,
       "runtime_data" : [],
       "primitives" : [
         {
@@ -3765,7 +3961,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 45,
+            "line" : 50,
             "column" : 24,
             "source_fragment" : "255; ..."
           }
@@ -3774,7 +3970,7 @@
     },
     {
       "name" : "IngressPipe.acl.drop",
-      "id" : 20,
+      "id" : 25,
       "runtime_data" : [],
       "primitives" : [
         {
@@ -3787,7 +3983,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 550,
+            "line" : 631,
             "column" : 8,
             "source_fragment" : "mark_to_drop(smeta)"
           }
@@ -3795,8 +3991,8 @@
       ]
     },
     {
-      "name" : "bng639",
-      "id" : 21,
+      "name" : "bng737",
+      "id" : 26,
       "runtime_data" : [],
       "primitives" : [
         {
@@ -3813,7 +4009,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 639,
+            "line" : 737,
             "column" : 12,
             "source_fragment" : "smeta.egress_spec = hdr.cpu_out.egress_port"
           }
@@ -3828,7 +4024,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 640,
+            "line" : 738,
             "column" : 12,
             "source_fragment" : "hdr.cpu_out.setInvalid()"
           }
@@ -3838,7 +4034,7 @@
           "parameters" : [],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 641,
+            "line" : 739,
             "column" : 12,
             "source_fragment" : "exit"
           }
@@ -3846,8 +4042,34 @@
       ]
     },
     {
-      "name" : "bng414",
-      "id" : 22,
+      "name" : "bng748",
+      "id" : 27,
+      "runtime_data" : [],
+      "primitives" : [
+        {
+          "op" : "assign",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["scalars", "userMetadata.direction"]
+            },
+            {
+              "type" : "hexstr",
+              "value" : "0x01"
+            }
+          ],
+          "source_info" : {
+            "filename" : "p4src/bng.p4",
+            "line" : 60,
+            "column" : 33,
+            "source_fragment" : "1; ..."
+          }
+        }
+      ]
+    },
+    {
+      "name" : "bng492",
+      "id" : 28,
       "runtime_data" : [],
       "primitives" : [
         {
@@ -3864,7 +4086,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 414,
+            "line" : 492,
             "column" : 8,
             "source_fragment" : "all.count(lmeta.line_id)"
           }
@@ -3872,8 +4094,8 @@
       ]
     },
     {
-      "name" : "bng283",
-      "id" : 23,
+      "name" : "bng302",
+      "id" : 29,
       "runtime_data" : [],
       "primitives" : [
         {
@@ -3913,7 +4135,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 283,
+            "line" : 302,
             "column" : 16,
             "source_fragment" : "hdr.ipv4.ttl = hdr.ipv4.ttl - 1"
           }
@@ -3921,8 +4143,8 @@
       ]
     },
     {
-      "name" : "bng285",
-      "id" : 24,
+      "name" : "bng304",
+      "id" : 30,
       "runtime_data" : [],
       "primitives" : [
         {
@@ -3939,7 +4161,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 285,
+            "line" : 304,
             "column" : 16,
             "source_fragment" : "expired.count(lmeta.line_id)"
           }
@@ -3947,10 +4169,29 @@
       ]
     },
     {
-      "name" : "bng522",
-      "id" : 25,
+      "name" : "bng602",
+      "id" : 31,
       "runtime_data" : [],
       "primitives" : [
+        {
+          "op" : "assign",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["scalars", "userMetadata.direction"]
+            },
+            {
+              "type" : "hexstr",
+              "value" : "0x02"
+            }
+          ],
+          "source_info" : {
+            "filename" : "p4src/bng.p4",
+            "line" : 61,
+            "column" : 35,
+            "source_fragment" : "2; ..."
+          }
+        },
         {
           "op" : "assign",
           "parameters" : [
@@ -3965,7 +4206,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 54,
+            "line" : 64,
             "column" : 31,
             "source_fragment" : "0; ..."
           }
@@ -3973,8 +4214,8 @@
       ]
     },
     {
-      "name" : "bng283_0",
-      "id" : 26,
+      "name" : "bng302_0",
+      "id" : 32,
       "runtime_data" : [],
       "primitives" : [
         {
@@ -4014,7 +4255,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 283,
+            "line" : 302,
             "column" : 16,
             "source_fragment" : "hdr.ipv4.ttl = hdr.ipv4.ttl - 1"
           }
@@ -4022,8 +4263,8 @@
       ]
     },
     {
-      "name" : "bng285_0",
-      "id" : 27,
+      "name" : "bng304_0",
+      "id" : 33,
       "runtime_data" : [],
       "primitives" : [
         {
@@ -4040,7 +4281,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 285,
+            "line" : 304,
             "column" : 16,
             "source_fragment" : "expired.count(lmeta.line_id)"
           }
@@ -4048,8 +4289,86 @@
       ]
     },
     {
-      "name" : "bng671",
-      "id" : 28,
+      "name" : "bng744",
+      "id" : 34,
+      "runtime_data" : [],
+      "primitives" : [
+        {
+          "op" : "assign",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["scalars", "userMetadata.direction"]
+            },
+            {
+              "type" : "hexstr",
+              "value" : "0x00"
+            }
+          ],
+          "source_info" : {
+            "filename" : "p4src/bng.p4",
+            "line" : 59,
+            "column" : 32,
+            "source_fragment" : "0; ..."
+          }
+        }
+      ]
+    },
+    {
+      "name" : "bng322",
+      "id" : 35,
+      "runtime_data" : [],
+      "primitives" : [
+        {
+          "op" : "count",
+          "parameters" : [
+            {
+              "type" : "counter_array",
+              "value" : "IngressPipe.accounting.upstream"
+            },
+            {
+              "type" : "field",
+              "value" : ["scalars", "userMetadata.accounting_id"]
+            }
+          ],
+          "source_info" : {
+            "filename" : "p4src/bng.p4",
+            "line" : 322,
+            "column" : 12,
+            "source_fragment" : "upstream.count(lmeta.accounting_id)"
+          }
+        }
+      ]
+    },
+    {
+      "name" : "bng324",
+      "id" : 36,
+      "runtime_data" : [],
+      "primitives" : [
+        {
+          "op" : "count",
+          "parameters" : [
+            {
+              "type" : "counter_array",
+              "value" : "IngressPipe.accounting.downstream"
+            },
+            {
+              "type" : "field",
+              "value" : ["scalars", "userMetadata.accounting_id"]
+            }
+          ],
+          "source_info" : {
+            "filename" : "p4src/bng.p4",
+            "line" : 324,
+            "column" : 12,
+            "source_fragment" : "downstream.count(lmeta.accounting_id)"
+          }
+        }
+      ]
+    },
+    {
+      "name" : "bng783",
+      "id" : 37,
       "runtime_data" : [],
       "primitives" : [
         {
@@ -4062,7 +4381,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 671,
+            "line" : 783,
             "column" : 12,
             "source_fragment" : "hdr.cpu_in.setValid()"
           }
@@ -4081,7 +4400,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 672,
+            "line" : 784,
             "column" : 12,
             "source_fragment" : "hdr.cpu_in.ingress_port = smeta.ingress_port"
           }
@@ -4091,9 +4410,61 @@
           "parameters" : [],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 673,
+            "line" : 785,
             "column" : 12,
             "source_fragment" : "exit"
+          }
+        }
+      ]
+    },
+    {
+      "name" : "bng322_0",
+      "id" : 38,
+      "runtime_data" : [],
+      "primitives" : [
+        {
+          "op" : "count",
+          "parameters" : [
+            {
+              "type" : "counter_array",
+              "value" : "EgressPipe.accounting.upstream"
+            },
+            {
+              "type" : "field",
+              "value" : ["scalars", "userMetadata.accounting_id"]
+            }
+          ],
+          "source_info" : {
+            "filename" : "p4src/bng.p4",
+            "line" : 322,
+            "column" : 12,
+            "source_fragment" : "upstream.count(lmeta.accounting_id)"
+          }
+        }
+      ]
+    },
+    {
+      "name" : "bng324_0",
+      "id" : 39,
+      "runtime_data" : [],
+      "primitives" : [
+        {
+          "op" : "count",
+          "parameters" : [
+            {
+              "type" : "counter_array",
+              "value" : "EgressPipe.accounting.downstream"
+            },
+            {
+              "type" : "field",
+              "value" : ["scalars", "userMetadata.accounting_id"]
+            }
+          ],
+          "source_info" : {
+            "filename" : "p4src/bng.p4",
+            "line" : 324,
+            "column" : 12,
+            "source_fragment" : "downstream.count(lmeta.accounting_id)"
           }
         }
       ]
@@ -4105,18 +4476,18 @@
       "id" : 0,
       "source_info" : {
         "filename" : "p4src/bng.p4",
-        "line" : 584,
+        "line" : 665,
         "column" : 8,
         "source_fragment" : "IngressPipe"
       },
       "init_table" : "node_2",
       "tables" : [
         {
-          "name" : "tbl_bng639",
+          "name" : "tbl_bng737",
           "id" : 0,
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 639,
+            "line" : 737,
             "column" : 30,
             "source_fragment" : "= hdr.cpu_out.egress_port; ..."
           },
@@ -4127,14 +4498,14 @@
           "with_counters" : false,
           "support_timeout" : false,
           "direct_meters" : null,
-          "action_ids" : [21],
-          "actions" : ["bng639"],
+          "action_ids" : [26],
+          "actions" : ["bng737"],
           "base_default_next" : "IngressPipe.if_types",
           "next_tables" : {
-            "bng639" : "IngressPipe.if_types"
+            "bng737" : "IngressPipe.if_types"
           },
           "default_entry" : {
-            "action_id" : 21,
+            "action_id" : 26,
             "action_const" : true,
             "action_data" : [],
             "action_entry_const" : true
@@ -4145,7 +4516,7 @@
           "id" : 1,
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 597,
+            "line" : 678,
             "column" : 10,
             "source_fragment" : "if_types"
           },
@@ -4165,9 +4536,9 @@
           "direct_meters" : null,
           "action_ids" : [8],
           "actions" : ["IngressPipe.set_if_type"],
-          "base_default_next" : "IngressPipe.my_stations",
+          "base_default_next" : "tbl_bng744",
           "next_tables" : {
-            "IngressPipe.set_if_type" : "IngressPipe.my_stations"
+            "IngressPipe.set_if_type" : "tbl_bng744"
           },
           "default_entry" : {
             "action_id" : 8,
@@ -4177,11 +4548,40 @@
           }
         },
         {
-          "name" : "IngressPipe.my_stations",
+          "name" : "tbl_bng744",
           "id" : 2,
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 616,
+            "line" : 744,
+            "column" : 24,
+            "source_fragment" : "="
+          },
+          "key" : [],
+          "match_type" : "exact",
+          "type" : "simple",
+          "max_size" : 1024,
+          "with_counters" : false,
+          "support_timeout" : false,
+          "direct_meters" : null,
+          "action_ids" : [34],
+          "actions" : ["bng744"],
+          "base_default_next" : "IngressPipe.my_stations",
+          "next_tables" : {
+            "bng744" : "IngressPipe.my_stations"
+          },
+          "default_entry" : {
+            "action_id" : 34,
+            "action_const" : true,
+            "action_data" : [],
+            "action_entry_const" : true
+          }
+        },
+        {
+          "name" : "IngressPipe.my_stations",
+          "id" : 3,
+          "source_info" : {
+            "filename" : "p4src/bng.p4",
+            "line" : 697,
             "column" : 10,
             "source_fragment" : "my_stations"
           },
@@ -4209,7 +4609,7 @@
           "actions" : ["IngressPipe.set_my_station", "nop"],
           "base_default_next" : null,
           "next_tables" : {
-            "__HIT__" : "node_6",
+            "__HIT__" : "node_7",
             "__MISS__" : "IngressPipe.acl.acls"
           },
           "default_entry" : {
@@ -4220,11 +4620,40 @@
           }
         },
         {
-          "name" : "IngressPipe.upstream.lines",
-          "id" : 3,
+          "name" : "tbl_bng748",
+          "id" : 4,
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 306,
+            "line" : 748,
+            "column" : 32,
+            "source_fragment" : "="
+          },
+          "key" : [],
+          "match_type" : "exact",
+          "type" : "simple",
+          "max_size" : 1024,
+          "with_counters" : false,
+          "support_timeout" : false,
+          "direct_meters" : null,
+          "action_ids" : [27],
+          "actions" : ["bng748"],
+          "base_default_next" : "IngressPipe.upstream.lines",
+          "next_tables" : {
+            "bng748" : "IngressPipe.upstream.lines"
+          },
+          "default_entry" : {
+            "action_id" : 27,
+            "action_const" : true,
+            "action_data" : [],
+            "action_entry_const" : true
+          }
+        },
+        {
+          "name" : "IngressPipe.upstream.lines",
+          "id" : 5,
+          "source_info" : {
+            "filename" : "p4src/bng.p4",
+            "line" : 383,
             "column" : 10,
             "source_fragment" : "lines"
           },
@@ -4254,25 +4683,25 @@
           "with_counters" : false,
           "support_timeout" : false,
           "direct_meters" : null,
-          "action_ids" : [10],
+          "action_ids" : [11],
           "actions" : ["IngressPipe.upstream.set_line"],
-          "base_default_next" : "tbl_bng414",
+          "base_default_next" : "tbl_bng492",
           "next_tables" : {
-            "IngressPipe.upstream.set_line" : "tbl_bng414"
+            "IngressPipe.upstream.set_line" : "tbl_bng492"
           },
           "default_entry" : {
-            "action_id" : 10,
+            "action_id" : 11,
             "action_const" : true,
             "action_data" : ["0x0"],
             "action_entry_const" : true
           }
         },
         {
-          "name" : "tbl_bng414",
-          "id" : 4,
+          "name" : "tbl_bng492",
+          "id" : 6,
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 414,
+            "line" : 492,
             "column" : 8,
             "source_fragment" : "all.count(lmeta.line_id)"
           },
@@ -4283,14 +4712,14 @@
           "with_counters" : false,
           "support_timeout" : false,
           "direct_meters" : null,
-          "action_ids" : [22],
-          "actions" : ["bng414"],
+          "action_ids" : [28],
+          "actions" : ["bng492"],
           "base_default_next" : "IngressPipe.upstream.pppoe_punts",
           "next_tables" : {
-            "bng414" : "IngressPipe.upstream.pppoe_punts"
+            "bng492" : "IngressPipe.upstream.pppoe_punts"
           },
           "default_entry" : {
-            "action_id" : 22,
+            "action_id" : 28,
             "action_const" : true,
             "action_data" : [],
             "action_entry_const" : true
@@ -4298,10 +4727,10 @@
         },
         {
           "name" : "IngressPipe.upstream.pppoe_punts",
-          "id" : 5,
+          "id" : 7,
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 330,
+            "line" : 407,
             "column" : 10,
             "source_fragment" : "pppoe_punts"
           },
@@ -4325,12 +4754,12 @@
           "with_counters" : false,
           "support_timeout" : false,
           "direct_meters" : null,
-          "action_ids" : [11, 1],
+          "action_ids" : [12, 1],
           "actions" : ["IngressPipe.upstream.punt", "nop"],
-          "base_default_next" : "node_10",
+          "base_default_next" : "node_12",
           "next_tables" : {
-            "IngressPipe.upstream.punt" : "node_10",
-            "nop" : "node_10"
+            "IngressPipe.upstream.punt" : "node_12",
+            "nop" : "node_12"
           },
           "default_entry" : {
             "action_id" : 1,
@@ -4341,10 +4770,10 @@
         },
         {
           "name" : "tbl_drop_now",
-          "id" : 6,
+          "id" : 8,
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 417,
+            "line" : 495,
             "column" : 12,
             "source_fragment" : "drop_now(smeta)"
           },
@@ -4357,9 +4786,9 @@
           "direct_meters" : null,
           "action_ids" : [5],
           "actions" : ["drop_now"],
-          "base_default_next" : "node_12",
+          "base_default_next" : "node_14",
           "next_tables" : {
-            "drop_now" : "node_12"
+            "drop_now" : "node_14"
           },
           "default_entry" : {
             "action_id" : 5,
@@ -4369,11 +4798,100 @@
           }
         },
         {
-          "name" : "IngressPipe.upstream.attachments_v4",
-          "id" : 7,
+          "name" : "IngressPipe.upstream.cos.services_v4",
+          "id" : 9,
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 351,
+            "line" : 338,
+            "column" : 10,
+            "source_fragment" : "services_v4"
+          },
+          "key" : [
+            {
+              "match_type" : "ternary",
+              "name" : "ipv4_src",
+              "target" : ["ipv4", "src_addr"],
+              "mask" : null
+            },
+            {
+              "match_type" : "ternary",
+              "name" : "ipv4_dst",
+              "target" : ["ipv4", "dst_addr"],
+              "mask" : null
+            },
+            {
+              "match_type" : "ternary",
+              "name" : "ipv4_proto",
+              "target" : ["ipv4", "proto"],
+              "mask" : null
+            },
+            {
+              "match_type" : "range",
+              "name" : "l4_sport",
+              "target" : ["scalars", "userMetadata.l4_sport"],
+              "mask" : null
+            },
+            {
+              "match_type" : "range",
+              "name" : "l4_dport",
+              "target" : ["scalars", "userMetadata.l4_dport"],
+              "mask" : null
+            }
+          ],
+          "match_type" : "range",
+          "type" : "simple",
+          "max_size" : 16,
+          "with_counters" : false,
+          "support_timeout" : false,
+          "direct_meters" : null,
+          "action_ids" : [15],
+          "actions" : ["IngressPipe.upstream.cos.set_cos_id"],
+          "base_default_next" : "node_17",
+          "next_tables" : {
+            "IngressPipe.upstream.cos.set_cos_id" : "node_17"
+          },
+          "default_entry" : {
+            "action_id" : 15,
+            "action_const" : true,
+            "action_data" : ["0x0"],
+            "action_entry_const" : true
+          }
+        },
+        {
+          "name" : "tbl_upstream_cos_set_cos_id",
+          "id" : 10,
+          "source_info" : {
+            "filename" : "p4src/bng.p4",
+            "line" : 361,
+            "column" : 12,
+            "source_fragment" : "set_cos_id(COS_UNKNOWN)"
+          },
+          "key" : [],
+          "match_type" : "exact",
+          "type" : "simple",
+          "max_size" : 1024,
+          "with_counters" : false,
+          "support_timeout" : false,
+          "direct_meters" : null,
+          "action_ids" : [16],
+          "actions" : ["IngressPipe.upstream.cos.set_cos_id"],
+          "base_default_next" : "node_17",
+          "next_tables" : {
+            "IngressPipe.upstream.cos.set_cos_id" : "node_17"
+          },
+          "default_entry" : {
+            "action_id" : 16,
+            "action_const" : true,
+            "action_data" : [],
+            "action_entry_const" : true
+          }
+        },
+        {
+          "name" : "IngressPipe.upstream.attachments_v4",
+          "id" : 11,
+          "source_info" : {
+            "filename" : "p4src/bng.p4",
+            "line" : 428,
             "column" : 10,
             "source_fragment" : "attachments_v4"
           },
@@ -4409,7 +4927,7 @@
           "with_counters" : false,
           "support_timeout" : false,
           "direct_meters" : null,
-          "action_ids" : [2, 12],
+          "action_ids" : [2, 13],
           "actions" : ["nop", "IngressPipe.upstream.reject"],
           "base_default_next" : "IngressPipe.upstream.routes_v4",
           "next_tables" : {
@@ -4417,7 +4935,7 @@
             "IngressPipe.upstream.reject" : "IngressPipe.upstream.routes_v4"
           },
           "default_entry" : {
-            "action_id" : 12,
+            "action_id" : 13,
             "action_const" : true,
             "action_data" : [],
             "action_entry_const" : true
@@ -4425,10 +4943,10 @@
         },
         {
           "name" : "IngressPipe.upstream.routes_v4",
-          "id" : 8,
+          "id" : 12,
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 387,
+            "line" : 464,
             "column" : 10,
             "source_fragment" : "routes_v4"
           },
@@ -4447,20 +4965,20 @@
           "with_counters" : false,
           "support_timeout" : false,
           "direct_meters" : null,
-          "action_ids" : [13, 3],
+          "action_ids" : [14, 3],
           "actions" : ["IngressPipe.upstream.route_v4", "nop"],
-          "base_default_next" : "node_15",
+          "base_default_next" : "node_20",
           "next_tables" : {
-            "IngressPipe.upstream.route_v4" : "node_15",
-            "nop" : "node_15"
+            "IngressPipe.upstream.route_v4" : "node_20",
+            "nop" : "node_20"
           }
         },
         {
-          "name" : "tbl_bng283",
-          "id" : 9,
+          "name" : "tbl_bng302",
+          "id" : 13,
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 283,
+            "line" : 302,
             "column" : 29,
             "source_fragment" : "="
           },
@@ -4471,25 +4989,25 @@
           "with_counters" : false,
           "support_timeout" : false,
           "direct_meters" : null,
-          "action_ids" : [23],
-          "actions" : ["bng283"],
+          "action_ids" : [29],
+          "actions" : ["bng302"],
           "base_default_next" : "IngressPipe.acl.acls",
           "next_tables" : {
-            "bng283" : "IngressPipe.acl.acls"
+            "bng302" : "IngressPipe.acl.acls"
           },
           "default_entry" : {
-            "action_id" : 23,
+            "action_id" : 29,
             "action_const" : true,
             "action_data" : [],
             "action_entry_const" : true
           }
         },
         {
-          "name" : "tbl_bng285",
-          "id" : 10,
+          "name" : "tbl_bng304",
+          "id" : 14,
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 285,
+            "line" : 304,
             "column" : 16,
             "source_fragment" : "expired.count(lmeta.line_id)"
           },
@@ -4500,14 +5018,14 @@
           "with_counters" : false,
           "support_timeout" : false,
           "direct_meters" : null,
-          "action_ids" : [24],
-          "actions" : ["bng285"],
+          "action_ids" : [30],
+          "actions" : ["bng304"],
           "base_default_next" : "tbl_drop_now_0",
           "next_tables" : {
-            "bng285" : "tbl_drop_now_0"
+            "bng304" : "tbl_drop_now_0"
           },
           "default_entry" : {
-            "action_id" : 24,
+            "action_id" : 30,
             "action_const" : true,
             "action_data" : [],
             "action_entry_const" : true
@@ -4515,10 +5033,10 @@
         },
         {
           "name" : "tbl_drop_now_0",
-          "id" : 11,
+          "id" : 15,
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 286,
+            "line" : 305,
             "column" : 16,
             "source_fragment" : "drop_now(smeta)"
           },
@@ -4543,13 +5061,13 @@
           }
         },
         {
-          "name" : "tbl_bng522",
-          "id" : 12,
+          "name" : "tbl_bng602",
+          "id" : 16,
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 522,
+            "line" : 602,
             "column" : 22,
-            "source_fragment" : "="
+            "source_fragment" : "= LINE_UNKNOWN; ..."
           },
           "key" : [],
           "match_type" : "exact",
@@ -4558,14 +5076,14 @@
           "with_counters" : false,
           "support_timeout" : false,
           "direct_meters" : null,
-          "action_ids" : [25],
-          "actions" : ["bng522"],
+          "action_ids" : [31],
+          "actions" : ["bng602"],
           "base_default_next" : "IngressPipe.downstream.lines_v4",
           "next_tables" : {
-            "bng522" : "IngressPipe.downstream.lines_v4"
+            "bng602" : "IngressPipe.downstream.lines_v4"
           },
           "default_entry" : {
-            "action_id" : 25,
+            "action_id" : 31,
             "action_const" : true,
             "action_data" : [],
             "action_entry_const" : true
@@ -4573,10 +5091,10 @@
         },
         {
           "name" : "IngressPipe.downstream.lines_v4",
-          "id" : 13,
+          "id" : 17,
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 450,
+            "line" : 529,
             "column" : 10,
             "source_fragment" : "lines_v4"
           },
@@ -4594,15 +5112,104 @@
           "with_counters" : false,
           "support_timeout" : false,
           "direct_meters" : null,
-          "action_ids" : [16, 14],
+          "action_ids" : [19, 17],
           "actions" : ["IngressPipe.downstream.set_line", "IngressPipe.downstream.miss"],
-          "base_default_next" : "IngressPipe.downstream.attachments_v4",
+          "base_default_next" : "node_28",
           "next_tables" : {
-            "IngressPipe.downstream.set_line" : "IngressPipe.downstream.attachments_v4",
-            "IngressPipe.downstream.miss" : "IngressPipe.downstream.attachments_v4"
+            "IngressPipe.downstream.set_line" : "node_28",
+            "IngressPipe.downstream.miss" : "node_28"
           },
           "default_entry" : {
-            "action_id" : 14,
+            "action_id" : 17,
+            "action_const" : true,
+            "action_data" : [],
+            "action_entry_const" : true
+          }
+        },
+        {
+          "name" : "IngressPipe.downstream.cos.services_v4",
+          "id" : 18,
+          "source_info" : {
+            "filename" : "p4src/bng.p4",
+            "line" : 338,
+            "column" : 10,
+            "source_fragment" : "services_v4"
+          },
+          "key" : [
+            {
+              "match_type" : "ternary",
+              "name" : "ipv4_src",
+              "target" : ["ipv4", "src_addr"],
+              "mask" : null
+            },
+            {
+              "match_type" : "ternary",
+              "name" : "ipv4_dst",
+              "target" : ["ipv4", "dst_addr"],
+              "mask" : null
+            },
+            {
+              "match_type" : "ternary",
+              "name" : "ipv4_proto",
+              "target" : ["ipv4", "proto"],
+              "mask" : null
+            },
+            {
+              "match_type" : "range",
+              "name" : "l4_sport",
+              "target" : ["scalars", "userMetadata.l4_sport"],
+              "mask" : null
+            },
+            {
+              "match_type" : "range",
+              "name" : "l4_dport",
+              "target" : ["scalars", "userMetadata.l4_dport"],
+              "mask" : null
+            }
+          ],
+          "match_type" : "range",
+          "type" : "simple",
+          "max_size" : 16,
+          "with_counters" : false,
+          "support_timeout" : false,
+          "direct_meters" : null,
+          "action_ids" : [21],
+          "actions" : ["IngressPipe.downstream.cos.set_cos_id"],
+          "base_default_next" : "IngressPipe.downstream.attachments_v4",
+          "next_tables" : {
+            "IngressPipe.downstream.cos.set_cos_id" : "IngressPipe.downstream.attachments_v4"
+          },
+          "default_entry" : {
+            "action_id" : 21,
+            "action_const" : true,
+            "action_data" : ["0x0"],
+            "action_entry_const" : true
+          }
+        },
+        {
+          "name" : "tbl_downstream_cos_set_cos_id",
+          "id" : 19,
+          "source_info" : {
+            "filename" : "p4src/bng.p4",
+            "line" : 361,
+            "column" : 12,
+            "source_fragment" : "set_cos_id(COS_UNKNOWN)"
+          },
+          "key" : [],
+          "match_type" : "exact",
+          "type" : "simple",
+          "max_size" : 1024,
+          "with_counters" : false,
+          "support_timeout" : false,
+          "direct_meters" : null,
+          "action_ids" : [22],
+          "actions" : ["IngressPipe.downstream.cos.set_cos_id"],
+          "base_default_next" : "IngressPipe.downstream.attachments_v4",
+          "next_tables" : {
+            "IngressPipe.downstream.cos.set_cos_id" : "IngressPipe.downstream.attachments_v4"
+          },
+          "default_entry" : {
+            "action_id" : 22,
             "action_const" : true,
             "action_data" : [],
             "action_entry_const" : true
@@ -4610,10 +5217,10 @@
         },
         {
           "name" : "IngressPipe.downstream.attachments_v4",
-          "id" : 14,
+          "id" : 20,
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 507,
+            "line" : 586,
             "column" : 10,
             "source_fragment" : "attachments_v4"
           },
@@ -4631,26 +5238,26 @@
           "with_counters" : false,
           "support_timeout" : false,
           "direct_meters" : null,
-          "action_ids" : [17, 15],
+          "action_ids" : [20, 18],
           "actions" : ["IngressPipe.downstream.set_pppoe_attachment_v4", "IngressPipe.downstream.miss"],
-          "base_default_next" : "node_24",
+          "base_default_next" : "node_32",
           "next_tables" : {
-            "IngressPipe.downstream.set_pppoe_attachment_v4" : "node_24",
-            "IngressPipe.downstream.miss" : "node_24"
+            "IngressPipe.downstream.set_pppoe_attachment_v4" : "node_32",
+            "IngressPipe.downstream.miss" : "node_32"
           },
           "default_entry" : {
-            "action_id" : 15,
+            "action_id" : 18,
             "action_const" : true,
             "action_data" : [],
             "action_entry_const" : true
           }
         },
         {
-          "name" : "tbl_bng283_0",
-          "id" : 15,
+          "name" : "tbl_bng302_0",
+          "id" : 21,
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 283,
+            "line" : 302,
             "column" : 29,
             "source_fragment" : "="
           },
@@ -4661,25 +5268,25 @@
           "with_counters" : false,
           "support_timeout" : false,
           "direct_meters" : null,
-          "action_ids" : [26],
-          "actions" : ["bng283_0"],
+          "action_ids" : [32],
+          "actions" : ["bng302_0"],
           "base_default_next" : "IngressPipe.acl.acls",
           "next_tables" : {
-            "bng283_0" : "IngressPipe.acl.acls"
+            "bng302_0" : "IngressPipe.acl.acls"
           },
           "default_entry" : {
-            "action_id" : 26,
+            "action_id" : 32,
             "action_const" : true,
             "action_data" : [],
             "action_entry_const" : true
           }
         },
         {
-          "name" : "tbl_bng285_0",
-          "id" : 16,
+          "name" : "tbl_bng304_0",
+          "id" : 22,
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 285,
+            "line" : 304,
             "column" : 16,
             "source_fragment" : "expired.count(lmeta.line_id)"
           },
@@ -4690,14 +5297,14 @@
           "with_counters" : false,
           "support_timeout" : false,
           "direct_meters" : null,
-          "action_ids" : [27],
-          "actions" : ["bng285_0"],
+          "action_ids" : [33],
+          "actions" : ["bng304_0"],
           "base_default_next" : "tbl_drop_now_1",
           "next_tables" : {
-            "bng285_0" : "tbl_drop_now_1"
+            "bng304_0" : "tbl_drop_now_1"
           },
           "default_entry" : {
-            "action_id" : 27,
+            "action_id" : 33,
             "action_const" : true,
             "action_data" : [],
             "action_entry_const" : true
@@ -4705,10 +5312,10 @@
         },
         {
           "name" : "tbl_drop_now_1",
-          "id" : 17,
+          "id" : 23,
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 286,
+            "line" : 305,
             "column" : 16,
             "source_fragment" : "drop_now(smeta)"
           },
@@ -4734,10 +5341,10 @@
         },
         {
           "name" : "IngressPipe.acl.acls",
-          "id" : 18,
+          "id" : 24,
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 553,
+            "line" : 634,
             "column" : 10,
             "source_fragment" : "acls"
           },
@@ -4809,17 +5416,117 @@
           "with_counters" : true,
           "support_timeout" : false,
           "direct_meters" : null,
-          "action_ids" : [18, 19, 20, 4],
+          "action_ids" : [23, 24, 25, 4],
           "actions" : ["IngressPipe.acl.set_port", "IngressPipe.acl.punt", "IngressPipe.acl.drop", "nop"],
-          "base_default_next" : null,
+          "base_default_next" : "IngressPipe.accounting_ids",
           "next_tables" : {
-            "IngressPipe.acl.set_port" : null,
-            "IngressPipe.acl.punt" : null,
-            "IngressPipe.acl.drop" : null,
-            "nop" : null
+            "IngressPipe.acl.set_port" : "IngressPipe.accounting_ids",
+            "IngressPipe.acl.punt" : "IngressPipe.accounting_ids",
+            "IngressPipe.acl.drop" : "IngressPipe.accounting_ids",
+            "nop" : "IngressPipe.accounting_ids"
           },
           "default_entry" : {
             "action_id" : 4,
+            "action_const" : true,
+            "action_data" : [],
+            "action_entry_const" : true
+          }
+        },
+        {
+          "name" : "IngressPipe.accounting_ids",
+          "id" : 25,
+          "source_info" : {
+            "filename" : "p4src/bng.p4",
+            "line" : 716,
+            "column" : 10,
+            "source_fragment" : "accounting_ids"
+          },
+          "key" : [
+            {
+              "match_type" : "exact",
+              "name" : "line_id",
+              "target" : ["scalars", "userMetadata.line_id"],
+              "mask" : null
+            },
+            {
+              "match_type" : "exact",
+              "name" : "cos_id",
+              "target" : ["scalars", "userMetadata.cos_id"],
+              "mask" : null
+            }
+          ],
+          "match_type" : "exact",
+          "type" : "simple",
+          "max_size" : 131072,
+          "with_counters" : false,
+          "support_timeout" : false,
+          "direct_meters" : null,
+          "action_ids" : [10],
+          "actions" : ["IngressPipe.set_accounting_id"],
+          "base_default_next" : "node_39",
+          "next_tables" : {
+            "IngressPipe.set_accounting_id" : "node_39"
+          },
+          "default_entry" : {
+            "action_id" : 10,
+            "action_const" : true,
+            "action_data" : ["0x0"],
+            "action_entry_const" : true
+          }
+        },
+        {
+          "name" : "tbl_bng322",
+          "id" : 26,
+          "source_info" : {
+            "filename" : "p4src/bng.p4",
+            "line" : 322,
+            "column" : 12,
+            "source_fragment" : "upstream.count(lmeta.accounting_id)"
+          },
+          "key" : [],
+          "match_type" : "exact",
+          "type" : "simple",
+          "max_size" : 1024,
+          "with_counters" : false,
+          "support_timeout" : false,
+          "direct_meters" : null,
+          "action_ids" : [35],
+          "actions" : ["bng322"],
+          "base_default_next" : null,
+          "next_tables" : {
+            "bng322" : null
+          },
+          "default_entry" : {
+            "action_id" : 35,
+            "action_const" : true,
+            "action_data" : [],
+            "action_entry_const" : true
+          }
+        },
+        {
+          "name" : "tbl_bng324",
+          "id" : 27,
+          "source_info" : {
+            "filename" : "p4src/bng.p4",
+            "line" : 324,
+            "column" : 12,
+            "source_fragment" : "downstream.count(lmeta.accounting_id)"
+          },
+          "key" : [],
+          "match_type" : "exact",
+          "type" : "simple",
+          "max_size" : 1024,
+          "with_counters" : false,
+          "support_timeout" : false,
+          "direct_meters" : null,
+          "action_ids" : [36],
+          "actions" : ["bng324"],
+          "base_default_next" : null,
+          "next_tables" : {
+            "bng324" : null
+          },
+          "default_entry" : {
+            "action_id" : 36,
             "action_const" : true,
             "action_data" : [],
             "action_entry_const" : true
@@ -4832,7 +5539,7 @@
           "id" : 0,
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 406,
+            "line" : 483,
             "column" : 25,
             "source_fragment" : "action_selector(HashAlgorithm.crc16, 32w1024, 32w16)"
           },
@@ -4870,7 +5577,7 @@
           "id" : 0,
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 638,
+            "line" : 736,
             "column" : 12,
             "source_fragment" : "hdr.cpu_out.isValid()"
           },
@@ -4885,15 +5592,15 @@
               }
             }
           },
-          "true_next" : "tbl_bng639",
+          "true_next" : "tbl_bng737",
           "false_next" : "IngressPipe.if_types"
         },
         {
-          "name" : "node_6",
+          "name" : "node_7",
           "id" : 1,
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 647,
+            "line" : 747,
             "column" : 16,
             "source_fragment" : "lmeta.if_type == IF_ACCESS"
           },
@@ -4911,15 +5618,15 @@
               }
             }
           },
-          "true_next" : "IngressPipe.upstream.lines",
-          "false_next" : "node_20"
+          "true_next" : "tbl_bng748",
+          "false_next" : "node_25"
         },
         {
-          "name" : "node_10",
+          "name" : "node_12",
           "id" : 2,
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 416,
+            "line" : 494,
             "column" : 12,
             "source_fragment" : "lmeta.line_id == LINE_UNKNOWN"
           },
@@ -4938,14 +5645,37 @@
             }
           },
           "true_next" : "tbl_drop_now",
-          "false_next" : "node_12"
+          "false_next" : "node_14"
         },
         {
-          "name" : "node_12",
+          "name" : "node_14",
           "id" : 3,
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 422,
+            "line" : 358,
+            "column" : 12,
+            "source_fragment" : "hdr.ipv4.isValid()"
+          },
+          "expression" : {
+            "type" : "expression",
+            "value" : {
+              "op" : "d2b",
+              "left" : null,
+              "right" : {
+                "type" : "field",
+                "value" : ["ipv4", "$valid$"]
+              }
+            }
+          },
+          "true_next" : "IngressPipe.upstream.cos.services_v4",
+          "false_next" : "tbl_upstream_cos_set_cos_id"
+        },
+        {
+          "name" : "node_17",
+          "id" : 4,
+          "source_info" : {
+            "filename" : "p4src/bng.p4",
+            "line" : 501,
             "column" : 12,
             "source_fragment" : "hdr.ipv4.isValid()"
           },
@@ -4961,14 +5691,14 @@
             }
           },
           "true_next" : "IngressPipe.upstream.attachments_v4",
-          "false_next" : "node_15"
+          "false_next" : "node_20"
         },
         {
-          "name" : "node_15",
-          "id" : 4,
+          "name" : "node_20",
+          "id" : 5,
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 281,
+            "line" : 300,
             "column" : 12,
             "source_fragment" : "hdr.ipv4.isValid()"
           },
@@ -4983,15 +5713,15 @@
               }
             }
           },
-          "true_next" : "node_16",
+          "true_next" : "node_21",
           "false_next" : "IngressPipe.acl.acls"
         },
         {
-          "name" : "node_16",
-          "id" : 5,
+          "name" : "node_21",
+          "id" : 6,
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 282,
+            "line" : 301,
             "column" : 16,
             "source_fragment" : "hdr.ipv4.ttl > 1"
           },
@@ -5009,15 +5739,15 @@
               }
             }
           },
-          "true_next" : "tbl_bng283",
-          "false_next" : "tbl_bng285"
+          "true_next" : "tbl_bng302",
+          "false_next" : "tbl_bng304"
         },
         {
-          "name" : "node_20",
-          "id" : 6,
+          "name" : "node_25",
+          "id" : 7,
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 649,
+            "line" : 750,
             "column" : 23,
             "source_fragment" : "lmeta.if_type == IF_CORE"
           },
@@ -5035,15 +5765,15 @@
               }
             }
           },
-          "true_next" : "tbl_bng522",
+          "true_next" : "tbl_bng602",
           "false_next" : "IngressPipe.acl.acls"
         },
         {
-          "name" : "node_24",
-          "id" : 7,
+          "name" : "node_28",
+          "id" : 8,
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 281,
+            "line" : 358,
             "column" : 12,
             "source_fragment" : "hdr.ipv4.isValid()"
           },
@@ -5058,15 +5788,38 @@
               }
             }
           },
-          "true_next" : "node_25",
+          "true_next" : "IngressPipe.downstream.cos.services_v4",
+          "false_next" : "tbl_downstream_cos_set_cos_id"
+        },
+        {
+          "name" : "node_32",
+          "id" : 9,
+          "source_info" : {
+            "filename" : "p4src/bng.p4",
+            "line" : 300,
+            "column" : 12,
+            "source_fragment" : "hdr.ipv4.isValid()"
+          },
+          "expression" : {
+            "type" : "expression",
+            "value" : {
+              "op" : "d2b",
+              "left" : null,
+              "right" : {
+                "type" : "field",
+                "value" : ["ipv4", "$valid$"]
+              }
+            }
+          },
+          "true_next" : "node_33",
           "false_next" : "IngressPipe.acl.acls"
         },
         {
-          "name" : "node_25",
-          "id" : 8,
+          "name" : "node_33",
+          "id" : 10,
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 282,
+            "line" : 301,
             "column" : 16,
             "source_fragment" : "hdr.ipv4.ttl > 1"
           },
@@ -5084,8 +5837,60 @@
               }
             }
           },
-          "true_next" : "tbl_bng283_0",
-          "false_next" : "tbl_bng285_0"
+          "true_next" : "tbl_bng302_0",
+          "false_next" : "tbl_bng304_0"
+        },
+        {
+          "name" : "node_39",
+          "id" : 11,
+          "source_info" : {
+            "filename" : "p4src/bng.p4",
+            "line" : 321,
+            "column" : 12,
+            "source_fragment" : "lmeta.direction == DIR_UPSTREAM"
+          },
+          "expression" : {
+            "type" : "expression",
+            "value" : {
+              "op" : "==",
+              "left" : {
+                "type" : "field",
+                "value" : ["scalars", "userMetadata.direction"]
+              },
+              "right" : {
+                "type" : "hexstr",
+                "value" : "0x01"
+              }
+            }
+          },
+          "true_next" : "tbl_bng322",
+          "false_next" : "node_41"
+        },
+        {
+          "name" : "node_41",
+          "id" : 12,
+          "source_info" : {
+            "filename" : "p4src/bng.p4",
+            "line" : 323,
+            "column" : 19,
+            "source_fragment" : "lmeta.direction == DIR_DOWNSTREAM"
+          },
+          "expression" : {
+            "type" : "expression",
+            "value" : {
+              "op" : "==",
+              "left" : {
+                "type" : "field",
+                "value" : ["scalars", "userMetadata.direction"]
+              },
+              "right" : {
+                "type" : "hexstr",
+                "value" : "0x02"
+              }
+            }
+          },
+          "false_next" : null,
+          "true_next" : "tbl_bng324"
         }
       ]
     },
@@ -5094,18 +5899,18 @@
       "id" : 1,
       "source_info" : {
         "filename" : "p4src/bng.p4",
-        "line" : 663,
+        "line" : 774,
         "column" : 8,
         "source_fragment" : "EgressPipe"
       },
-      "init_table" : "node_32",
+      "init_table" : "node_45",
       "tables" : [
         {
-          "name" : "tbl_bng671",
-          "id" : 19,
+          "name" : "tbl_bng783",
+          "id" : 28,
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 671,
+            "line" : 783,
             "column" : 12,
             "source_fragment" : "hdr.cpu_in.setValid(); ..."
           },
@@ -5116,14 +5921,72 @@
           "with_counters" : false,
           "support_timeout" : false,
           "direct_meters" : null,
-          "action_ids" : [28],
-          "actions" : ["bng671"],
-          "base_default_next" : null,
+          "action_ids" : [37],
+          "actions" : ["bng783"],
+          "base_default_next" : "node_47",
           "next_tables" : {
-            "bng671" : null
+            "bng783" : "node_47"
           },
           "default_entry" : {
-            "action_id" : 28,
+            "action_id" : 37,
+            "action_const" : true,
+            "action_data" : [],
+            "action_entry_const" : true
+          }
+        },
+        {
+          "name" : "tbl_bng322_0",
+          "id" : 29,
+          "source_info" : {
+            "filename" : "p4src/bng.p4",
+            "line" : 322,
+            "column" : 12,
+            "source_fragment" : "upstream.count(lmeta.accounting_id)"
+          },
+          "key" : [],
+          "match_type" : "exact",
+          "type" : "simple",
+          "max_size" : 1024,
+          "with_counters" : false,
+          "support_timeout" : false,
+          "direct_meters" : null,
+          "action_ids" : [38],
+          "actions" : ["bng322_0"],
+          "base_default_next" : null,
+          "next_tables" : {
+            "bng322_0" : null
+          },
+          "default_entry" : {
+            "action_id" : 38,
+            "action_const" : true,
+            "action_data" : [],
+            "action_entry_const" : true
+          }
+        },
+        {
+          "name" : "tbl_bng324_0",
+          "id" : 30,
+          "source_info" : {
+            "filename" : "p4src/bng.p4",
+            "line" : 324,
+            "column" : 12,
+            "source_fragment" : "downstream.count(lmeta.accounting_id)"
+          },
+          "key" : [],
+          "match_type" : "exact",
+          "type" : "simple",
+          "max_size" : 1024,
+          "with_counters" : false,
+          "support_timeout" : false,
+          "direct_meters" : null,
+          "action_ids" : [39],
+          "actions" : ["bng324_0"],
+          "base_default_next" : null,
+          "next_tables" : {
+            "bng324_0" : null
+          },
+          "default_entry" : {
+            "action_id" : 39,
             "action_const" : true,
             "action_data" : [],
             "action_entry_const" : true
@@ -5133,11 +5996,11 @@
       "action_profiles" : [],
       "conditionals" : [
         {
-          "name" : "node_32",
-          "id" : 9,
+          "name" : "node_45",
+          "id" : 13,
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 670,
+            "line" : 782,
             "column" : 12,
             "source_fragment" : "smeta.egress_port == CPU_PORT"
           },
@@ -5155,8 +6018,60 @@
               }
             }
           },
+          "true_next" : "tbl_bng783",
+          "false_next" : "node_47"
+        },
+        {
+          "name" : "node_47",
+          "id" : 14,
+          "source_info" : {
+            "filename" : "p4src/bng.p4",
+            "line" : 321,
+            "column" : 12,
+            "source_fragment" : "lmeta.direction == DIR_UPSTREAM"
+          },
+          "expression" : {
+            "type" : "expression",
+            "value" : {
+              "op" : "==",
+              "left" : {
+                "type" : "field",
+                "value" : ["scalars", "userMetadata.direction"]
+              },
+              "right" : {
+                "type" : "hexstr",
+                "value" : "0x01"
+              }
+            }
+          },
+          "true_next" : "tbl_bng322_0",
+          "false_next" : "node_49"
+        },
+        {
+          "name" : "node_49",
+          "id" : 15,
+          "source_info" : {
+            "filename" : "p4src/bng.p4",
+            "line" : 323,
+            "column" : 19,
+            "source_fragment" : "lmeta.direction == DIR_DOWNSTREAM"
+          },
+          "expression" : {
+            "type" : "expression",
+            "value" : {
+              "op" : "==",
+              "left" : {
+                "type" : "field",
+                "value" : ["scalars", "userMetadata.direction"]
+              },
+              "right" : {
+                "type" : "hexstr",
+                "value" : "0x02"
+              }
+            }
+          },
           "false_next" : null,
-          "true_next" : "tbl_bng671"
+          "true_next" : "tbl_bng324_0"
         }
       ]
     }
@@ -5167,7 +6082,7 @@
       "id" : 0,
       "source_info" : {
         "filename" : "p4src/bng.p4",
-        "line" : 683,
+        "line" : 811,
         "column" : 8,
         "source_fragment" : "update_checksum( ..."
       },
@@ -5193,7 +6108,7 @@
       "id" : 1,
       "source_info" : {
         "filename" : "p4src/bng.p4",
-        "line" : 709,
+        "line" : 837,
         "column" : 8,
         "source_fragment" : "verify_checksum( ..."
       },

@@ -27,7 +27,6 @@
 # ------------------------------------------------------------------------------
 
 from base_test import *
-from ptf.testutils import group
 from scapy.layers.ppp import PPPoED, Ether
 
 CPU_CLONE_SESSION_ID = 99
@@ -47,7 +46,6 @@ PPPOED_CODES = (
 )
 
 
-@group("packetio")
 class PacketOutTest(P4RuntimeTest):
     """Tests controller packet-out capability by sending PacketOut messages and
     expecting a corresponding packet on the output port set in the PacketOut
@@ -79,8 +77,7 @@ class PacketOutTest(P4RuntimeTest):
         testutils.verify_no_other_packets(self)
 
 
-@group("packetio")
-class PacketInTest(P4RuntimeTest):
+class AclPacketInTest(P4RuntimeTest):
     """Tests controller packet-in capability by matching on the packet EtherType
     and cloning to the CPU port.
     """
@@ -122,24 +119,21 @@ class PacketInTest(P4RuntimeTest):
 
 
 # TODO: add test for LCP, IPCP, CHAP/PAP, keep-alive control plane packets
-@group("packetio")
-class PacketInPppoeTest(P4RuntimeTest):
+class PppoePuntTest(P4RuntimeTest):
     """Tests controller packet-in capability by matching PPPoE Control Plane packets
     """
+    packets = {
+        "PADI": Ether(src="00:11:22:33:44:55", dst="FF:FF:FF:FF:FF:FF") /
+                PPPoED(version=1, type=1, code=PPPOED_CODE_PADI) /
+                "dummy pppoed payload",
+        "PADR": Ether(src="00:11:22:33:44:55", dst="AA:BB:CC:DD:EE:FF") /
+                PPPoED(version=1, type=1, code=PPPOED_CODE_PADR) /
+                "dummy pppoed payload",
+    }
 
     def runTest(self):
-        packets = {"PADI": Ether(src="00:11:22:33:44:55", dst="FF:FF:FF:FF:FF:FF") /
-                           PPPoED(version=1, type=1, code=PPPOED_CODE_PADI) /
-                           "dummy pppoed payload",
-                   "PADR": Ether(src="00:11:22:33:44:55", dst="AA:BB:CC:DD:EE:FF") /
-                           PPPoED(version=1, type=1, code=PPPOED_CODE_PADR) /
-                           "dummy pppoed payload",
-                   }
-
-        print ""
-        for pkt_type, pkt in packets.items():
-            print "Testing %s packet..." \
-                  % (pkt_type)
+        for pkt_type, pkt in self.packets.items():
+            print_inline("%s ... " % pkt_type)
             self.testPacket(pkt)
 
     @autocleanup
