@@ -1,6 +1,7 @@
 package translate
 
 import (
+	"bytes"
 	"fmt"
 	p4v1 "github.com/p4lang/p4runtime/go/p4/v1"
 	log "github.com/sirupsen/logrus"
@@ -43,6 +44,7 @@ type Processor interface {
 	HandleRouteV4NextHopGroup(e *NextHopGroup, uType p4v1.Update_Type) ([]*p4v1.Update, error)
 	HandleRouteV4Entry(e *RouteV4Entry, uType p4v1.Update_Type) ([]*p4v1.Update, error)
 	HandleAclEntry(e *AclEntry, uType p4v1.Update_Type) ([]*p4v1.Update, error)
+	HandlePpppoePunts(e *PppoePuntedEntry, uType p4v1.Update_Type) ([]*p4v1.Update, error)
 }
 
 // Translator context.
@@ -73,6 +75,7 @@ type LogicalStore struct {
 	IfTypes                map[PortKey]*IfTypeEntry
 	MyStations             map[PortKey]*MyStationEntry
 	Acl                    map[AclKey]*AclEntry
+	CtrlPunted             map[CtrlPuntedKey]*PppoePuntedEntry
 	UpstreamAttachments    map[LineIdKey]*AttachmentEntry
 	DownstreamAttachments  map[LineIdKey]*AttachmentEntry
 	UpstreamRoutesV4       map[Ipv4LpmKey]*RouteV4Entry
@@ -87,6 +90,7 @@ func NewContext() Context {
 			IfTypes:                make(map[PortKey]*IfTypeEntry),
 			MyStations:             make(map[PortKey]*MyStationEntry),
 			Acl:                    make(map[AclKey]*AclEntry),
+			CtrlPunted:             make(map[CtrlPuntedKey]*PppoePuntedEntry),
 			UpstreamAttachments:    make(map[LineIdKey]*AttachmentEntry),
 			DownstreamAttachments:  make(map[LineIdKey]*AttachmentEntry),
 			UpstreamRoutesV4:       make(map[Ipv4LpmKey]*RouteV4Entry),
@@ -226,9 +230,6 @@ func (t translator) translateOrStore(u *p4v1.Update, translate bool) ([]*p4v1.Up
 			}
 		case Table_IngressPipeAclAcls:
 			x, err := parseAclEntry(e.TableEntry)
-			if err != nil {
-				return nil, err
-			}
 			if translate {
 				// TODO: implement validation
 				return t.proc.HandleAclEntry(&x, u.Type)
@@ -241,7 +242,23 @@ func (t translator) translateOrStore(u *p4v1.Update, translate bool) ([]*p4v1.Up
 				}
 				return nil, nil
 			}
-		// TODO: case Table_UpstreamPppoePunts // device-level
+		case Table_IngressPipeUpstreamPppoePunts:
+			x, err := parsePppoePunts(e.TableEntry)
+			if err != nil {
+				return nil, err
+			}
+			if translate {
+				// TODO: implement validation
+				return t.proc.HandlePpppoePunts(&x, u.Type)
+			} else {
+				key := ToCtrlPuntedKey(x.PppoeCode, x.PppoeProto)
+				if u.Type == p4v1.Update_DELETE {
+					delete(t.ctx.Logical().CtrlPunted, key)
+				} else {
+					t.ctx.Logical().CtrlPunted[key] = &x
+				}
+				return nil, nil
+			}
 		default:
 			return nil, fmt.Errorf("invalid table ID %v", e.TableEntry.TableId)
 		}
@@ -566,4 +583,21 @@ func parseUpstreamRouteV4Entry(t *p4v1.TableEntry) (RouteV4Entry, error) {
 func parseAclEntry(t *p4v1.TableEntry) (AclEntry, error) {
 	// No need to parse, simply wrap message in AclEntry.
 	return AclEntry(*t), nil
+}
+
+func parsePppoePunts(t *p4v1.TableEntry) (PppoePuntedEntry, error) {
+	c := PppoePuntedEntry{}
+	for _, m := range t.Match {
+		switch m.FieldId {
+		case Hdr_IngressPipeUpstreamPppoePunts_PppoeCode:
+			c.PppoeCode = m.GetExact().Value
+		case Hdr_IngressPipeUpstreamPppoePunts_PppoeProto:
+			// FIXME: what if the mask if not 0xFFFF?
+			if !bytes.Equal(m.GetTernary().Mask, []byte{0xFF, 0xFF}) {
+				return c, fmt.Errorf("xxpected 0xFFFF as PPPoE Proto mask but found %x", m.GetTernary().Mask)
+			}
+			c.PppoeProto = m.GetTernary().Value
+		}
+	}
+	return c, nil
 }

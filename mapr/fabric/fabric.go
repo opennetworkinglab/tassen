@@ -221,5 +221,9 @@ func (p fabricProcessor) HandleAclEntry(e *translate.AclEntry, uType v1.Update_T
 	if err != nil {
 		return nil, err
 	}
+
+func (p fabricProcessor) HandlePpppoePunts(e *translate.PppoePuntedEntry, uType v1.Update_Type) ([]*v1.Update, error) {
+	log.Tracef("PppoePuntEntry={ %s }", e)
+	t := createPppoePuntEntry(e.PppoeCode, e.PppoeProto, defaultPrio)
 	return []*v1.Update{createUpdateEntry(&t, uType)}, nil
 }

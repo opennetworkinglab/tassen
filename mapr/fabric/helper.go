@@ -209,6 +209,34 @@ func createFwdClassifierEntry(port []byte, EthDst []byte, prio int32) v1.TableEn
 	}
 }
 
+func createPppoePuntEntry(pppoeCode []byte, pppoeProto []byte, prio int32) v1.TableEntry {
+	match := []*v1.FieldMatch{{
+		FieldId: Hdr_FabricIngressBngIngressUpstreamTPppoeCp_PppoeCode,
+		FieldMatchType: &v1.FieldMatch_Exact_{
+			Exact: &v1.FieldMatch_Exact{
+				Value: pppoeCode,
+			}}},
+	}
+	if pppoeProto != nil {
+		match = append(match, &v1.FieldMatch{
+			FieldId: Hdr_FabricIngressBngIngressUpstreamTPppoeCp_PppoeProtocol,
+			FieldMatchType: &v1.FieldMatch_Ternary_{
+				Ternary: &v1.FieldMatch_Ternary{
+					Value: pppoeProto,
+					Mask:  []byte{0xFF, 0xFF},
+				}}})
+	}
+	return v1.TableEntry{
+		TableId: Table_FabricIngressBngIngressUpstreamTPppoeCp,
+		Match:   match,
+		Action: &v1.TableAction{
+			Type: &v1.TableAction_Action{Action: &v1.Action{
+				ActionId: Action_FabricIngressBngIngressUpstreamPuntToCpu,
+			}}},
+		Priority: prio,
+	}
+}
+
 func createHashedSelectorMember(memberId uint32, port []byte, dMac []byte, sMac []byte) v1.ActionProfileMember {
 	return v1.ActionProfileMember{
 		ActionProfileId: ActionProfile_FabricIngressNextHashedSelector,
