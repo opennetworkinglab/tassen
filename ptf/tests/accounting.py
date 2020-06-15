@@ -25,8 +25,9 @@
 # For example:
 #     make check TEST=accounting.UpstreamPppoeIp4UnicastTest
 # ------------------------------------------------------------------------------
-from base_test import *
 from ptf.testutils import group
+
+from base_test import *
 import downstream
 import packetio
 import upstream
@@ -92,8 +93,7 @@ class AccountingTest(P4RuntimeTest):
                         % (key, expected, actual))
 
 
-@group('accounting')
-class UpstreamPppoeIp4UnicastTest(AccountingTest, upstream.PppoeIp4UnicastTest):
+class UpstreamPppoeIp4UnicastTest(upstream.PppoeIp4UnicastTest, AccountingTest):
     """Tests counters for PPPoE IPv4 upstream traffic. Uses
     upstream.PppoeIp4UnicastTest as the base class for packet testing, but
     asserts that counters get incremented as expected.
@@ -165,7 +165,6 @@ class UpstreamPppoeIp4UnicastTest(AccountingTest, upstream.PppoeIp4UnicastTest):
         )
 
 
-@group('accounting')
 class DownstreamPppoeIp4UnicastTest(AccountingTest, downstream.PppoeIp4UnicastTest):
     """Tests counters for PPPoE IPv4 downstream traffic. Uses
     downstream.PppoeIp4UnicastTest as the base class for packet testing, but
@@ -236,7 +235,6 @@ class DownstreamPppoeIp4UnicastTest(AccountingTest, downstream.PppoeIp4UnicastTe
         )
 
 
-@group('accounting')
 class PppoePuntTest(AccountingTest, packetio.PppoePuntTest):
     """Tests that counters do NOT get increased when punting PPPoE packets to
     the CPU. Uses packetio.PppoePuntTest as the base class for packet testing.

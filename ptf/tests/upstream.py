@@ -27,10 +27,8 @@
 # ------------------------------------------------------------------------------
 
 from base_test import *
-from ptf.testutils import group
 
 
-@group('upstream')
 class PppoeIp4UnicastTest(P4RuntimeTest):
     """Tests upstream PPPoE termination and routing of IPv4 unicast packets.
     """

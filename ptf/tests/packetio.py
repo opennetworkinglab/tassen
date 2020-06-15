@@ -27,7 +27,6 @@
 # ------------------------------------------------------------------------------
 
 from base_test import *
-from ptf.testutils import group
 from scapy.layers.ppp import PPPoED, Ether
 
 CPU_CLONE_SESSION_ID = 99
@@ -47,7 +46,6 @@ PPPOED_CODES = (
 )
 
 
-@group("packetio")
 class PacketOutTest(P4RuntimeTest):
     """Tests controller packet-out capability by sending PacketOut messages and
     expecting a corresponding packet on the output port set in the PacketOut
@@ -79,7 +77,6 @@ class PacketOutTest(P4RuntimeTest):
         testutils.verify_no_other_packets(self)
 
 
-@group("packetio")
 class AclPacketInTest(P4RuntimeTest):
     """Tests controller packet-in capability by matching on the packet EtherType
     and cloning to the CPU port.
@@ -122,7 +119,6 @@ class AclPacketInTest(P4RuntimeTest):
 
 
 # TODO: add test for LCP, IPCP, CHAP/PAP, keep-alive control plane packets
-@group("packetio")
 class PppoePuntTest(P4RuntimeTest):
     """Tests controller packet-in capability by matching PPPoE Control Plane packets
     """

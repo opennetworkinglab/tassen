@@ -6,9 +6,9 @@ jobs:
     steps:
       - checkout
       - run: make deps build
-      - run: make check-self
-      - run: make check-dummy
-      - run: make check-fabric
+      - run: make check-self TEST="all"
+      - run: make check-dummy TEST="all"
+      - run: make check-fabric TEST="all ^accounting"
 
 workflows:
   main:
