@@ -215,6 +215,15 @@ func (p fabricProcessor) HandleRouteV4Entry(e *translate.RouteV4Entry, uType v1.
 	}
 }
 
+func (p fabricProcessor) HandleAclEntry(e *translate.AclEntry, uType v1.Update_Type) ([]*v1.Update, error) {
+	log.Tracef("AclEntry={ %s }", e)
+	t, err := createAclEntry(e)
+	if err != nil {
+		return nil, err
+	}
+	return []*v1.Update{createUpdateEntry(&t, uType)}, nil
+}
+
 func (p fabricProcessor) HandlePpppoePunts(e *translate.PppoePuntedEntry, uType v1.Update_Type) ([]*v1.Update, error) {
 	log.Tracef("PppoePuntEntry={ %s }", e)
 	t := createPppoePuntEntry(e.PppoeCode, e.PppoeProto, defaultPrio)
