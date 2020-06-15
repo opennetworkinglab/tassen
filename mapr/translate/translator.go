@@ -43,6 +43,7 @@ type Processor interface {
 	HandleRouteV4NextHopEntry(e *NextHopEntry, uType p4v1.Update_Type) ([]*p4v1.Update, error)
 	HandleRouteV4NextHopGroup(e *NextHopGroup, uType p4v1.Update_Type) ([]*p4v1.Update, error)
 	HandleRouteV4Entry(e *RouteV4Entry, uType p4v1.Update_Type) ([]*p4v1.Update, error)
+	HandleAclEntry(e *AclEntry, uType p4v1.Update_Type) ([]*p4v1.Update, error)
 	HandlePpppoePunts(e *PppoePuntedEntry, uType p4v1.Update_Type) ([]*p4v1.Update, error)
 }
 
@@ -73,6 +74,7 @@ func (p context) Target() P4RtStore {
 type LogicalStore struct {
 	IfTypes                map[PortKey]*IfTypeEntry
 	MyStations             map[PortKey]*MyStationEntry
+	Acl                    map[AclKey]*AclEntry
 	CtrlPunted             map[CtrlPuntedKey]*PppoePuntedEntry
 	UpstreamAttachments    map[LineIdKey]*AttachmentEntry
 	DownstreamAttachments  map[LineIdKey]*AttachmentEntry
@@ -87,6 +89,7 @@ func NewContext() Context {
 		logical: LogicalStore{
 			IfTypes:                make(map[PortKey]*IfTypeEntry),
 			MyStations:             make(map[PortKey]*MyStationEntry),
+			Acl:                    make(map[AclKey]*AclEntry),
 			CtrlPunted:             make(map[CtrlPuntedKey]*PppoePuntedEntry),
 			UpstreamAttachments:    make(map[LineIdKey]*AttachmentEntry),
 			DownstreamAttachments:  make(map[LineIdKey]*AttachmentEntry),
@@ -225,6 +228,23 @@ func (t translator) translateOrStore(u *p4v1.Update, translate bool) ([]*p4v1.Up
 				}
 				return nil, nil
 			}
+		case Table_IngressPipeAclAcls:
+			x, err := parseAclEntry(e.TableEntry)
+			if err != nil {
+				return nil, err
+			}
+			if translate {
+				// TODO: implement validation
+				return t.proc.HandleAclEntry(&x, u.Type)
+			} else {
+				key := ToAclKey(&x)
+				if u.Type == p4v1.Update_DELETE {
+					delete(t.ctx.Logical().Acl, key)
+				} else {
+					t.ctx.Logical().Acl[key] = &x
+				}
+				return nil, nil
+			}
 		case Table_IngressPipeUpstreamPppoePunts:
 			x, err := parsePppoePunts(e.TableEntry)
 			if err != nil {
@@ -242,8 +262,6 @@ func (t translator) translateOrStore(u *p4v1.Update, translate bool) ([]*p4v1.Up
 				}
 				return nil, nil
 			}
-
-		// TODO: downstream tables
 		default:
 			return nil, fmt.Errorf("invalid table ID %v", e.TableEntry.TableId)
 		}
@@ -563,6 +581,11 @@ func parseUpstreamRouteV4Entry(t *p4v1.TableEntry) (RouteV4Entry, error) {
 	}
 	r.NextHopGroupId = gid
 	return r, nil
+}
+
+func parseAclEntry(t *p4v1.TableEntry) (AclEntry, error) {
+	// No need to parse, simply wrap message in AclEntry.
+	return AclEntry(*t), nil
 }
 
 func parsePppoePunts(t *p4v1.TableEntry) (PppoePuntedEntry, error) {

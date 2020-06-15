@@ -96,6 +96,19 @@ func ToIpv4LpmKey(addr []byte, prefixLen int32) Ipv4LpmKey {
 	return Ipv4LpmKey(fmt.Sprintf("%x/%d", addr, prefixLen))
 }
 
+// An entry in the ACL table, for now it's just a TableEntry
+type AclEntry p4v1.TableEntry
+
+func (a AclEntry) String() string {
+	return fmt.Sprintf("%v", (p4v1.TableEntry)(a))
+}
+
+type AclKey string
+
+func ToAclKey(t *AclEntry) AclKey {
+	return AclKey(KeyFromTableEntry((*p4v1.TableEntry)(t)))
+}
+
 type PppoePuntedEntry struct {
 	PppoeCode  []byte
 	PppoeProto []byte
