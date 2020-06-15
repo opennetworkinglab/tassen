@@ -230,6 +230,9 @@ func (t translator) translateOrStore(u *p4v1.Update, translate bool) ([]*p4v1.Up
 			}
 		case Table_IngressPipeAclAcls:
 			x, err := parseAclEntry(e.TableEntry)
+			if err != nil {
+				return nil, err
+			}
 			if translate {
 				// TODO: implement validation
 				return t.proc.HandleAclEntry(&x, u.Type)
