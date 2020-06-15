@@ -25,20 +25,22 @@
 # For example:
 #     make check TEST=accounting.UpstreamPppoeIp4UnicastTest
 # ------------------------------------------------------------------------------
-
 from base_test import *
 from ptf.testutils import group
+import downstream
+import packetio
 import upstream
 
 INGRESS = "Ingress"
 EGRESS = "Egress"
 UPSTREAM = 'upstream'
 DOWNSTREAM = 'downstream'
-
 BYTES = 'bytes'
 PKTS = 'packets'
 
 COUNTER_NAME_TEMPLATE = "%sPipe.accounting.%s"
+
+ACCOUNTING_UNKNOWN = 0
 
 def ctr_name(gress, direction):
     return COUNTER_NAME_TEMPLATE % (gress, direction)
@@ -102,7 +104,6 @@ class UpstreamPppoeIp4UnicastTest(AccountingTest, upstream.PppoeIp4UnicastTest):
         for pkt_type in ['tcp', 'udp', 'icmp']:
             print_inline('%s ... ' % pkt_type)
             pkt = getattr(testutils, 'simple_%s_packet' % pkt_type)()
-            # TODO: add cos and account_id rules
             self.testPacketAndCounters(pkt)
 
     def testPacketAndCounters(self, pkt):
@@ -116,7 +117,7 @@ class UpstreamPppoeIp4UnicastTest(AccountingTest, upstream.PppoeIp4UnicastTest):
         ig_bytes = len(pkt) + 4 + 4 + 8
 
         # Byte size at egress (decapsulated)
-        # FIXME: switch to PSA to count post-encap/decap bytes.
+        # FIXME: switch to PSA to count post-decap bytes.
         # Since we use v1model, byte counters in the egress pipe are
         # incremented with the same pkt size seen at ingress. See note in
         # bng.p4's EgressPipe. With PSA, eg_bytes should be the size of
@@ -149,10 +150,10 @@ class UpstreamPppoeIp4UnicastTest(AccountingTest, upstream.PppoeIp4UnicastTest):
 
         pre = self.read_counters(accounting_id)
 
-        # Send packet as in PppoeIp4UnicastTest.testPacket(), making sure to
-        # override PppoeIp4UnicastTest's default line ID to use the same for the
-        # accounting_id map. Also, testPacket() is annotated with @autocleanup,
-        # which will remove all entries inserted above.
+        # Send packet as in upstream.PppoeIp4UnicastTest.testPacket(), making
+        # sure to override the default line ID to use the same mapped to
+        # accounting_id. testPacket() is annotated with @autocleanup, which will
+        # remove all entries inserted above.
         self.testPacket(pkt, line_id=line_id)
 
         post = self.read_counters(accounting_id)
@@ -161,4 +162,100 @@ class UpstreamPppoeIp4UnicastTest(AccountingTest, upstream.PppoeIp4UnicastTest):
             pre_counters=pre, post_counters=post, idx=accounting_id,
             pkt_direction=UPSTREAM,
             ig_bytes=ig_bytes, eg_bytes=eg_bytes, pkt_count=1
+        )
+
+
+@group('accounting')
+class DownstreamPppoeIp4UnicastTest(AccountingTest, downstream.PppoeIp4UnicastTest):
+    """Tests counters for PPPoE IPv4 downstream traffic. Uses
+    downstream.PppoeIp4UnicastTest as the base class for packet testing, but
+    asserts that counters get incremented as expected.
+    """
+
+    def runTest(self):
+        # Test with different type of packets.
+        for pkt_type in ['tcp', 'udp', 'icmp']:
+            print_inline('%s ... ' % pkt_type)
+            pkt = getattr(testutils, 'simple_%s_packet' % pkt_type)()
+            self.testPacketAndCounters(pkt)
+
+    def testPacketAndCounters(self, pkt):
+        line_id = 10
+        cos_id = 1
+        accounting_id = 99
+
+        # Pkt's byte size at ingress.
+        ig_bytes = len(pkt)
+
+        # Byte size at egress.
+        # FIXME: switch to PSA to count post-encap bytes.
+        # Since we use v1model, byte counters in the egress pipe are incremented
+        # with the same pkt size seen at ingress. See note in bng.p4's
+        # EgressPipe. With PSA, eg_bytes should be the size of the encapped pkt,
+        # i.e., len(pkt) + 4 (VLAN s-tag) + 4 (VLAN c-tag) + 8 (PPPoE).
+        eg_bytes = ig_bytes
+
+        self.insert(self.helper.build_table_entry(
+            table_name='IngressPipe.downstream.cos.services_v4',
+            match_fields={
+                'ipv4_proto': (pkt[IP].proto, 0xFF)
+            },
+            priority=10,
+            action_name='IngressPipe.downstream.cos.set_cos_id',
+            action_params={
+                'cos_id': cos_id,
+            }
+        ))
+
+        self.insert(self.helper.build_table_entry(
+            table_name='IngressPipe.accounting_ids',
+            match_fields={
+                'line_id': line_id,
+                'cos_id': cos_id,
+            },
+            action_name='IngressPipe.set_accounting_id',
+            action_params={
+                'accounting_id': accounting_id,
+            }
+        ))
+
+        pre = self.read_counters(accounting_id)
+
+        # Send packet as in downstream.PppoeIp4UnicastTest.testPacket(), making
+        # sure to override the default line ID to use the same mapped to
+        # accounting_id. testPacket() is annotated with @autocleanup, which will
+        # remove all entries inserted above.
+        self.testPacket(pkt, line_id=line_id)
+
+        post = self.read_counters(accounting_id)
+
+        self.assert_counter_increase(
+            pre_counters=pre, post_counters=post, idx=accounting_id,
+            pkt_direction=DOWNSTREAM,
+            ig_bytes=ig_bytes, eg_bytes=eg_bytes, pkt_count=1
+        )
+
+
+@group('accounting')
+class PppoePuntTest(AccountingTest, packetio.PppoePuntTest):
+    """Tests that counters do NOT get increased when punting PPPoE packets to
+    the CPU. Uses packetio.PppoePuntTest as the base class for packet testing.
+    """
+
+    def runTest(self):
+        for pkt_type, pkt in self.packets.items():
+            print_inline("%s ... " % pkt_type)
+            self.testPacket(pkt)
+
+    def testPacketAndCounters(self, pkt):
+        pre = self.read_counters(ACCOUNTING_UNKNOWN)
+        # packetio.PppoePuntTest.testPacket()
+        self.testPacket(pkt)
+        post = self.read_counters(ACCOUNTING_UNKNOWN)
+
+        # Asserts that increase for both pkt and byte count is 0.
+        self.assert_counter_increase(
+            pre_counters=pre, post_counters=post, idx=ACCOUNTING_UNKNOWN,
+            pkt_direction=DOWNSTREAM,
+            ig_bytes=0, eg_bytes=0, pkt_count=0
         )

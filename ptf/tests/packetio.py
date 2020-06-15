@@ -126,17 +126,17 @@ class AclPacketInTest(P4RuntimeTest):
 class PppoePuntTest(P4RuntimeTest):
     """Tests controller packet-in capability by matching PPPoE Control Plane packets
     """
+    packets = {
+        "PADI": Ether(src="00:11:22:33:44:55", dst="FF:FF:FF:FF:FF:FF") /
+                PPPoED(version=1, type=1, code=PPPOED_CODE_PADI) /
+                "dummy pppoed payload",
+        "PADR": Ether(src="00:11:22:33:44:55", dst="AA:BB:CC:DD:EE:FF") /
+                PPPoED(version=1, type=1, code=PPPOED_CODE_PADR) /
+                "dummy pppoed payload",
+    }
 
     def runTest(self):
-        packets = {"PADI": Ether(src="00:11:22:33:44:55", dst="FF:FF:FF:FF:FF:FF") /
-                           PPPoED(version=1, type=1, code=PPPOED_CODE_PADI) /
-                           "dummy pppoed payload",
-                   "PADR": Ether(src="00:11:22:33:44:55", dst="AA:BB:CC:DD:EE:FF") /
-                           PPPoED(version=1, type=1, code=PPPOED_CODE_PADR) /
-                           "dummy pppoed payload",
-                   }
-
-        for pkt_type, pkt in packets.items():
+        for pkt_type, pkt in self.packets.items():
             print_inline("%s ... " % pkt_type)
             self.testPacket(pkt)
 

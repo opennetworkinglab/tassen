@@ -43,12 +43,22 @@ class PppoeIp4UnicastTest(P4RuntimeTest):
             self.testPacket(pkt)
 
     @autocleanup
-    def testPacket(self, pkt):
-        next_hop_mac = HOST1_MAC
-        c_tag = 10
-        s_tag = 20
-        line_id = 100
-        pppoe_sess_id = 90
+    def testPacket(self, pkt,
+                   next_hop_mac=HOST1_MAC,
+                   c_tag=10,
+                   s_tag=20,
+                   line_id=100,
+                   pppoe_sess_id=90):
+        """
+        Inserts table entries and tests downstream forwarding for the given packet.
+        :param pkt: as received from the core network
+        :param next_hop_mac: MAC address of the next hop after the BNG
+        (i.e., the attachment MAC)
+        :param c_tag: C-tag
+        :param s_tag: S-tag
+        :param line_id: Line ID
+        :param pppoe_sess_id: PPPoE session ID
+        """
 
         self.insert(self.helper.build_table_entry(
             table_name='IngressPipe.if_types',
