@@ -40,7 +40,6 @@ PKTS = 'packets'
 
 COUNTER_NAME_TEMPLATE = "%sPipe.accounting.%s"
 
-
 def ctr_name(gress, direction):
     return COUNTER_NAME_TEMPLATE % (gress, direction)
 
@@ -95,7 +94,7 @@ class AccountingTest(P4RuntimeTest):
 class UpstreamPppoeIp4UnicastTest(AccountingTest, upstream.PppoeIp4UnicastTest):
     """Tests counters for PPPoE IPv4 upstream traffic. Uses
     upstream.PppoeIp4UnicastTest as the base class for packet testing, but
-    verifies that counters get incremented as expected.
+    asserts that counters get incremented as expected.
     """
 
     def runTest(self):
@@ -104,9 +103,13 @@ class UpstreamPppoeIp4UnicastTest(AccountingTest, upstream.PppoeIp4UnicastTest):
             print_inline('%s ... ' % pkt_type)
             pkt = getattr(testutils, 'simple_%s_packet' % pkt_type)()
             # TODO: add cos and account_id rules
-            self.testPacketAndCounters(pkt, 0)
+            self.testPacketAndCounters(pkt)
 
-    def testPacketAndCounters(self, pkt, accounting_id):
+    def testPacketAndCounters(self, pkt):
+        line_id = 10
+        cos_id = 1
+        accounting_id = 99
+
         # Pkt's byte size at ingress, encapsulated with VLAN s-tag (4 bytes),
         # VLAN c-tag (4 bytes), and PPPoE (8 bytes). NOTE: self.testPacket()
         # performs encapsulation before sending pkt to switch.
@@ -120,8 +123,38 @@ class UpstreamPppoeIp4UnicastTest(AccountingTest, upstream.PppoeIp4UnicastTest):
         # the decapped pkt, i.e., len(pkt).
         eg_bytes = ig_bytes
 
+        self.insert(self.helper.build_table_entry(
+            table_name='IngressPipe.upstream.cos.services_v4',
+            match_fields={
+                'ipv4_proto': (pkt[IP].proto, 0xFF)
+            },
+            priority=10,
+            action_name='IngressPipe.upstream.cos.set_cos_id',
+            action_params={
+                'cos_id': cos_id,
+            }
+        ))
+
+        self.insert(self.helper.build_table_entry(
+            table_name='IngressPipe.accounting_ids',
+            match_fields={
+                'line_id': line_id,
+                'cos_id': cos_id,
+            },
+            action_name='IngressPipe.set_accounting_id',
+            action_params={
+                'accounting_id': accounting_id,
+            }
+        ))
+
         pre = self.read_counters(accounting_id)
-        self.testPacket(pkt)
+
+        # Send packet as in PppoeIp4UnicastTest.testPacket(), making sure to
+        # override PppoeIp4UnicastTest's default line ID to use the same for the
+        # accounting_id map. Also, testPacket() is annotated with @autocleanup,
+        # which will remove all entries inserted above.
+        self.testPacket(pkt, line_id=line_id)
+
         post = self.read_counters(accounting_id)
 
         self.assert_counter_increase(

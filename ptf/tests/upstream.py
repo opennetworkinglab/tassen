@@ -43,12 +43,22 @@ class PppoeIp4UnicastTest(P4RuntimeTest):
             self.testPacket(pkt)
 
     @autocleanup
-    def testPacket(self, pkt):
-        next_hop_mac = CORE_MAC
-        c_tag = 10
-        s_tag = 20
-        line_id = 100
-        pppoe_sess_id = 90
+    def testPacket(self, pkt,
+                   next_hop_mac=CORE_MAC,
+                   c_tag=10,
+                   s_tag=20,
+                   line_id=100,
+                   pppoe_sess_id=90):
+        """
+        Inserts table entries and tests upstream forwarding for the given packet.
+        :param pkt: as it is emitted by a subscriber client, i.e., without
+        access headers (VLAN or PPPoE)
+        :param next_hop_mac: MAC address of the next hop after the BNG
+        :param c_tag: C-tag
+        :param s_tag: S-tag
+        :param line_id: Line ID
+        :param pppoe_sess_id: PPPoE session ID
+        """
 
         self.insert(self.helper.build_table_entry(
             table_name='IngressPipe.if_types',
@@ -94,7 +104,7 @@ class PppoeIp4UnicastTest(P4RuntimeTest):
         self.insert(self.helper.build_table_entry(
             table_name='IngressPipe.upstream.lines',
             match_fields={
-                'port' : self.port1,
+                'port': self.port1,
                 's_tag': s_tag,
                 'c_tag': c_tag,
             },
@@ -118,7 +128,7 @@ class PppoeIp4UnicastTest(P4RuntimeTest):
             group_id=line_id,
             actions=[
                 ('IngressPipe.upstream.route_v4',
-                    {'dmac': next_hop_mac, 'port': self.port2}),
+                 {'dmac': next_hop_mac, 'port': self.port2}),
             ]
         ))
 
