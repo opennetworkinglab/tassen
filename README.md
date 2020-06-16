@@ -89,11 +89,11 @@ To run all tests, except that of a specific module (e.g., `accounting`)
 the test case implementations (e.g., `helper.py` provides a P4Info helper with
 methods convenient to construct P4Runtime table entries).
 
-### Mapping to Target-specific BNG-UP Implementations
+### Runtime Mapping to Target BNG-UP Implementations
 
 The directory `mapr` contains the reference implementation of the runtime
 logic to translate P4Runtime RPCs for the logical P4 program (`bng.p4`) to 
-target-specific ones, e.g., for Tofino, FPGA, Broadcom Q2C, etc.
+target-specific ones.
 
 `mapr` is written in Go.
 
@@ -109,7 +109,8 @@ the PTF tests.
 * `dummy`: for testing purposes only, where the target device runs with
   the same Tassen logical pipeline, and P4Runtime RPCs are relayed as-is,
   with no translation. 
-* `fabric`: for a switch running ONF's fabric.p4 (`fabric-bng` profile).
+* `fabric`: for a switch running ONF's fabric.p4 (`fabric-bng` profile) which is
+  optimized for Intel Barefoot  Tofino.
 
 To run PTF tests on a given target together with `mapr`:
 
@@ -135,6 +136,9 @@ Currently, we check the following targets:
 | `self`   | `all`             | Tests executed without `mapr`               |
 | `dummy`  | `all`             |                                             |
 | `fabric` | `all ^accounting` | Accounting not supported on fabric.p4, yet. |
+
+The current status for the master branch is:
+[![CircleCI](https://circleci.com/gh/opennetworkinglab/tassen.svg?style=svg&circle-token=1192ef25b712aaf3f6e5e54fb65b3aad27ad1f57)](https://app.circleci.com/pipelines/github/opennetworkinglab/tassen)
 
 [bmv2]: https://github.com/p4lang/behavioral-model
 [stratum]: https://github.com/stratum/stratum
