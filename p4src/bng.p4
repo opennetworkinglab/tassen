@@ -72,12 +72,6 @@ const line_id_t ACCOUNTING_UNKNOWN = 0;
 // Global actions common to many controls.
 action nop() { /* no-op */ }
 
-action drop_now(inout standard_metadata_t smeta) {
-    // Exit the pipeline now and drop.
-    mark_to_drop(smeta);
-    exit;
-}
-
 // Controller packet-in/out headers.
 @controller_header("packet_in")
 header cpu_in_t {
@@ -179,6 +173,9 @@ struct local_metadata_t {
     bit<12>          s_tag;
     bit<12>          c_tag;
     bit<16>          pppoe_sess_id;
+    bool             my_station_hit;
+    bool             drop_packet;
+    bool             punted;
 }
 
 struct parsed_headers_t {
@@ -193,6 +190,13 @@ struct parsed_headers_t {
     icmp_t      icmp;
     cpu_out_t   cpu_out;
     cpu_in_t    cpu_in;
+}
+
+// Needed after definition of local_metadata_t
+action drop_now(inout standard_metadata_t smeta, inout local_metadata_t lmeta) {
+    // Drop and set metadata
+    mark_to_drop(smeta);
+    lmeta.drop_packet = true;
 }
 
 parser ParserImpl (
@@ -302,7 +306,7 @@ control TtlCheck(
                 hdr.ipv4.ttl = hdr.ipv4.ttl - 1;
             } else {
                 expired.count(lmeta.line_id);
-                drop_now(smeta);
+                drop_now(smeta, lmeta);
             }
         }
     }
@@ -398,7 +402,8 @@ control IngressUpstream(
     action punt() {
         smeta.egress_spec = CPU_PORT;
         punted.count(lmeta.line_id);
-        exit;
+        lmeta.punted = true;
+        return;
     }
 
     // NOTE: we expect the control plane to populate this at runtime.
@@ -419,7 +424,8 @@ control IngressUpstream(
 
     action reject() {
         spoofed.count(lmeta.line_id);
-        drop_now(smeta);
+        drop_now(smeta, lmeta);
+        return;
     }
 
     // Provides anti-spoofing.
@@ -480,7 +486,9 @@ control IngressUpstream(
         // BUG: action profiles don't get a fully qualified name in P4Info.
         @name("IngressPipe.upstream.ecmp")
         @max_group_size(MAX_ECMP_GROUP_SIZE)
+#ifndef FOR_P4PKTGEN
         implementation = action_selector(HashAlgorithm.crc16, 32w1024, 32w16);
+#endif
         size = MAX_UPSTREAM_ROUTES;
     }
 
@@ -491,18 +499,20 @@ control IngressUpstream(
         lines.apply();
         all.count(lmeta.line_id);
         pppoe_punts.apply();
-        if (lmeta.line_id == LINE_UNKNOWN) {
-            drop_now(smeta);
+        if (!(lmeta.punted)) {
+            if (lmeta.line_id == LINE_UNKNOWN) {
+                drop_now(smeta, lmeta);
+            }
+            cos.apply(hdr, lmeta, smeta);
+            // Line is known and pkt was not punted. Verify attachment info, if
+            // valid (not spoofed), decap and route. If no route then no-op, we
+            // might punt or do something else in ACL.
+            if (hdr.ipv4.isValid()) {
+                attachments_v4.apply();
+                routes_v4.apply();
+            }
+            ttl.apply(hdr, lmeta, smeta);
         }
-        cos.apply(hdr, lmeta, smeta);
-        // Line is known and pkt was not punted. Verify attachment info, if
-        // valid (not spoofed), decap and route. If no route then no-op, we
-        // might punt or do something else in ACL.
-        if (hdr.ipv4.isValid()) {
-            attachments_v4.apply();
-            routes_v4.apply();
-        }
-        ttl.apply(hdr, lmeta, smeta);
     }
 }
 
@@ -519,7 +529,8 @@ control IngressDownstream(
     // immediately.
     action miss() {
         dropped.count(lmeta.line_id);
-        drop_now(smeta);
+        drop_now(smeta, lmeta);
+        return;
     }
 
     action set_line(bit<32> line_id) {
@@ -690,6 +701,7 @@ control IngressPipe(
 
     action set_my_station() {
         lmeta.my_mac = hdr.ethernet.dst_addr;
+        lmeta.my_station_hit = true;
     }
 
     // The BNG acts as a router, so we expect packets to have Ethernet dest
@@ -736,14 +748,15 @@ control IngressPipe(
         if (hdr.cpu_out.isValid()) {
             smeta.egress_spec = hdr.cpu_out.egress_port;
             hdr.cpu_out.setInvalid();
-            exit;
+            return;
         }
 
         if_types.apply();
 
         lmeta.direction = DIR_UNKNOWN;
 
-        if (my_stations.apply().hit) {
+        my_stations.apply();
+        if (lmeta.my_station_hit) {
             if (lmeta.if_type == IF_ACCESS) {
                 lmeta.direction = DIR_UPSTREAM;
                 upstream.apply(hdr, lmeta, smeta);
@@ -758,7 +771,9 @@ control IngressPipe(
         //  by routing or previous tables. A simple solution is to make sure all
         //  previous tables modify only metadata, and the actual header rewrite
         //  happen after the ACL table.
-        acl.apply(hdr, lmeta, smeta);
+        if (!(lmeta.drop_packet) && !(lmeta.punted)) {
+            acl.apply(hdr, lmeta, smeta);
+        }
 
         // FIXME: stop using exit statement in drop_now() action, otherwise
         //  dropped packets will not make it until here to be counted. This is
@@ -782,7 +797,7 @@ control EgressPipe(
         if (smeta.egress_port == CPU_PORT) {
             hdr.cpu_in.setValid();
             hdr.cpu_in.ingress_port = smeta.ingress_port;
-            exit;
+            return;
         }
 
         // TODO: Consider switching to PSA to count post-encap/decap bytes
