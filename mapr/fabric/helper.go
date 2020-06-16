@@ -3,6 +3,7 @@ package fabric
 import (
 	"bytes"
 	"encoding/binary"
+	"fmt"
 	v1 "github.com/p4lang/p4runtime/go/p4/v1"
 	"mapr/translate"
 )
@@ -375,6 +376,67 @@ func createPppoeTermV4(lineId []byte, ipv4Addr []byte, pppoeSessId []byte) v1.Ta
 			ActionId: Action_FabricIngressBngIngressUpstreamTermEnabledV4,
 		}}},
 	}
+}
+
+func createAclEntry(e *translate.AclEntry) (v1.TableEntry, error) {
+	matches := make([]*v1.FieldMatch, 0)
+	for _, m := range e.Match {
+		switch m.FieldId {
+		case translate.Hdr_IngressPipeAclAcls_Port:
+			matches = append(matches, createMatchAcl(m.GetTernary().Value, m.GetTernary().Mask, Hdr_FabricIngressAclAcl_IgPort))
+		//TODO: case translate.Hdr_IngressPipeAclAcls_IfType:
+		case translate.Hdr_IngressPipeAclAcls_EthSrc:
+			matches = append(matches, createMatchAcl(m.GetTernary().Value, m.GetTernary().Mask, Hdr_FabricIngressAclAcl_EthSrc))
+		case translate.Hdr_IngressPipeAclAcls_EthDst:
+			matches = append(matches, createMatchAcl(m.GetTernary().Value, m.GetTernary().Mask, Hdr_FabricIngressAclAcl_EthDst))
+		case translate.Hdr_IngressPipeAclAcls_EthType:
+			matches = append(matches, createMatchAcl(m.GetTernary().Value, m.GetTernary().Mask, Hdr_FabricIngressAclAcl_EthType))
+		case translate.Hdr_IngressPipeAclAcls_Ipv4Src:
+			matches = append(matches, createMatchAcl(m.GetTernary().Value, m.GetTernary().Mask, Hdr_FabricIngressAclAcl_Ipv4Src))
+		case translate.Hdr_IngressPipeAclAcls_Ipv4Dst:
+			matches = append(matches, createMatchAcl(m.GetTernary().Value, m.GetTernary().Mask, Hdr_FabricIngressAclAcl_Ipv4Dst))
+		case translate.Hdr_IngressPipeAclAcls_Ipv4Proto:
+			matches = append(matches, createMatchAcl(m.GetTernary().Value, m.GetTernary().Mask, Hdr_FabricIngressAclAcl_IpProto))
+		case translate.Hdr_IngressPipeAclAcls_L4Sport:
+			matches = append(matches, createMatchAcl(m.GetTernary().Value, m.GetTernary().Mask, Hdr_FabricIngressAclAcl_L4Sport))
+		case translate.Hdr_IngressPipeAclAcls_L4Dport:
+			matches = append(matches, createMatchAcl(m.GetTernary().Value, m.GetTernary().Mask, Hdr_FabricIngressAclAcl_L4Dport))
+		default:
+			return v1.TableEntry{}, fmt.Errorf("unsupported ACL match for fabric.p4: %s", m)
+		}
+
+	}
+	var action v1.TableAction
+	switch e.Action.GetAction().ActionId {
+	case translate.Action_IngressPipeAclPunt:
+		action = v1.TableAction{Type: &v1.TableAction_Action{Action: &v1.Action{
+			ActionId: Action_FabricIngressAclPuntToCpu,
+		}}}
+	case translate.Action_IngressPipeAclDrop:
+		action = v1.TableAction{Type: &v1.TableAction_Action{Action: &v1.Action{
+			ActionId: Action_FabricIngressAclDrop,
+		}}}
+	// TODO: case translate.Action_IngressPipeAclSetPort: this case requires to use the indirect forwarding on fabric (next_id + next.simple/next.hashed)
+	default:
+		return v1.TableEntry{}, fmt.Errorf("unrecognized acl action: %s", e.Action.GetAction())
+	}
+
+	return v1.TableEntry{
+		TableId:  Table_FabricIngressAclAcl,
+		Match:    matches,
+		Action:   &action,
+		Priority: e.Priority,
+	}, nil
+}
+
+func createMatchAcl(value []byte, mask []byte, fieldId uint32) *v1.FieldMatch {
+	return &v1.FieldMatch{
+		FieldId: fieldId,
+		FieldMatchType: &v1.FieldMatch_Ternary_{
+			Ternary: &v1.FieldMatch_Ternary{
+				Value: value,
+				Mask:  mask,
+			}}}
 }
 
 func createLineSessionMap(lineId []byte, pppoeSessId []byte) v1.TableEntry {

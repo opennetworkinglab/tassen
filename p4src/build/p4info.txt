@@ -52,6 +52,30 @@ tables {
 }
 tables {
   preamble {
+    id: 42617777
+    name: "IngressPipe.accounting_ids"
+    alias: "accounting_ids"
+  }
+  match_fields {
+    id: 1
+    name: "line_id"
+    bitwidth: 32
+    match_type: EXACT
+  }
+  match_fields {
+    id: 2
+    name: "cos_id"
+    bitwidth: 32
+    match_type: EXACT
+  }
+  action_refs {
+    id: 31884918
+  }
+  const_default_action_id: 31884918
+  size: 131072
+}
+tables {
+  preamble {
     id: 33956689
     name: "IngressPipe.upstream.lines"
     alias: "lines"
@@ -175,6 +199,48 @@ tables {
 }
 tables {
   preamble {
+    id: 43325894
+    name: "IngressPipe.upstream.cos.services_v4"
+    alias: "upstream.cos.services_v4"
+  }
+  match_fields {
+    id: 1
+    name: "ipv4_src"
+    bitwidth: 32
+    match_type: TERNARY
+  }
+  match_fields {
+    id: 2
+    name: "ipv4_dst"
+    bitwidth: 32
+    match_type: TERNARY
+  }
+  match_fields {
+    id: 3
+    name: "ipv4_proto"
+    bitwidth: 8
+    match_type: TERNARY
+  }
+  match_fields {
+    id: 4
+    name: "l4_sport"
+    bitwidth: 16
+    match_type: RANGE
+  }
+  match_fields {
+    id: 5
+    name: "l4_dport"
+    bitwidth: 16
+    match_type: RANGE
+  }
+  action_refs {
+    id: 26801906
+  }
+  const_default_action_id: 26801906
+  size: 16
+}
+tables {
+  preamble {
     id: 44334275
     name: "IngressPipe.downstream.lines_v4"
     alias: "lines_v4"
@@ -218,6 +284,48 @@ tables {
   }
   const_default_action_id: 27308170
   size: 8192
+}
+tables {
+  preamble {
+    id: 44470911
+    name: "IngressPipe.downstream.cos.services_v4"
+    alias: "downstream.cos.services_v4"
+  }
+  match_fields {
+    id: 1
+    name: "ipv4_src"
+    bitwidth: 32
+    match_type: TERNARY
+  }
+  match_fields {
+    id: 2
+    name: "ipv4_dst"
+    bitwidth: 32
+    match_type: TERNARY
+  }
+  match_fields {
+    id: 3
+    name: "ipv4_proto"
+    bitwidth: 8
+    match_type: TERNARY
+  }
+  match_fields {
+    id: 4
+    name: "l4_sport"
+    bitwidth: 16
+    match_type: RANGE
+  }
+  match_fields {
+    id: 5
+    name: "l4_dport"
+    bitwidth: 16
+    match_type: RANGE
+  }
+  action_refs {
+    id: 24318838
+  }
+  const_default_action_id: 24318838
+  size: 16
 }
 tables {
   preamble {
@@ -336,6 +444,18 @@ actions {
 }
 actions {
   preamble {
+    id: 31884918
+    name: "IngressPipe.set_accounting_id"
+    alias: "set_accounting_id"
+  }
+  params {
+    id: 1
+    name: "accounting_id"
+    bitwidth: 32
+  }
+}
+actions {
+  preamble {
     id: 17659136
     name: "IngressPipe.upstream.set_line"
     alias: "upstream.set_line"
@@ -375,6 +495,18 @@ actions {
     id: 2
     name: "dmac"
     bitwidth: 48
+  }
+}
+actions {
+  preamble {
+    id: 26801906
+    name: "IngressPipe.upstream.cos.set_cos_id"
+    alias: "upstream.cos.set_cos_id"
+  }
+  params {
+    id: 1
+    name: "cos_id"
+    bitwidth: 32
   }
 }
 actions {
@@ -426,6 +558,18 @@ actions {
     id: 5
     name: "pppoe_sess_id"
     bitwidth: 16
+  }
+}
+actions {
+  preamble {
+    id: 24318838
+    name: "IngressPipe.downstream.cos.set_cos_id"
+    alias: "downstream.cos.set_cos_id"
+  }
+  params {
+    id: 1
+    name: "cos_id"
+    bitwidth: 32
   }
 }
 actions {
@@ -552,6 +696,50 @@ counters {
     unit: BOTH
   }
   size: 8192
+}
+counters {
+  preamble {
+    id: 305793916
+    name: "IngressPipe.accounting.upstream"
+    alias: "IngressPipe.accounting.upstream"
+  }
+  spec {
+    unit: BOTH
+  }
+  size: 131073
+}
+counters {
+  preamble {
+    id: 302621207
+    name: "IngressPipe.accounting.downstream"
+    alias: "IngressPipe.accounting.downstream"
+  }
+  spec {
+    unit: BOTH
+  }
+  size: 131073
+}
+counters {
+  preamble {
+    id: 309841876
+    name: "EgressPipe.accounting.upstream"
+    alias: "EgressPipe.accounting.upstream"
+  }
+  spec {
+    unit: BOTH
+  }
+  size: 131073
+}
+counters {
+  preamble {
+    id: 311241884
+    name: "EgressPipe.accounting.downstream"
+    alias: "EgressPipe.accounting.downstream"
+  }
+  spec {
+    unit: BOTH
+  }
+  size: 131073
 }
 direct_counters {
   preamble {
