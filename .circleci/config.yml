@@ -8,7 +8,7 @@ jobs:
       - run: make deps build
       - run: make check-self TEST="all"
       - run: make check-dummy TEST="all"
-      - run: make check-fabric TEST="all ^accounting"
+      - run: make check-fabric TEST="all ^accounting.UpstreamPppoeIp4UnicastTest ^accounting.DownstreamPppoeIp4UnicastTest ^accounting.PppoePuntTest"
 
 workflows:
   main:
