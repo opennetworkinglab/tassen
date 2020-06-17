@@ -22,16 +22,6 @@ images:
 
     make deps
 
-## Quick Instructions
-
-To build everything:
-
-    make build
-
-To test everything:
-
-    make check
-
 ## Content
 
 ### Reference BNG-UP P4 Implementation
@@ -44,7 +34,7 @@ The goal of this P4 program is twofold:
 
 1. formally define the forwarding model of a BNG-UP;
 2. implicitly define the runtime API that a BNG control plane (BNG-CP) can use
-   to manipulate the forwarding state of the BNG-UP.
+   to manipulate the forwarding state of a BNG-UP.
 
 To build the P4 program:
 
@@ -110,7 +100,7 @@ the PTF tests.
   the same Tassen logical pipeline, and P4Runtime RPCs are relayed as-is,
   with no translation. 
 * `fabric`: for a switch running ONF's fabric.p4 (`fabric-bng` profile) which is
-  optimized for Intel Barefoot  Tofino.
+  optimized for Intel Barefoot Tofino.
 
 To run PTF tests on a given target together with `mapr`:
 
