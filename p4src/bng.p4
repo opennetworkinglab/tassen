@@ -174,7 +174,7 @@ struct local_metadata_t {
     bit<12>          c_tag;
     bit<16>          pppoe_sess_id;
     bool             my_station_hit;
-    bool             drop_packet;
+    bool             drop;
     bool             punted;
 }
 
@@ -193,10 +193,10 @@ struct parsed_headers_t {
 }
 
 // Needed after definition of local_metadata_t
-action drop_now(inout standard_metadata_t smeta, inout local_metadata_t lmeta) {
+action will_drop(inout standard_metadata_t smeta, inout local_metadata_t lmeta) {
     // Drop and set metadata
     mark_to_drop(smeta);
-    lmeta.drop_packet = true;
+    lmeta.drop = true;
 }
 
 parser ParserImpl (
@@ -306,7 +306,7 @@ control TtlCheck(
                 hdr.ipv4.ttl = hdr.ipv4.ttl - 1;
             } else {
                 expired.count(lmeta.line_id);
-                drop_now(smeta, lmeta);
+                will_drop(smeta, lmeta);
             }
         }
     }
@@ -403,7 +403,6 @@ control IngressUpstream(
         smeta.egress_spec = CPU_PORT;
         punted.count(lmeta.line_id);
         lmeta.punted = true;
-        return;
     }
 
     // NOTE: we expect the control plane to populate this at runtime.
@@ -424,7 +423,7 @@ control IngressUpstream(
 
     action reject() {
         spoofed.count(lmeta.line_id);
-        drop_now(smeta, lmeta);
+        will_drop(smeta, lmeta);
         return;
     }
 
@@ -501,7 +500,8 @@ control IngressUpstream(
         pppoe_punts.apply();
         if (!(lmeta.punted)) {
             if (lmeta.line_id == LINE_UNKNOWN) {
-                drop_now(smeta, lmeta);
+                will_drop(smeta, lmeta);
+                return;
             }
             cos.apply(hdr, lmeta, smeta);
             // Line is known and pkt was not punted. Verify attachment info, if
@@ -529,7 +529,7 @@ control IngressDownstream(
     // immediately.
     action miss() {
         dropped.count(lmeta.line_id);
-        drop_now(smeta, lmeta);
+        will_drop(smeta, lmeta);
         return;
     }
 
@@ -771,15 +771,7 @@ control IngressPipe(
         //  by routing or previous tables. A simple solution is to make sure all
         //  previous tables modify only metadata, and the actual header rewrite
         //  happen after the ACL table.
-        if (!(lmeta.drop_packet) && !(lmeta.punted)) {
-            acl.apply(hdr, lmeta, smeta);
-        }
-
-        // FIXME: stop using exit statement in drop_now() action, otherwise
-        //  dropped packets will not make it until here to be counted. This is
-        //  pre-qos accounting, so we should count every packet that enters the
-        //  switch. Instead of the exit statement, we should use metadata to
-        //  signal intention to drop and skip applying tables as needed.
+        acl.apply(hdr, lmeta, smeta);
 
         accounting_ids.apply();
         accounting.apply(hdr, lmeta, smeta);

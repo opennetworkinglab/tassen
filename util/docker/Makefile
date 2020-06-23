@@ -12,9 +12,10 @@ push-ptf:
 	docker push ${PTF_IMG}
 
 build-p4pktgen:
-	cd p4pktgen && docker build --build-arg B_MODEL_SHA=$(B_MODEL_SHA) \
+	cd p4pktgen && docker build --build-arg B_MODEL_SHA=$(BMV2_SHA) \
 		-t ${P4PKTGEN_IMG} .
 
 push-p4pktgen:
+	# Remember to update Makefile.vars with the new image sha
 	docker push ${P4PKTGEN_IMG}
 

@@ -2,8 +2,5 @@
 ptf/log
 mapr/mapr
 p4src/build/graphs
-util/p4pktgen/p4build
-util/p4pktgen/log.txt
-util/p4pktgen/test.pcap
-util/p4pktgen/test-cases.json
+p4pktgen
 **/*.pyc

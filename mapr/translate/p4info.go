@@ -98,12 +98,12 @@ const (
 	Action_IngressPipeUpstreamSetLine                uint32 = 17659136
 	Action_Nop                                       uint32 = 28485346
 	Action_IngressPipeUpstreamRouteV4                uint32 = 31033793
+	Action_WillDrop                                  uint32 = 28026654
 	Action_IngressPipeUpstreamReject                 uint32 = 18981580
-	Action_IngressPipeUpstreamCosSetCosId            uint32 = 26801906
-	Action_IngressPipeDownstreamSetPppoeAttachmentV4 uint32 = 32146370
 	Action_IngressPipeDownstreamMiss                 uint32 = 27308170
+	Action_IngressPipeDownstreamSetPppoeAttachmentV4 uint32 = 32146370
 	Action_IngressPipeAclPunt                        uint32 = 22515864
-	Action_DropNow                                   uint32 = 31962786
+	Action_IngressPipeUpstreamCosSetCosId            uint32 = 26801906
 	// Action Param IDs
 	ActionParam_IngressPipeDownstreamCosSetCosId_CosId                uint32 = 1
 	ActionParam_IngressPipeDownstreamSetLine_LineId                   uint32 = 1

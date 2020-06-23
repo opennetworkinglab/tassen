@@ -27,6 +27,8 @@ RUN apt update && apt install -y $DEPS
 
 RUN git clone https://github.com/p4pktgen/p4pktgen.git /p4pktgen
 RUN cd /p4pktgen && ./tools/install.sh
+# Clearing APT cache after install.sh
+RUN rm -rf /var/lib/apt/lists/*
 
 COPY run_p4pktgen.sh /
 

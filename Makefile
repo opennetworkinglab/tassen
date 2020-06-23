@@ -24,6 +24,8 @@ _docker_pull_all:
 	docker pull ${GNMI_CLI_IMG}@${GNMI_CLI_SHA}
 	docker tag ${GNMI_CLI_IMG}@${GNMI_CLI_SHA} ${GNMI_CLI_IMG}
 	docker pull ${GOLANG_IMG}
+	docker pull ${P4PKTGEN_IMG}@${P4PKTGEN_SHA}
+	docker tag ${P4PKTGEN_IMG}@${P4PKTGEN_SHA} ${P4PKTGEN_IMG}
 
 deps: _docker_pull_all
 
@@ -91,3 +93,19 @@ $(P4INFO_GO):
 		--output $@ --p4info $<
 	@docker run --rm -v ${curr_dir}:/tassen -w /tassen \
 		${GOLANG_IMG} gofmt -w $@
+
+build-bng-p4pktgen:
+	$(info *** Compiling P4 program for p4pktgen...)
+	@mkdir -p ./p4pktgen/p4build
+	@docker run --rm -v ${curr_dir}:/tassen -w /tassen ${P4C_IMG} \
+		p4c-bm2-ss --arch v1model -o ./p4pktgen/p4build/bmv2.json \
+		--p4runtime-files ./p4pktgen/p4build/p4info.txt,p4pktgen/p4build/p4info.bin \
+		--Wdisable=unsupported -DFOR_P4PKTGEN\
+		./p4src/bng.p4
+	@echo "*** P4 program for p4pktgen compiled successfully! Output files are in p4pktgen/p4build"
+
+p4pktgen: build-bng-p4pktgen
+	$(info *** Run p4pktgen against bng.p4...)
+	@docker run --rm -v ${curr_dir}/p4pktgen:/tassen_p4pktgen -ti -w /tassen_p4pktgen ${P4PKTGEN_IMG} \
+		/run_p4pktgen.sh ./p4build/bmv2.json > ./p4pktgen/log.txt 2>&1
+	@echo "*** Output files are in util/p4pktgen"

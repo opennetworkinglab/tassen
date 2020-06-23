@@ -7,6 +7,7 @@
         ["tmp", 16, false],
         ["tmp_0", 16, false],
         ["hasReturned_1", 1, false],
+        ["upstream_hasReturned_0", 1, false],
         ["hasReturned_2", 1, false],
         ["userMetadata.if_type", 3, false],
         ["userMetadata.direction", 3, false],
@@ -21,9 +22,9 @@
         ["userMetadata.c_tag", 12, false],
         ["userMetadata.pppoe_sess_id", 16, false],
         ["userMetadata.my_station_hit", 1, false],
-        ["userMetadata.drop_packet", 1, false],
+        ["userMetadata.drop", 1, false],
         ["userMetadata.punted", 1, false],
-        ["_padding_6", 5, false]
+        ["_padding_6", 4, false]
       ]
     },
     {
@@ -794,7 +795,7 @@
       "id" : 0,
       "source_info" : {
         "filename" : "p4src/bng.p4",
-        "line" : 873,
+        "line" : 865,
         "column" : 8,
         "source_fragment" : "DeparserImpl"
       },
@@ -992,7 +993,7 @@
       "id" : 0,
       "source_info" : {
         "filename" : "p4src/bng.p4",
-        "line" : 826,
+        "line" : 818,
         "column" : 8,
         "source_fragment" : "update_checksum( ..."
       },
@@ -1053,7 +1054,7 @@
       "id" : 1,
       "source_info" : {
         "filename" : "p4src/bng.p4",
-        "line" : 852,
+        "line" : 844,
         "column" : 8,
         "source_fragment" : "verify_checksum( ..."
       },
@@ -1143,7 +1144,7 @@
       "primitives" : []
     },
     {
-      "name" : "drop_now",
+      "name" : "will_drop",
       "id" : 5,
       "runtime_data" : [],
       "primitives" : [
@@ -1162,7 +1163,7 @@
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 196,
-            "column" : 42,
+            "column" : 43,
             "source_fragment" : "smeta, inout local_metadata_t lmeta) { ..."
           }
         },
@@ -1181,7 +1182,7 @@
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 196,
-            "column" : 42,
+            "column" : 43,
             "source_fragment" : "smeta, inout local_metadata_t lmeta) { ..."
           }
         },
@@ -1200,7 +1201,7 @@
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 196,
-            "column" : 42,
+            "column" : 43,
             "source_fragment" : "smeta, inout local_metadata_t lmeta) { ..."
           }
         },
@@ -1219,7 +1220,7 @@
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 196,
-            "column" : 42,
+            "column" : 43,
             "source_fragment" : "smeta, inout local_metadata_t lmeta) { ..."
           }
         },
@@ -1238,7 +1239,7 @@
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 196,
-            "column" : 42,
+            "column" : 43,
             "source_fragment" : "smeta, inout local_metadata_t lmeta) { ..."
           }
         },
@@ -1257,7 +1258,7 @@
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 196,
-            "column" : 42,
+            "column" : 43,
             "source_fragment" : "smeta, inout local_metadata_t lmeta) { ..."
           }
         },
@@ -1276,7 +1277,7 @@
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 196,
-            "column" : 42,
+            "column" : 43,
             "source_fragment" : "smeta, inout local_metadata_t lmeta) { ..."
           }
         },
@@ -1295,7 +1296,7 @@
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 196,
-            "column" : 42,
+            "column" : 43,
             "source_fragment" : "smeta, inout local_metadata_t lmeta) { ..."
           }
         },
@@ -1314,7 +1315,7 @@
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 196,
-            "column" : 42,
+            "column" : 43,
             "source_fragment" : "smeta, inout local_metadata_t lmeta) { ..."
           }
         },
@@ -1333,7 +1334,7 @@
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 196,
-            "column" : 42,
+            "column" : 43,
             "source_fragment" : "smeta, inout local_metadata_t lmeta) { ..."
           }
         },
@@ -1352,7 +1353,7 @@
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 196,
-            "column" : 42,
+            "column" : 43,
             "source_fragment" : "smeta, inout local_metadata_t lmeta) { ..."
           }
         },
@@ -1371,7 +1372,7 @@
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 196,
-            "column" : 42,
+            "column" : 43,
             "source_fragment" : "smeta, inout local_metadata_t lmeta) { ..."
           }
         },
@@ -1390,7 +1391,7 @@
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 196,
-            "column" : 42,
+            "column" : 43,
             "source_fragment" : "smeta, inout local_metadata_t lmeta) { ..."
           }
         },
@@ -1409,7 +1410,7 @@
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 196,
-            "column" : 42,
+            "column" : 43,
             "source_fragment" : "smeta, inout local_metadata_t lmeta) { ..."
           }
         },
@@ -1428,7 +1429,7 @@
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 196,
-            "column" : 42,
+            "column" : 43,
             "source_fragment" : "smeta, inout local_metadata_t lmeta) { ..."
           }
         },
@@ -1447,7 +1448,7 @@
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 196,
-            "column" : 42,
+            "column" : 43,
             "source_fragment" : "smeta, inout local_metadata_t lmeta) { ..."
           }
         },
@@ -1481,7 +1482,7 @@
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 196,
-            "column" : 42,
+            "column" : 43,
             "source_fragment" : "smeta, inout local_metadata_t lmeta) { ..."
           }
         },
@@ -1500,7 +1501,7 @@
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 196,
-            "column" : 42,
+            "column" : 43,
             "source_fragment" : "smeta, inout local_metadata_t lmeta) { ..."
           }
         },
@@ -1519,7 +1520,7 @@
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 196,
-            "column" : 42,
+            "column" : 43,
             "source_fragment" : "smeta, inout local_metadata_t lmeta) { ..."
           }
         },
@@ -1538,7 +1539,7 @@
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 196,
-            "column" : 42,
+            "column" : 43,
             "source_fragment" : "smeta, inout local_metadata_t lmeta) { ..."
           }
         },
@@ -1557,7 +1558,7 @@
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 196,
-            "column" : 42,
+            "column" : 43,
             "source_fragment" : "smeta, inout local_metadata_t lmeta) { ..."
           }
         },
@@ -1576,7 +1577,7 @@
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 196,
-            "column" : 42,
+            "column" : 43,
             "source_fragment" : "smeta, inout local_metadata_t lmeta) { ..."
           }
         },
@@ -1595,7 +1596,7 @@
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 196,
-            "column" : 42,
+            "column" : 43,
             "source_fragment" : "smeta, inout local_metadata_t lmeta) { ..."
           }
         },
@@ -1614,7 +1615,7 @@
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 196,
-            "column" : 42,
+            "column" : 43,
             "source_fragment" : "smeta, inout local_metadata_t lmeta) { ..."
           }
         },
@@ -1633,7 +1634,7 @@
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 196,
-            "column" : 42,
+            "column" : 43,
             "source_fragment" : "smeta, inout local_metadata_t lmeta) { ..."
           }
         },
@@ -1652,7 +1653,7 @@
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 196,
-            "column" : 42,
+            "column" : 43,
             "source_fragment" : "smeta, inout local_metadata_t lmeta) { ..."
           }
         },
@@ -1671,7 +1672,7 @@
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 196,
-            "column" : 42,
+            "column" : 43,
             "source_fragment" : "smeta, inout local_metadata_t lmeta) { ..."
           }
         },
@@ -1690,7 +1691,7 @@
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 196,
-            "column" : 42,
+            "column" : 43,
             "source_fragment" : "smeta, inout local_metadata_t lmeta) { ..."
           }
         },
@@ -1709,7 +1710,7 @@
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 196,
-            "column" : 42,
+            "column" : 43,
             "source_fragment" : "smeta, inout local_metadata_t lmeta) { ..."
           }
         },
@@ -1728,7 +1729,7 @@
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 196,
-            "column" : 42,
+            "column" : 43,
             "source_fragment" : "smeta, inout local_metadata_t lmeta) { ..."
           }
         },
@@ -1747,7 +1748,7 @@
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 196,
-            "column" : 42,
+            "column" : 43,
             "source_fragment" : "smeta, inout local_metadata_t lmeta) { ..."
           }
         },
@@ -1766,7 +1767,7 @@
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 196,
-            "column" : 42,
+            "column" : 43,
             "source_fragment" : "smeta, inout local_metadata_t lmeta) { ..."
           }
         },
@@ -1775,7 +1776,7 @@
           "parameters" : [
             {
               "type" : "field",
-              "value" : ["scalars", "userMetadata.drop_packet"]
+              "value" : ["scalars", "userMetadata.drop"]
             },
             {
               "type" : "expression",
@@ -1795,14 +1796,14 @@
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 199,
-            "column" : 24,
+            "column" : 17,
             "source_fragment" : "true; ..."
           }
         }
       ]
     },
     {
-      "name" : "drop_now",
+      "name" : "will_drop",
       "id" : 6,
       "runtime_data" : [],
       "primitives" : [
@@ -1821,7 +1822,7 @@
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 196,
-            "column" : 42,
+            "column" : 43,
             "source_fragment" : "smeta, inout local_metadata_t lmeta) { ..."
           }
         },
@@ -1840,7 +1841,7 @@
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 196,
-            "column" : 42,
+            "column" : 43,
             "source_fragment" : "smeta, inout local_metadata_t lmeta) { ..."
           }
         },
@@ -1859,7 +1860,7 @@
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 196,
-            "column" : 42,
+            "column" : 43,
             "source_fragment" : "smeta, inout local_metadata_t lmeta) { ..."
           }
         },
@@ -1878,7 +1879,7 @@
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 196,
-            "column" : 42,
+            "column" : 43,
             "source_fragment" : "smeta, inout local_metadata_t lmeta) { ..."
           }
         },
@@ -1897,7 +1898,7 @@
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 196,
-            "column" : 42,
+            "column" : 43,
             "source_fragment" : "smeta, inout local_metadata_t lmeta) { ..."
           }
         },
@@ -1916,7 +1917,7 @@
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 196,
-            "column" : 42,
+            "column" : 43,
             "source_fragment" : "smeta, inout local_metadata_t lmeta) { ..."
           }
         },
@@ -1935,7 +1936,7 @@
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 196,
-            "column" : 42,
+            "column" : 43,
             "source_fragment" : "smeta, inout local_metadata_t lmeta) { ..."
           }
         },
@@ -1954,7 +1955,7 @@
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 196,
-            "column" : 42,
+            "column" : 43,
             "source_fragment" : "smeta, inout local_metadata_t lmeta) { ..."
           }
         },
@@ -1973,7 +1974,7 @@
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 196,
-            "column" : 42,
+            "column" : 43,
             "source_fragment" : "smeta, inout local_metadata_t lmeta) { ..."
           }
         },
@@ -1992,7 +1993,7 @@
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 196,
-            "column" : 42,
+            "column" : 43,
             "source_fragment" : "smeta, inout local_metadata_t lmeta) { ..."
           }
         },
@@ -2011,7 +2012,7 @@
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 196,
-            "column" : 42,
+            "column" : 43,
             "source_fragment" : "smeta, inout local_metadata_t lmeta) { ..."
           }
         },
@@ -2030,7 +2031,7 @@
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 196,
-            "column" : 42,
+            "column" : 43,
             "source_fragment" : "smeta, inout local_metadata_t lmeta) { ..."
           }
         },
@@ -2049,7 +2050,7 @@
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 196,
-            "column" : 42,
+            "column" : 43,
             "source_fragment" : "smeta, inout local_metadata_t lmeta) { ..."
           }
         },
@@ -2068,7 +2069,7 @@
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 196,
-            "column" : 42,
+            "column" : 43,
             "source_fragment" : "smeta, inout local_metadata_t lmeta) { ..."
           }
         },
@@ -2087,7 +2088,7 @@
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 196,
-            "column" : 42,
+            "column" : 43,
             "source_fragment" : "smeta, inout local_metadata_t lmeta) { ..."
           }
         },
@@ -2106,7 +2107,7 @@
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 196,
-            "column" : 42,
+            "column" : 43,
             "source_fragment" : "smeta, inout local_metadata_t lmeta) { ..."
           }
         },
@@ -2140,7 +2141,7 @@
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 196,
-            "column" : 42,
+            "column" : 43,
             "source_fragment" : "smeta, inout local_metadata_t lmeta) { ..."
           }
         },
@@ -2159,7 +2160,7 @@
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 196,
-            "column" : 42,
+            "column" : 43,
             "source_fragment" : "smeta, inout local_metadata_t lmeta) { ..."
           }
         },
@@ -2178,7 +2179,7 @@
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 196,
-            "column" : 42,
+            "column" : 43,
             "source_fragment" : "smeta, inout local_metadata_t lmeta) { ..."
           }
         },
@@ -2197,7 +2198,7 @@
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 196,
-            "column" : 42,
+            "column" : 43,
             "source_fragment" : "smeta, inout local_metadata_t lmeta) { ..."
           }
         },
@@ -2216,7 +2217,7 @@
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 196,
-            "column" : 42,
+            "column" : 43,
             "source_fragment" : "smeta, inout local_metadata_t lmeta) { ..."
           }
         },
@@ -2235,7 +2236,7 @@
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 196,
-            "column" : 42,
+            "column" : 43,
             "source_fragment" : "smeta, inout local_metadata_t lmeta) { ..."
           }
         },
@@ -2254,7 +2255,7 @@
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 196,
-            "column" : 42,
+            "column" : 43,
             "source_fragment" : "smeta, inout local_metadata_t lmeta) { ..."
           }
         },
@@ -2273,7 +2274,7 @@
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 196,
-            "column" : 42,
+            "column" : 43,
             "source_fragment" : "smeta, inout local_metadata_t lmeta) { ..."
           }
         },
@@ -2292,7 +2293,7 @@
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 196,
-            "column" : 42,
+            "column" : 43,
             "source_fragment" : "smeta, inout local_metadata_t lmeta) { ..."
           }
         },
@@ -2311,7 +2312,7 @@
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 196,
-            "column" : 42,
+            "column" : 43,
             "source_fragment" : "smeta, inout local_metadata_t lmeta) { ..."
           }
         },
@@ -2330,7 +2331,7 @@
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 196,
-            "column" : 42,
+            "column" : 43,
             "source_fragment" : "smeta, inout local_metadata_t lmeta) { ..."
           }
         },
@@ -2349,7 +2350,7 @@
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 196,
-            "column" : 42,
+            "column" : 43,
             "source_fragment" : "smeta, inout local_metadata_t lmeta) { ..."
           }
         },
@@ -2368,7 +2369,7 @@
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 196,
-            "column" : 42,
+            "column" : 43,
             "source_fragment" : "smeta, inout local_metadata_t lmeta) { ..."
           }
         },
@@ -2387,7 +2388,7 @@
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 196,
-            "column" : 42,
+            "column" : 43,
             "source_fragment" : "smeta, inout local_metadata_t lmeta) { ..."
           }
         },
@@ -2406,7 +2407,7 @@
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 196,
-            "column" : 42,
+            "column" : 43,
             "source_fragment" : "smeta, inout local_metadata_t lmeta) { ..."
           }
         },
@@ -2425,7 +2426,7 @@
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 196,
-            "column" : 42,
+            "column" : 43,
             "source_fragment" : "smeta, inout local_metadata_t lmeta) { ..."
           }
         },
@@ -2434,7 +2435,7 @@
           "parameters" : [
             {
               "type" : "field",
-              "value" : ["scalars", "userMetadata.drop_packet"]
+              "value" : ["scalars", "userMetadata.drop"]
             },
             {
               "type" : "expression",
@@ -2454,14 +2455,14 @@
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 199,
-            "column" : 24,
+            "column" : 17,
             "source_fragment" : "true; ..."
           }
         }
       ]
     },
     {
-      "name" : "drop_now",
+      "name" : "will_drop",
       "id" : 7,
       "runtime_data" : [],
       "primitives" : [
@@ -2480,7 +2481,7 @@
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 196,
-            "column" : 42,
+            "column" : 43,
             "source_fragment" : "smeta, inout local_metadata_t lmeta) { ..."
           }
         },
@@ -2499,7 +2500,7 @@
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 196,
-            "column" : 42,
+            "column" : 43,
             "source_fragment" : "smeta, inout local_metadata_t lmeta) { ..."
           }
         },
@@ -2518,7 +2519,7 @@
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 196,
-            "column" : 42,
+            "column" : 43,
             "source_fragment" : "smeta, inout local_metadata_t lmeta) { ..."
           }
         },
@@ -2537,7 +2538,7 @@
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 196,
-            "column" : 42,
+            "column" : 43,
             "source_fragment" : "smeta, inout local_metadata_t lmeta) { ..."
           }
         },
@@ -2556,7 +2557,7 @@
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 196,
-            "column" : 42,
+            "column" : 43,
             "source_fragment" : "smeta, inout local_metadata_t lmeta) { ..."
           }
         },
@@ -2575,7 +2576,7 @@
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 196,
-            "column" : 42,
+            "column" : 43,
             "source_fragment" : "smeta, inout local_metadata_t lmeta) { ..."
           }
         },
@@ -2594,7 +2595,7 @@
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 196,
-            "column" : 42,
+            "column" : 43,
             "source_fragment" : "smeta, inout local_metadata_t lmeta) { ..."
           }
         },
@@ -2613,7 +2614,7 @@
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 196,
-            "column" : 42,
+            "column" : 43,
             "source_fragment" : "smeta, inout local_metadata_t lmeta) { ..."
           }
         },
@@ -2632,7 +2633,7 @@
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 196,
-            "column" : 42,
+            "column" : 43,
             "source_fragment" : "smeta, inout local_metadata_t lmeta) { ..."
           }
         },
@@ -2651,7 +2652,7 @@
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 196,
-            "column" : 42,
+            "column" : 43,
             "source_fragment" : "smeta, inout local_metadata_t lmeta) { ..."
           }
         },
@@ -2670,7 +2671,7 @@
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 196,
-            "column" : 42,
+            "column" : 43,
             "source_fragment" : "smeta, inout local_metadata_t lmeta) { ..."
           }
         },
@@ -2689,7 +2690,7 @@
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 196,
-            "column" : 42,
+            "column" : 43,
             "source_fragment" : "smeta, inout local_metadata_t lmeta) { ..."
           }
         },
@@ -2708,7 +2709,7 @@
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 196,
-            "column" : 42,
+            "column" : 43,
             "source_fragment" : "smeta, inout local_metadata_t lmeta) { ..."
           }
         },
@@ -2727,7 +2728,7 @@
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 196,
-            "column" : 42,
+            "column" : 43,
             "source_fragment" : "smeta, inout local_metadata_t lmeta) { ..."
           }
         },
@@ -2746,7 +2747,7 @@
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 196,
-            "column" : 42,
+            "column" : 43,
             "source_fragment" : "smeta, inout local_metadata_t lmeta) { ..."
           }
         },
@@ -2765,7 +2766,7 @@
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 196,
-            "column" : 42,
+            "column" : 43,
             "source_fragment" : "smeta, inout local_metadata_t lmeta) { ..."
           }
         },
@@ -2799,7 +2800,7 @@
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 196,
-            "column" : 42,
+            "column" : 43,
             "source_fragment" : "smeta, inout local_metadata_t lmeta) { ..."
           }
         },
@@ -2818,7 +2819,7 @@
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 196,
-            "column" : 42,
+            "column" : 43,
             "source_fragment" : "smeta, inout local_metadata_t lmeta) { ..."
           }
         },
@@ -2837,7 +2838,7 @@
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 196,
-            "column" : 42,
+            "column" : 43,
             "source_fragment" : "smeta, inout local_metadata_t lmeta) { ..."
           }
         },
@@ -2856,7 +2857,7 @@
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 196,
-            "column" : 42,
+            "column" : 43,
             "source_fragment" : "smeta, inout local_metadata_t lmeta) { ..."
           }
         },
@@ -2875,7 +2876,7 @@
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 196,
-            "column" : 42,
+            "column" : 43,
             "source_fragment" : "smeta, inout local_metadata_t lmeta) { ..."
           }
         },
@@ -2894,7 +2895,7 @@
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 196,
-            "column" : 42,
+            "column" : 43,
             "source_fragment" : "smeta, inout local_metadata_t lmeta) { ..."
           }
         },
@@ -2913,7 +2914,7 @@
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 196,
-            "column" : 42,
+            "column" : 43,
             "source_fragment" : "smeta, inout local_metadata_t lmeta) { ..."
           }
         },
@@ -2932,7 +2933,7 @@
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 196,
-            "column" : 42,
+            "column" : 43,
             "source_fragment" : "smeta, inout local_metadata_t lmeta) { ..."
           }
         },
@@ -2951,7 +2952,7 @@
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 196,
-            "column" : 42,
+            "column" : 43,
             "source_fragment" : "smeta, inout local_metadata_t lmeta) { ..."
           }
         },
@@ -2970,7 +2971,7 @@
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 196,
-            "column" : 42,
+            "column" : 43,
             "source_fragment" : "smeta, inout local_metadata_t lmeta) { ..."
           }
         },
@@ -2989,7 +2990,7 @@
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 196,
-            "column" : 42,
+            "column" : 43,
             "source_fragment" : "smeta, inout local_metadata_t lmeta) { ..."
           }
         },
@@ -3008,7 +3009,7 @@
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 196,
-            "column" : 42,
+            "column" : 43,
             "source_fragment" : "smeta, inout local_metadata_t lmeta) { ..."
           }
         },
@@ -3027,7 +3028,7 @@
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 196,
-            "column" : 42,
+            "column" : 43,
             "source_fragment" : "smeta, inout local_metadata_t lmeta) { ..."
           }
         },
@@ -3046,7 +3047,7 @@
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 196,
-            "column" : 42,
+            "column" : 43,
             "source_fragment" : "smeta, inout local_metadata_t lmeta) { ..."
           }
         },
@@ -3065,7 +3066,7 @@
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 196,
-            "column" : 42,
+            "column" : 43,
             "source_fragment" : "smeta, inout local_metadata_t lmeta) { ..."
           }
         },
@@ -3084,7 +3085,7 @@
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 196,
-            "column" : 42,
+            "column" : 43,
             "source_fragment" : "smeta, inout local_metadata_t lmeta) { ..."
           }
         },
@@ -3093,7 +3094,7 @@
           "parameters" : [
             {
               "type" : "field",
-              "value" : ["scalars", "userMetadata.drop_packet"]
+              "value" : ["scalars", "userMetadata.drop"]
             },
             {
               "type" : "expression",
@@ -3113,7 +3114,7 @@
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 199,
-            "column" : 24,
+            "column" : 17,
             "source_fragment" : "true; ..."
           }
         }
@@ -3360,7 +3361,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 426,
+            "line" : 425,
             "column" : 8,
             "source_fragment" : "spoofed.count(lmeta.line_id)"
           }
@@ -3801,7 +3802,7 @@
           "parameters" : [
             {
               "type" : "field",
-              "value" : ["scalars", "userMetadata.drop_packet"]
+              "value" : ["scalars", "userMetadata.drop"]
             },
             {
               "type" : "expression",
@@ -3864,7 +3865,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 452,
+            "line" : 451,
             "column" : 8,
             "source_fragment" : "hdr.vlan.setInvalid()"
           }
@@ -3879,7 +3880,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 453,
+            "line" : 452,
             "column" : 8,
             "source_fragment" : "hdr.vlan2.setInvalid()"
           }
@@ -3894,7 +3895,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 454,
+            "line" : 453,
             "column" : 8,
             "source_fragment" : "hdr.pppoe.setInvalid()"
           }
@@ -3913,7 +3914,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 459,
+            "line" : 458,
             "column" : 8,
             "source_fragment" : "smeta.egress_spec = port; ..."
           }
@@ -3932,7 +3933,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 460,
+            "line" : 459,
             "column" : 8,
             "source_fragment" : "hdr.ethernet.src_addr = lmeta.my_mac"
           }
@@ -3951,7 +3952,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 461,
+            "line" : 460,
             "column" : 8,
             "source_fragment" : "hdr.ethernet.dst_addr = dmac; ..."
           }
@@ -3970,7 +3971,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 462,
+            "line" : 461,
             "column" : 8,
             "source_fragment" : "routed.count(lmeta.line_id)"
           }
@@ -4494,7 +4495,7 @@
           "parameters" : [
             {
               "type" : "field",
-              "value" : ["scalars", "userMetadata.drop_packet"]
+              "value" : ["scalars", "userMetadata.drop"]
             },
             {
               "type" : "expression",
@@ -4974,7 +4975,7 @@
           "parameters" : [
             {
               "type" : "field",
-              "value" : ["scalars", "userMetadata.drop_packet"]
+              "value" : ["scalars", "userMetadata.drop"]
             },
             {
               "type" : "expression",
@@ -5824,11 +5825,34 @@
             "column" : 33,
             "source_fragment" : "1; ..."
           }
+        },
+        {
+          "op" : "assign",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["scalars", "upstream_hasReturned_0"]
+            },
+            {
+              "type" : "expression",
+              "value" : {
+                "type" : "expression",
+                "value" : {
+                  "op" : "b2d",
+                  "left" : null,
+                  "right" : {
+                    "type" : "bool",
+                    "value" : false
+                  }
+                }
+              }
+            }
+          ]
         }
       ]
     },
     {
-      "name" : "bng500",
+      "name" : "bng499",
       "id" : 30,
       "runtime_data" : [],
       "primitives" : [
@@ -5846,7 +5870,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 500,
+            "line" : 499,
             "column" : 8,
             "source_fragment" : "all.count(lmeta.line_id)"
           }
@@ -5854,8 +5878,44 @@
       ]
     },
     {
-      "name" : "bng306",
+      "name" : "bng504",
       "id" : 31,
+      "runtime_data" : [],
+      "primitives" : [
+        {
+          "op" : "assign",
+          "parameters" : [
+            {
+              "type" : "field",
+              "value" : ["scalars", "upstream_hasReturned_0"]
+            },
+            {
+              "type" : "expression",
+              "value" : {
+                "type" : "expression",
+                "value" : {
+                  "op" : "b2d",
+                  "left" : null,
+                  "right" : {
+                    "type" : "bool",
+                    "value" : true
+                  }
+                }
+              }
+            }
+          ],
+          "source_info" : {
+            "filename" : "p4src/bng.p4",
+            "line" : 504,
+            "column" : 16,
+            "source_fragment" : "return"
+          }
+        }
+      ]
+    },
+    {
+      "name" : "bng306",
+      "id" : 32,
       "runtime_data" : [],
       "primitives" : [
         {
@@ -5904,7 +5964,7 @@
     },
     {
       "name" : "bng308",
-      "id" : 32,
+      "id" : 33,
       "runtime_data" : [],
       "primitives" : [
         {
@@ -5930,7 +5990,7 @@
     },
     {
       "name" : "bng613",
-      "id" : 33,
+      "id" : 34,
       "runtime_data" : [],
       "primitives" : [
         {
@@ -5975,7 +6035,7 @@
     },
     {
       "name" : "bng306_0",
-      "id" : 34,
+      "id" : 35,
       "runtime_data" : [],
       "primitives" : [
         {
@@ -6024,7 +6084,7 @@
     },
     {
       "name" : "bng308_0",
-      "id" : 35,
+      "id" : 36,
       "runtime_data" : [],
       "primitives" : [
         {
@@ -6050,7 +6110,7 @@
     },
     {
       "name" : "bng326",
-      "id" : 36,
+      "id" : 37,
       "runtime_data" : [],
       "primitives" : [
         {
@@ -6076,7 +6136,7 @@
     },
     {
       "name" : "bng328",
-      "id" : 37,
+      "id" : 38,
       "runtime_data" : [],
       "primitives" : [
         {
@@ -6101,8 +6161,8 @@
       ]
     },
     {
-      "name" : "bng798",
-      "id" : 38,
+      "name" : "bng790",
+      "id" : 39,
       "runtime_data" : [],
       "primitives" : [
         {
@@ -6115,7 +6175,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 798,
+            "line" : 790,
             "column" : 12,
             "source_fragment" : "hdr.cpu_in.setValid()"
           }
@@ -6134,7 +6194,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 799,
+            "line" : 791,
             "column" : 12,
             "source_fragment" : "hdr.cpu_in.ingress_port = smeta.ingress_port"
           }
@@ -6163,7 +6223,7 @@
           ],
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 800,
+            "line" : 792,
             "column" : 12,
             "source_fragment" : "return"
           }
@@ -6172,7 +6232,7 @@
     },
     {
       "name" : "act_0",
-      "id" : 39,
+      "id" : 40,
       "runtime_data" : [],
       "primitives" : [
         {
@@ -6202,7 +6262,7 @@
     },
     {
       "name" : "bng326_0",
-      "id" : 40,
+      "id" : 41,
       "runtime_data" : [],
       "primitives" : [
         {
@@ -6228,7 +6288,7 @@
     },
     {
       "name" : "bng328_0",
-      "id" : 41,
+      "id" : 42,
       "runtime_data" : [],
       "primitives" : [
         {
@@ -6491,9 +6551,9 @@
           "direct_meters" : null,
           "action_ids" : [11],
           "actions" : ["IngressPipe.upstream.set_line"],
-          "base_default_next" : "tbl_bng500",
+          "base_default_next" : "tbl_bng499",
           "next_tables" : {
-            "IngressPipe.upstream.set_line" : "tbl_bng500"
+            "IngressPipe.upstream.set_line" : "tbl_bng499"
           },
           "default_entry" : {
             "action_id" : 11,
@@ -6503,11 +6563,11 @@
           }
         },
         {
-          "name" : "tbl_bng500",
+          "name" : "tbl_bng499",
           "id" : 7,
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 500,
+            "line" : 499,
             "column" : 8,
             "source_fragment" : "all.count(lmeta.line_id)"
           },
@@ -6519,10 +6579,10 @@
           "support_timeout" : false,
           "direct_meters" : null,
           "action_ids" : [30],
-          "actions" : ["bng500"],
+          "actions" : ["bng499"],
           "base_default_next" : "IngressPipe.upstream.pppoe_punts",
           "next_tables" : {
-            "bng500" : "IngressPipe.upstream.pppoe_punts"
+            "bng499" : "IngressPipe.upstream.pppoe_punts"
           },
           "default_entry" : {
             "action_id" : 30,
@@ -6536,7 +6596,7 @@
           "id" : 8,
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 412,
+            "line" : 411,
             "column" : 10,
             "source_fragment" : "pppoe_punts"
           },
@@ -6575,13 +6635,13 @@
           }
         },
         {
-          "name" : "tbl_drop_now",
+          "name" : "tbl_will_drop",
           "id" : 9,
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 504,
+            "line" : 503,
             "column" : 16,
-            "source_fragment" : "drop_now(smeta, lmeta)"
+            "source_fragment" : "will_drop(smeta, lmeta)"
           },
           "key" : [],
           "match_type" : "exact",
@@ -6591,10 +6651,10 @@
           "support_timeout" : false,
           "direct_meters" : null,
           "action_ids" : [5],
-          "actions" : ["drop_now"],
-          "base_default_next" : "node_18",
+          "actions" : ["will_drop"],
+          "base_default_next" : "tbl_bng504",
           "next_tables" : {
-            "drop_now" : "node_18"
+            "will_drop" : "tbl_bng504"
           },
           "default_entry" : {
             "action_id" : 5,
@@ -6604,8 +6664,37 @@
           }
         },
         {
-          "name" : "IngressPipe.upstream.cos.services_v4",
+          "name" : "tbl_bng504",
           "id" : 10,
+          "source_info" : {
+            "filename" : "p4src/bng.p4",
+            "line" : 504,
+            "column" : 16,
+            "source_fragment" : "return"
+          },
+          "key" : [],
+          "match_type" : "exact",
+          "type" : "simple",
+          "max_size" : 1024,
+          "with_counters" : false,
+          "support_timeout" : false,
+          "direct_meters" : null,
+          "action_ids" : [31],
+          "actions" : ["bng504"],
+          "base_default_next" : "node_19",
+          "next_tables" : {
+            "bng504" : "node_19"
+          },
+          "default_entry" : {
+            "action_id" : 31,
+            "action_const" : true,
+            "action_data" : [],
+            "action_entry_const" : true
+          }
+        },
+        {
+          "name" : "IngressPipe.upstream.cos.services_v4",
+          "id" : 11,
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 342,
@@ -6652,9 +6741,9 @@
           "direct_meters" : null,
           "action_ids" : [15],
           "actions" : ["IngressPipe.upstream.cos.set_cos_id"],
-          "base_default_next" : "node_21",
+          "base_default_next" : "node_23",
           "next_tables" : {
-            "IngressPipe.upstream.cos.set_cos_id" : "node_21"
+            "IngressPipe.upstream.cos.set_cos_id" : "node_23"
           },
           "default_entry" : {
             "action_id" : 15,
@@ -6665,7 +6754,7 @@
         },
         {
           "name" : "tbl_upstream_cos_set_cos_id",
-          "id" : 11,
+          "id" : 12,
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 365,
@@ -6681,9 +6770,9 @@
           "direct_meters" : null,
           "action_ids" : [16],
           "actions" : ["IngressPipe.upstream.cos.set_cos_id"],
-          "base_default_next" : "node_21",
+          "base_default_next" : "node_23",
           "next_tables" : {
-            "IngressPipe.upstream.cos.set_cos_id" : "node_21"
+            "IngressPipe.upstream.cos.set_cos_id" : "node_23"
           },
           "default_entry" : {
             "action_id" : 16,
@@ -6694,10 +6783,10 @@
         },
         {
           "name" : "IngressPipe.upstream.attachments_v4",
-          "id" : 12,
+          "id" : 13,
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 434,
+            "line" : 433,
             "column" : 10,
             "source_fragment" : "attachments_v4"
           },
@@ -6749,10 +6838,10 @@
         },
         {
           "name" : "IngressPipe.upstream.routes_v4",
-          "id" : 13,
+          "id" : 14,
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 470,
+            "line" : 469,
             "column" : 10,
             "source_fragment" : "routes_v4"
           },
@@ -6773,15 +6862,15 @@
           "direct_meters" : null,
           "action_ids" : [14, 3],
           "actions" : ["IngressPipe.upstream.route_v4", "nop"],
-          "base_default_next" : "node_24",
+          "base_default_next" : "node_26",
           "next_tables" : {
-            "IngressPipe.upstream.route_v4" : "node_24",
-            "nop" : "node_24"
+            "IngressPipe.upstream.route_v4" : "node_26",
+            "nop" : "node_26"
           }
         },
         {
           "name" : "tbl_bng306",
-          "id" : 14,
+          "id" : 15,
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 306,
@@ -6795,14 +6884,14 @@
           "with_counters" : false,
           "support_timeout" : false,
           "direct_meters" : null,
-          "action_ids" : [31],
+          "action_ids" : [32],
           "actions" : ["bng306"],
-          "base_default_next" : "node_41",
+          "base_default_next" : "IngressPipe.acl.acls",
           "next_tables" : {
-            "bng306" : "node_41"
+            "bng306" : "IngressPipe.acl.acls"
           },
           "default_entry" : {
-            "action_id" : 31,
+            "action_id" : 32,
             "action_const" : true,
             "action_data" : [],
             "action_entry_const" : true
@@ -6810,7 +6899,7 @@
         },
         {
           "name" : "tbl_bng308",
-          "id" : 15,
+          "id" : 16,
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 308,
@@ -6824,27 +6913,27 @@
           "with_counters" : false,
           "support_timeout" : false,
           "direct_meters" : null,
-          "action_ids" : [32],
+          "action_ids" : [33],
           "actions" : ["bng308"],
-          "base_default_next" : "tbl_drop_now_0",
+          "base_default_next" : "tbl_will_drop_0",
           "next_tables" : {
-            "bng308" : "tbl_drop_now_0"
+            "bng308" : "tbl_will_drop_0"
           },
           "default_entry" : {
-            "action_id" : 32,
+            "action_id" : 33,
             "action_const" : true,
             "action_data" : [],
             "action_entry_const" : true
           }
         },
         {
-          "name" : "tbl_drop_now_0",
-          "id" : 16,
+          "name" : "tbl_will_drop_0",
+          "id" : 17,
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 309,
             "column" : 16,
-            "source_fragment" : "drop_now(smeta, lmeta)"
+            "source_fragment" : "will_drop(smeta, lmeta)"
           },
           "key" : [],
           "match_type" : "exact",
@@ -6854,10 +6943,10 @@
           "support_timeout" : false,
           "direct_meters" : null,
           "action_ids" : [6],
-          "actions" : ["drop_now"],
-          "base_default_next" : "node_41",
+          "actions" : ["will_drop"],
+          "base_default_next" : "IngressPipe.acl.acls",
           "next_tables" : {
-            "drop_now" : "node_41"
+            "will_drop" : "IngressPipe.acl.acls"
           },
           "default_entry" : {
             "action_id" : 6,
@@ -6868,7 +6957,7 @@
         },
         {
           "name" : "tbl_bng613",
-          "id" : 17,
+          "id" : 18,
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 613,
@@ -6882,14 +6971,14 @@
           "with_counters" : false,
           "support_timeout" : false,
           "direct_meters" : null,
-          "action_ids" : [33],
+          "action_ids" : [34],
           "actions" : ["bng613"],
           "base_default_next" : "IngressPipe.downstream.lines_v4",
           "next_tables" : {
             "bng613" : "IngressPipe.downstream.lines_v4"
           },
           "default_entry" : {
-            "action_id" : 33,
+            "action_id" : 34,
             "action_const" : true,
             "action_data" : [],
             "action_entry_const" : true
@@ -6897,7 +6986,7 @@
         },
         {
           "name" : "IngressPipe.downstream.lines_v4",
-          "id" : 18,
+          "id" : 19,
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 540,
@@ -6920,10 +7009,10 @@
           "direct_meters" : null,
           "action_ids" : [19, 17],
           "actions" : ["IngressPipe.downstream.set_line", "IngressPipe.downstream.miss"],
-          "base_default_next" : "node_32",
+          "base_default_next" : "node_34",
           "next_tables" : {
-            "IngressPipe.downstream.set_line" : "node_32",
-            "IngressPipe.downstream.miss" : "node_32"
+            "IngressPipe.downstream.set_line" : "node_34",
+            "IngressPipe.downstream.miss" : "node_34"
           },
           "default_entry" : {
             "action_id" : 17,
@@ -6934,7 +7023,7 @@
         },
         {
           "name" : "IngressPipe.downstream.cos.services_v4",
-          "id" : 19,
+          "id" : 20,
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 342,
@@ -6994,7 +7083,7 @@
         },
         {
           "name" : "tbl_downstream_cos_set_cos_id",
-          "id" : 20,
+          "id" : 21,
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 365,
@@ -7023,7 +7112,7 @@
         },
         {
           "name" : "IngressPipe.downstream.attachments_v4",
-          "id" : 21,
+          "id" : 22,
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 597,
@@ -7046,10 +7135,10 @@
           "direct_meters" : null,
           "action_ids" : [20, 18],
           "actions" : ["IngressPipe.downstream.set_pppoe_attachment_v4", "IngressPipe.downstream.miss"],
-          "base_default_next" : "node_36",
+          "base_default_next" : "node_38",
           "next_tables" : {
-            "IngressPipe.downstream.set_pppoe_attachment_v4" : "node_36",
-            "IngressPipe.downstream.miss" : "node_36"
+            "IngressPipe.downstream.set_pppoe_attachment_v4" : "node_38",
+            "IngressPipe.downstream.miss" : "node_38"
           },
           "default_entry" : {
             "action_id" : 18,
@@ -7060,7 +7149,7 @@
         },
         {
           "name" : "tbl_bng306_0",
-          "id" : 22,
+          "id" : 23,
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 306,
@@ -7074,14 +7163,14 @@
           "with_counters" : false,
           "support_timeout" : false,
           "direct_meters" : null,
-          "action_ids" : [34],
+          "action_ids" : [35],
           "actions" : ["bng306_0"],
-          "base_default_next" : "node_41",
+          "base_default_next" : "IngressPipe.acl.acls",
           "next_tables" : {
-            "bng306_0" : "node_41"
+            "bng306_0" : "IngressPipe.acl.acls"
           },
           "default_entry" : {
-            "action_id" : 34,
+            "action_id" : 35,
             "action_const" : true,
             "action_data" : [],
             "action_entry_const" : true
@@ -7089,7 +7178,7 @@
         },
         {
           "name" : "tbl_bng308_0",
-          "id" : 23,
+          "id" : 24,
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 308,
@@ -7103,27 +7192,27 @@
           "with_counters" : false,
           "support_timeout" : false,
           "direct_meters" : null,
-          "action_ids" : [35],
+          "action_ids" : [36],
           "actions" : ["bng308_0"],
-          "base_default_next" : "tbl_drop_now_1",
+          "base_default_next" : "tbl_will_drop_1",
           "next_tables" : {
-            "bng308_0" : "tbl_drop_now_1"
+            "bng308_0" : "tbl_will_drop_1"
           },
           "default_entry" : {
-            "action_id" : 35,
+            "action_id" : 36,
             "action_const" : true,
             "action_data" : [],
             "action_entry_const" : true
           }
         },
         {
-          "name" : "tbl_drop_now_1",
-          "id" : 24,
+          "name" : "tbl_will_drop_1",
+          "id" : 25,
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 309,
             "column" : 16,
-            "source_fragment" : "drop_now(smeta, lmeta)"
+            "source_fragment" : "will_drop(smeta, lmeta)"
           },
           "key" : [],
           "match_type" : "exact",
@@ -7133,10 +7222,10 @@
           "support_timeout" : false,
           "direct_meters" : null,
           "action_ids" : [7],
-          "actions" : ["drop_now"],
-          "base_default_next" : "node_41",
+          "actions" : ["will_drop"],
+          "base_default_next" : "IngressPipe.acl.acls",
           "next_tables" : {
-            "drop_now" : "node_41"
+            "will_drop" : "IngressPipe.acl.acls"
           },
           "default_entry" : {
             "action_id" : 7,
@@ -7147,7 +7236,7 @@
         },
         {
           "name" : "IngressPipe.acl.acls",
-          "id" : 25,
+          "id" : 26,
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 645,
@@ -7240,7 +7329,7 @@
         },
         {
           "name" : "IngressPipe.accounting_ids",
-          "id" : 26,
+          "id" : 27,
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 728,
@@ -7269,9 +7358,9 @@
           "direct_meters" : null,
           "action_ids" : [10],
           "actions" : ["IngressPipe.set_accounting_id"],
-          "base_default_next" : "node_44",
+          "base_default_next" : "node_45",
           "next_tables" : {
-            "IngressPipe.set_accounting_id" : "node_44"
+            "IngressPipe.set_accounting_id" : "node_45"
           },
           "default_entry" : {
             "action_id" : 10,
@@ -7282,7 +7371,7 @@
         },
         {
           "name" : "tbl_bng326",
-          "id" : 27,
+          "id" : 28,
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 326,
@@ -7296,14 +7385,14 @@
           "with_counters" : false,
           "support_timeout" : false,
           "direct_meters" : null,
-          "action_ids" : [36],
+          "action_ids" : [37],
           "actions" : ["bng326"],
           "base_default_next" : null,
           "next_tables" : {
             "bng326" : null
           },
           "default_entry" : {
-            "action_id" : 36,
+            "action_id" : 37,
             "action_const" : true,
             "action_data" : [],
             "action_entry_const" : true
@@ -7311,7 +7400,7 @@
         },
         {
           "name" : "tbl_bng328",
-          "id" : 28,
+          "id" : 29,
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 328,
@@ -7325,14 +7414,14 @@
           "with_counters" : false,
           "support_timeout" : false,
           "direct_meters" : null,
-          "action_ids" : [37],
+          "action_ids" : [38],
           "actions" : ["bng328"],
           "base_default_next" : null,
           "next_tables" : {
             "bng328" : null
           },
           "default_entry" : {
-            "action_id" : 37,
+            "action_id" : 38,
             "action_const" : true,
             "action_data" : [],
             "action_entry_const" : true
@@ -7345,7 +7434,7 @@
           "id" : 0,
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 490,
+            "line" : 489,
             "column" : 25,
             "source_fragment" : "action_selector(HashAlgorithm.crc16, 32w1024, 32w16)"
           },
@@ -7446,7 +7535,7 @@
             }
           },
           "true_next" : "node_10",
-          "false_next" : "node_41"
+          "false_next" : "IngressPipe.acl.acls"
         },
         {
           "name" : "node_10",
@@ -7472,14 +7561,14 @@
             }
           },
           "true_next" : "tbl_bng761",
-          "false_next" : "node_29"
+          "false_next" : "node_31"
         },
         {
           "name" : "node_15",
           "id" : 4,
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 502,
+            "line" : 501,
             "column" : 12,
             "source_fragment" : "!(lmeta.punted)"
           },
@@ -7502,14 +7591,14 @@
             }
           },
           "true_next" : "node_16",
-          "false_next" : "node_41"
+          "false_next" : "IngressPipe.acl.acls"
         },
         {
           "name" : "node_16",
           "id" : 5,
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 503,
+            "line" : 502,
             "column" : 16,
             "source_fragment" : "lmeta.line_id == LINE_UNKNOWN"
           },
@@ -7527,12 +7616,36 @@
               }
             }
           },
-          "true_next" : "tbl_drop_now",
-          "false_next" : "node_18"
+          "true_next" : "tbl_will_drop",
+          "false_next" : "node_19"
         },
         {
-          "name" : "node_18",
+          "name" : "node_19",
           "id" : 6,
+          "expression" : {
+            "type" : "expression",
+            "value" : {
+              "op" : "not",
+              "left" : null,
+              "right" : {
+                "type" : "expression",
+                "value" : {
+                  "op" : "d2b",
+                  "left" : null,
+                  "right" : {
+                    "type" : "field",
+                    "value" : ["scalars", "upstream_hasReturned_0"]
+                  }
+                }
+              }
+            }
+          },
+          "true_next" : "node_20",
+          "false_next" : "IngressPipe.acl.acls"
+        },
+        {
+          "name" : "node_20",
+          "id" : 7,
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 362,
@@ -7554,8 +7667,8 @@
           "false_next" : "tbl_upstream_cos_set_cos_id"
         },
         {
-          "name" : "node_21",
-          "id" : 7,
+          "name" : "node_23",
+          "id" : 8,
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 510,
@@ -7574,11 +7687,11 @@
             }
           },
           "true_next" : "IngressPipe.upstream.attachments_v4",
-          "false_next" : "node_24"
+          "false_next" : "node_26"
         },
         {
-          "name" : "node_24",
-          "id" : 8,
+          "name" : "node_26",
+          "id" : 9,
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 304,
@@ -7596,12 +7709,12 @@
               }
             }
           },
-          "true_next" : "node_25",
-          "false_next" : "node_41"
+          "true_next" : "node_27",
+          "false_next" : "IngressPipe.acl.acls"
         },
         {
-          "name" : "node_25",
-          "id" : 9,
+          "name" : "node_27",
+          "id" : 10,
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 305,
@@ -7626,8 +7739,8 @@
           "false_next" : "tbl_bng308"
         },
         {
-          "name" : "node_29",
-          "id" : 10,
+          "name" : "node_31",
+          "id" : 11,
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 763,
@@ -7649,11 +7762,11 @@
             }
           },
           "true_next" : "tbl_bng613",
-          "false_next" : "node_41"
+          "false_next" : "IngressPipe.acl.acls"
         },
         {
-          "name" : "node_32",
-          "id" : 11,
+          "name" : "node_34",
+          "id" : 12,
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 362,
@@ -7675,8 +7788,8 @@
           "false_next" : "tbl_downstream_cos_set_cos_id"
         },
         {
-          "name" : "node_36",
-          "id" : 12,
+          "name" : "node_38",
+          "id" : 13,
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 304,
@@ -7694,12 +7807,12 @@
               }
             }
           },
-          "true_next" : "node_37",
-          "false_next" : "node_41"
+          "true_next" : "node_39",
+          "false_next" : "IngressPipe.acl.acls"
         },
         {
-          "name" : "node_37",
-          "id" : 13,
+          "name" : "node_39",
+          "id" : 14,
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 305,
@@ -7724,61 +7837,7 @@
           "false_next" : "tbl_bng308_0"
         },
         {
-          "name" : "node_41",
-          "id" : 14,
-          "source_info" : {
-            "filename" : "p4src/bng.p4",
-            "line" : 774,
-            "column" : 12,
-            "source_fragment" : "!(lmeta.drop_packet) && !(lmeta.punted)"
-          },
-          "expression" : {
-            "type" : "expression",
-            "value" : {
-              "op" : "and",
-              "left" : {
-                "type" : "expression",
-                "value" : {
-                  "op" : "not",
-                  "left" : null,
-                  "right" : {
-                    "type" : "expression",
-                    "value" : {
-                      "op" : "d2b",
-                      "left" : null,
-                      "right" : {
-                        "type" : "field",
-                        "value" : ["scalars", "userMetadata.drop_packet"]
-                      }
-                    }
-                  }
-                }
-              },
-              "right" : {
-                "type" : "expression",
-                "value" : {
-                  "op" : "not",
-                  "left" : null,
-                  "right" : {
-                    "type" : "expression",
-                    "value" : {
-                      "op" : "d2b",
-                      "left" : null,
-                      "right" : {
-                        "type" : "field",
-                        "value" : ["scalars", "userMetadata.punted"]
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "true_next" : "IngressPipe.acl.acls",
-          "false_next" : "IngressPipe.accounting_ids"
-        },
-        {
-          "name" : "node_44",
+          "name" : "node_45",
           "id" : 15,
           "source_info" : {
             "filename" : "p4src/bng.p4",
@@ -7801,10 +7860,10 @@
             }
           },
           "true_next" : "tbl_bng326",
-          "false_next" : "node_46"
+          "false_next" : "node_47"
         },
         {
-          "name" : "node_46",
+          "name" : "node_47",
           "id" : 16,
           "source_info" : {
             "filename" : "p4src/bng.p4",
@@ -7836,7 +7895,7 @@
       "id" : 1,
       "source_info" : {
         "filename" : "p4src/bng.p4",
-        "line" : 789,
+        "line" : 781,
         "column" : 8,
         "source_fragment" : "EgressPipe"
       },
@@ -7844,7 +7903,7 @@
       "tables" : [
         {
           "name" : "tbl_act_0",
-          "id" : 29,
+          "id" : 30,
           "key" : [],
           "match_type" : "exact",
           "type" : "simple",
@@ -7852,25 +7911,25 @@
           "with_counters" : false,
           "support_timeout" : false,
           "direct_meters" : null,
-          "action_ids" : [39],
+          "action_ids" : [40],
           "actions" : ["act_0"],
-          "base_default_next" : "node_51",
+          "base_default_next" : "node_52",
           "next_tables" : {
-            "act_0" : "node_51"
+            "act_0" : "node_52"
           },
           "default_entry" : {
-            "action_id" : 39,
+            "action_id" : 40,
             "action_const" : true,
             "action_data" : [],
             "action_entry_const" : true
           }
         },
         {
-          "name" : "tbl_bng798",
-          "id" : 30,
+          "name" : "tbl_bng790",
+          "id" : 31,
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 798,
+            "line" : 790,
             "column" : 12,
             "source_fragment" : "hdr.cpu_in.setValid(); ..."
           },
@@ -7881,14 +7940,14 @@
           "with_counters" : false,
           "support_timeout" : false,
           "direct_meters" : null,
-          "action_ids" : [38],
-          "actions" : ["bng798"],
-          "base_default_next" : "node_53",
+          "action_ids" : [39],
+          "actions" : ["bng790"],
+          "base_default_next" : "node_54",
           "next_tables" : {
-            "bng798" : "node_53"
+            "bng790" : "node_54"
           },
           "default_entry" : {
-            "action_id" : 38,
+            "action_id" : 39,
             "action_const" : true,
             "action_data" : [],
             "action_entry_const" : true
@@ -7896,7 +7955,7 @@
         },
         {
           "name" : "tbl_bng326_0",
-          "id" : 31,
+          "id" : 32,
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 326,
@@ -7910,14 +7969,14 @@
           "with_counters" : false,
           "support_timeout" : false,
           "direct_meters" : null,
-          "action_ids" : [40],
+          "action_ids" : [41],
           "actions" : ["bng326_0"],
           "base_default_next" : null,
           "next_tables" : {
             "bng326_0" : null
           },
           "default_entry" : {
-            "action_id" : 40,
+            "action_id" : 41,
             "action_const" : true,
             "action_data" : [],
             "action_entry_const" : true
@@ -7925,7 +7984,7 @@
         },
         {
           "name" : "tbl_bng328_0",
-          "id" : 32,
+          "id" : 33,
           "source_info" : {
             "filename" : "p4src/bng.p4",
             "line" : 328,
@@ -7939,14 +7998,14 @@
           "with_counters" : false,
           "support_timeout" : false,
           "direct_meters" : null,
-          "action_ids" : [41],
+          "action_ids" : [42],
           "actions" : ["bng328_0"],
           "base_default_next" : null,
           "next_tables" : {
             "bng328_0" : null
           },
           "default_entry" : {
-            "action_id" : 41,
+            "action_id" : 42,
             "action_const" : true,
             "action_data" : [],
             "action_entry_const" : true
@@ -7956,11 +8015,11 @@
       "action_profiles" : [],
       "conditionals" : [
         {
-          "name" : "node_51",
+          "name" : "node_52",
           "id" : 17,
           "source_info" : {
             "filename" : "p4src/bng.p4",
-            "line" : 797,
+            "line" : 789,
             "column" : 12,
             "source_fragment" : "smeta.egress_port == CPU_PORT"
           },
@@ -7978,11 +8037,11 @@
               }
             }
           },
-          "true_next" : "tbl_bng798",
-          "false_next" : "node_53"
+          "true_next" : "tbl_bng790",
+          "false_next" : "node_54"
         },
         {
-          "name" : "node_53",
+          "name" : "node_54",
           "id" : 18,
           "expression" : {
             "type" : "expression",
@@ -8003,10 +8062,10 @@
             }
           },
           "false_next" : null,
-          "true_next" : "node_54"
+          "true_next" : "node_55"
         },
         {
-          "name" : "node_54",
+          "name" : "node_55",
           "id" : 19,
           "source_info" : {
             "filename" : "p4src/bng.p4",
@@ -8029,10 +8088,10 @@
             }
           },
           "true_next" : "tbl_bng326_0",
-          "false_next" : "node_56"
+          "false_next" : "node_57"
         },
         {
-          "name" : "node_56",
+          "name" : "node_57",
           "id" : 20,
           "source_info" : {
             "filename" : "p4src/bng.p4",
@@ -8066,7 +8125,7 @@
       "id" : 0,
       "source_info" : {
         "filename" : "p4src/bng.p4",
-        "line" : 826,
+        "line" : 818,
         "column" : 8,
         "source_fragment" : "update_checksum( ..."
       },
@@ -8092,7 +8151,7 @@
       "id" : 1,
       "source_info" : {
         "filename" : "p4src/bng.p4",
-        "line" : 852,
+        "line" : 844,
         "column" : 8,
         "source_fragment" : "verify_checksum( ..."
       },
