@@ -1,3 +1,7 @@
+# Copyright 2020-present Open Networking Foundation
+#
+# SPDX-License-Identifier: Apache-2.0
+
 mkfile_path := $(abspath $(lastword $(MAKEFILE_LIST)))
 curr_dir := $(patsubst %/,%,$(dir $(mkfile_path)))
 curr_dir_sha := $(shell echo -n "$(curr_dir)" | shasum | cut -c1-7)
