@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
 
+# Copyright 2020-present Open Networking Foundation
+#
+# SPDX-License-Identifier: Apache-2.0
+
+
 set -ex
 
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" >/dev/null 2>&1 && pwd)"
