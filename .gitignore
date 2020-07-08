@@ -2,5 +2,4 @@
 ptf/log
 mapr/mapr
 p4src/build/graphs
-p4pktgen
 **/*.pyc
