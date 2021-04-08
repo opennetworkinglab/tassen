@@ -3,3 +3,15 @@ ptf/log
 mapr/mapr
 p4src/build/graphs
 **/*.pyc
+
+# Sphinx documentation
+_build/
+_static/
+doc_venv/
+
+# VS Code
+.vscode
+
+# Mac OSX
+.DS_Store
+*/.DS_Store
